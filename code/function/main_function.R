@@ -97,7 +97,8 @@ one_step_rand_biv <- function(x, K, beta_true, log_dat, weight, rwd_sig = 0.1){
 one_step_ts_batch <- function(x, x_true, t, param, beta_true, K, d, log_dat,  
                               floor_start = 0.005, floor_decay = 0.7, M = 1000,
                               tr_start = 10, tr_lag = 10, ate_start = 20, 
-                              weight = 2, train = FALSE, rwd_sig = 0.1){
+                              weight = 2, train = FALSE, rwd_sig = 0.1,
+                              design = "NoMAD"){
   # browser()
   last_tr_ind <- log_dat$last_tr_ind
   trt_hist <- log_dat$trt
@@ -120,8 +121,19 @@ one_step_ts_batch <- function(x, x_true, t, param, beta_true, K, d, log_dat,
   
   # compute propensity scores
   prpns <- get_propensities_ts(t, x, K, d, param, tr_start = tr_start, M = M)
-  prpn_min <- floor_start / (t^floor_decay)
-  prpns <- apply_floor(prpns, prpn_min)
+  # prpn_min <- floor_start / (t^floor_decay)
+  # prpns <- apply_floor(prpns, prpn_min)
+  if(design == "MAD"){
+    delt <- 1 / t^(0.24)
+  } else if(design == "MAD-clip"){
+    delt <- 1 / t^(0.24)
+    delt <- max(0.05, delt)
+  } else if(design == "rand"){
+    delt <- 1
+  } else{
+    delt <- 0
+  }
+  prpns <- (1/K) * delt + (1 - delt) * prpns
   prpns_mat[t, ] <- prpns
   
   if(t <= 2*K){
@@ -200,11 +212,12 @@ one_step_ts_batch <- function(x, x_true, t, param, beta_true, K, d, log_dat,
 
 
 one_step_rits_batch <- function(x, x_true, t, param, beta_true, K, d, 
-                                    log_dat, floor_start = 0.005, 
-                                    floor_decay = 0.7, tr_start = 10, 
-                                    tr_lag = 10, M = 1000,
-                                    ate_start = 20, tr_batch = 10, weight = 2, 
-                                    train = FALSE, rwd_sig = 0.1){
+                                log_dat, floor_start = 0.005, 
+                                floor_decay = 0.7, tr_start = 10, 
+                                tr_lag = 10, M = 1000,
+                                ate_start = 20, tr_batch = 10, weight = 2, 
+                                train = FALSE, rwd_sig = 0.1, 
+                                design = "NoMAD"){
   last_tr_ind <- log_dat$last_tr_ind
   trt_hist <- log_dat$trt
   rwd_safe_hist <- log_dat$reward_safe
@@ -228,8 +241,19 @@ one_step_rits_batch <- function(x, x_true, t, param, beta_true, K, d,
   prpns <- get_propensities_rits(t, x, K, d, param, tr_start = tr_start, 
                                  weight = weight, 
                                  last_tr_ind = last_tr_ind, M = M)
-  prpn_min <- floor_start / (t^floor_decay)
-  prpns <- apply_floor(prpns, prpn_min)
+  # prpn_min <- floor_start / (t^floor_decay)
+  # prpns <- apply_floor(prpns, prpn_min)
+  if(design == "MAD"){
+    delt <- 1 / t^(0.24)
+  } else if(design == "MAD-clip"){
+    delt <- 1 / t^(0.24)
+    delt <- max(0.05, delt)
+  } else if(design == "rand"){
+    delt <- 1
+  } else{
+    delt <- 0
+  }
+  prpns <- (1/K) * delt + (1 - delt) * prpns
   prpns_mat[t, ] <- prpns
   
   if(t <= 2*K){
@@ -379,7 +403,7 @@ do_ts_batch <- function(X, X_true, beta_true, tr_start = 20, tr_batch = 5,
                         weight = 2, tr_lag = 10, ate_start = 30, M = 1000,
                         v = 10, placebo_arm = 1,
                         floor_start = 0.005, floor_decay = 0.7,
-                        rwd_sig = 0.1, seed = 2024){
+                        rwd_sig = 0.1, seed = 2024, design = "NoMAD"){
   # browser()
   set.seed(seed)
   N <- nrow(X)
@@ -422,7 +446,8 @@ do_ts_batch <- function(X, X_true, beta_true, tr_start = 20, tr_batch = 5,
                               log_dat, tr_start = tr_start, tr_lag = tr_lag,
                               ate_start = ate_start, train = train, M = M, 
                               weight = weight, floor_start = floor_start, 
-                              floor_decay = floor_decay, rwd_sig = rwd_sig)
+                              floor_decay = floor_decay, rwd_sig = rwd_sig,
+                              design = design)
     param <- step$param
     log_dat <- step$log_dat
     if(t >= ate_start){
@@ -464,7 +489,7 @@ do_rits_batch <- function(X, X_true, beta_true, weight, rwd_sig = 0.1,
                               tr_start = 20, M = 1000, placebo_arm = 1,
                               tr_batch = 5, tr_lag = 10, ate_start = 30, 
                               floor_start = 0.005, floor_decay = 0.7,
-                              v = 10, seed = 2024){
+                              v = 10, seed = 2024, design = "NoMAD"){
   # browser()
   set.seed(seed)
   N <- nrow(X)
@@ -517,7 +542,7 @@ do_rits_batch <- function(X, X_true, beta_true, weight, rwd_sig = 0.1,
                                     train = train, weight = weight, 
                                     floor_start = floor_start, 
                                     floor_decay = floor_decay,
-                                    rwd_sig = rwd_sig)
+                                    rwd_sig = rwd_sig, design = design)
     param <- step$param
     log_dat <- step$log_dat
     if(t >= ate_start){

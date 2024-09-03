@@ -3,7 +3,7 @@ source("code/function/main_function.R")
 source("code/function/misc.R")
 
 set.seed(2024)
-N <- 200
+N <- 1000
 K <- 4 # cannot be changed
 d <- 3 # cannot be changed
 E <- 2 # cannot be changed
@@ -27,51 +27,52 @@ beta_true <- 5 * beta_true
 weight <- 1
 (util_true <- (mu_true + nu_true * weight) / (1+weight))
 placebo_arm <- 1
-seed <- 1
+seed_ <- 1
 tr_start <- 30
 ate_start <- 30
 floor_start <- 0.005
 floor_decay <- 0.7
 reward_sig <- 1
 # correct
-ts_out <- do_ts_batch(X, X_true, beta_true, seed = seed, weight = weight, 
+ts_out <- do_ts_batch(X, X_true, beta_true, seed = seed_, weight = weight, 
                       tr_start = tr_start, ate_start = ate_start,
                       placebo_arm = placebo_arm,
                       floor_start = floor_start, floor_decay = floor_decay,
-                      rwd_sig = reward_sig)
-rits_out <- do_rits_batch(X, X_true, beta_true, weight = weight, seed = seed, 
-                              tr_start = tr_start, ate_start = ate_start,
-                              floor_start = floor_start, floor_decay = floor_decay,
-                              placebo_arm = placebo_arm, rwd_sig = reward_sig)
-rand_out <- do_rand_biv(X_true, beta_true, seed = seed, weight = weight, 
-                        placebo_arm = placebo_arm)
-# miss
-X <- X_true[, 1:2]
-ts_mis_out <- do_ts_batch(X, X_true, beta_true, seed = seed, weight = weight, 
-                      tr_start = tr_start, ate_start = ate_start,
-                      placebo_arm = placebo_arm,
-                      floor_start = floor_start, floor_decay = floor_decay,
-                      rwd_sig = reward_sig)
-rits_mis_out <- do_rits_batch(X, X_true, beta_true, weight = weight, seed = seed, 
+                      rwd_sig = reward_sig, design = "MAD")
+rits_out <- do_rits_batch(X, X_true, beta_true, weight = weight, seed = seed_, 
                           tr_start = tr_start, ate_start = ate_start,
                           floor_start = floor_start, floor_decay = floor_decay,
-                          placebo_arm = placebo_arm, rwd_sig = reward_sig)
-rand_mis_out <- do_rand_biv(X_true, beta_true, seed = seed, weight = weight, 
+                          placebo_arm = placebo_arm, rwd_sig = reward_sig,
+                          design = "MAD")
+rand_out <- do_rand_biv(X_true, beta_true, seed = seed_, weight = weight, 
                         placebo_arm = placebo_arm)
+# # miss
+# X <- X_true[, 1:2]
+# ts_mis_out <- do_ts_batch(X, X_true, beta_true, seed = seed_, weight = weight, 
+#                       tr_start = tr_start, ate_start = ate_start,
+#                       placebo_arm = placebo_arm,
+#                       floor_start = floor_start, floor_decay = floor_decay,
+#                       rwd_sig = reward_sig)
+# rits_mis_out <- do_rits_batch(X, X_true, beta_true, weight = weight, seed = seed, 
+#                           tr_start = tr_start, ate_start = ate_start,
+#                           floor_start = floor_start, floor_decay = floor_decay,
+#                           placebo_arm = placebo_arm, rwd_sig = reward_sig)
+# rand_mis_out <- do_rand_biv(X_true, beta_true, seed = seed, weight = weight, 
+#                         placebo_arm = placebo_arm)
+# 
+# sim_dat <- list(X = X, X_true = X_true, mu_true = mu_true, nu_true = nu_true,
+#                 util_true = util_true, tr_start = tr_start,
+#                 ate_start = ate_start, beta_true = beta_true,
+#                 placebo_arm = placebo_arm, weight = weight)
+# sim_choice <- list(N = N, K = K, d = d, tr_start = tr_start, 
+#                    ate_start = ate_start, floor_start = floor_start,
+#                    floor_decay = floor_decay, reward_sig = reward_sig)
 
-sim_dat <- list(X = X, X_true = X_true, mu_true = mu_true, nu_true = nu_true,
-                util_true = util_true, tr_start = tr_start,
-                ate_start = ate_start, beta_true = beta_true,
-                placebo_arm = placebo_arm, weight = weight)
-sim_choice <- list(N = N, K = K, d = d, tr_start = tr_start, 
-                   ate_start = ate_start, floor_start = floor_start,
-                   floor_decay = floor_decay, reward_sig = reward_sig)
-
-saveRDS(sim_choice, "output/sim_choice.RData")
-saveRDS(sim_dat, "output/sim_dat.RData")
-saveRDS(ts_out, "output/ts_out.RData")
-saveRDS(rits_out, "output/rits_out.RData")
-saveRDS(rand_out, "output/rand_out.RData")
-saveRDS(ts_mis_out, "output/ts_mis_out.RData")
-saveRDS(rits_mis_out, "output/rits_mis_out.RData")
-saveRDS(rand_mis_out, "output/rand_mis_out.RData")
+# saveRDS(sim_choice, "output/sim_choice.RData")
+# saveRDS(sim_dat, "output/sim_dat.RData")
+# saveRDS(ts_out, "output/ts_out.RData")
+# saveRDS(rits_out, "output/rits_out.RData")
+# saveRDS(rand_out, "output/rand_out.RData")
+# saveRDS(ts_mis_out, "output/ts_mis_out.RData")
+# saveRDS(rits_mis_out, "output/rits_mis_out.RData")
+# saveRDS(rand_mis_out, "output/rand_mis_out.RData")
