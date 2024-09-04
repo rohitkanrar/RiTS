@@ -88,16 +88,20 @@ get_asympcs <- function(trt_hist, rwd_hist, prpns_mat,
 }
 
 
-# # trt <- ts_out$trt; rwd <- ts_out$reward; prpns_mat <- ts_out$log_dat$prpns_mat
+trt <- ts_out$trt; rwd <- ts_out$reward; prpns_mat <- ts_out$log_dat$prpns_mat
+# true_mu <- get_true_avg_rwd(ts_out$log_dat$context, ts_out$trt, beta_true[, , 1])
+# true_mu_running <- cumsum(true_mu) / (1:length(true_mu))
+# trt <- ts_sim[[1]]$trt; rwd <- ts_sim[[1]]$reward; prpns_mat <- ts_sim[[1]]$log_dat$prpns_mat
 # trt <- rits_out$trt; rwd <- rits_out$reward_benf; prpns_mat <- rits_out$log_dat$prpns_mat
-# par(mfrow = c(1, 3))
-# for(k in 2:4){
-#   tmp1 <- get_asympcs(trt, rwd, prpns_mat, k, 1, 0.05, first_peek = 30)
-#   
-#   plot(tmp1[, 1], type = "l", ylim = c(-3, 3), xlab = "Patient", ylab = "ATE")
-#   lines(tmp1[, 2])
-#   lines(tmp1[, 3])
-#   abline(h = mu_true[k] - mu_true[1])
-# }
-# par(mfrow = c(1, 1))
+par(mfrow = c(1, 3))
+for(k in 2:4){
+  tmp1 <- get_asympcs(trt, rwd, prpns_mat, k, 1, 0.05, first_peek = 30)
+
+  plot(tmp1[, 1], type = "l", ylim = c(-3, 3), xlab = "Patient", ylab = "ATE")
+  lines(tmp1[, 2])
+  lines(tmp1[, 3])
+  # lines(true_mu_running)
+  abline(h = mu_true[k] - mu_true[1])
+}
+par(mfrow = c(1, 1))
 
