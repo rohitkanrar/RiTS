@@ -130,6 +130,8 @@ one_step_ts_batch <- function(x, x_true, t, param, beta_true, K, d, log_dat,
     delt <- max(0.05, delt)
   } else if(design == "rand"){
     delt <- 1
+  } else if(design == "clip"){
+    delt <- 0.1 * K
   } else{
     delt <- 0
   }
@@ -250,6 +252,8 @@ one_step_rits_batch <- function(x, x_true, t, param, beta_true, K, d,
     delt <- max(0.05, delt)
   } else if(design == "rand"){
     delt <- 1
+  } else if(design == "clip"){
+    delt <- 0.1 * K
   } else{
     delt <- 0
   }

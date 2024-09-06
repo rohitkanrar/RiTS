@@ -3,7 +3,7 @@ source("code/function/main_function.R")
 source("code/function/misc.R")
 
 set.seed(2024)
-N <- 1000
+N <- 200
 K <- 4 # cannot be changed
 d <- 3 # cannot be changed
 E <- 2 # cannot be changed
@@ -38,12 +38,12 @@ ts_out <- do_ts_batch(X, X_true, beta_true, seed = seed_, weight = weight,
                       tr_start = tr_start, ate_start = ate_start,
                       placebo_arm = placebo_arm,
                       floor_start = floor_start, floor_decay = floor_decay,
-                      rwd_sig = reward_sig, design = "MAD")
+                      rwd_sig = reward_sig, design = "clip")
 rits_out <- do_rits_batch(X, X_true, beta_true, weight = weight, seed = seed_, 
                           tr_start = tr_start, ate_start = ate_start,
                           floor_start = floor_start, floor_decay = floor_decay,
                           placebo_arm = placebo_arm, rwd_sig = reward_sig,
-                          design = "MAD")
+                          design = "clip")
 rand_out <- do_rand_biv(X_true, beta_true, seed = seed_, weight = weight, 
                         placebo_arm = placebo_arm)
 # # miss

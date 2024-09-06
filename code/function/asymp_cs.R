@@ -1,107 +1,155 @@
-get_aipw_score <- function(t, K, trt_hist, rwd_hist, prpns_mat, tr_ind){
-  if(t < 3 || length(tr_ind) == 0){
-    stop("Too early to obtain AsympCS. Gather more data...")
-  }
-  ind1 <- tr_ind
-  ind2 <- setdiff(1:t, ind1)
-  trt_hist1 <- trt_hist[ind1]
-  trt_hist2 <- trt_hist[ind2]
-  rwd_hist1 <- rwd_hist[ind1]
-  rwd_hist2 <- rwd_hist[ind2]
-  prpns_mat <- prpns_mat[1:t, ]
-  aipw_mat <- matrix(NA, t, K)
-  estm1 <- numeric(K); estm2 <- estm1
-  for(k in 1:K){
-    ind <- which(trt_hist1 == k)
-    estm1[k] <- mean(rwd_hist1[ind])
-    ind <- which(trt_hist2 == k)
-    estm2[k] <- mean(rwd_hist2[ind])
-  }
-  for(i in 1:t){
-    for(k in 1:K){
-      estm <- ifelse(i %in% ind1, estm1[k], estm2[k])
-      if(trt_hist[i] == k){
-        aipw_mat[i, k] <- rwd_hist[i] / prpns_mat[i, k] +
-          (1 - 1 / prpns_mat[i, k]) * estm
-      } else{
-        aipw_mat[i, k] <- estm
-      }
-    }
-  }
-  aipw_mat
-}
-
-get_aipw_var_running <- function(psi, tr_ind){
-  t <- length(psi)
-  var_running <- numeric(t)
-  for(i in 1:t){
-    var_running[i] <- sum((psi[1:i] - psi_running[i])^2) / i
-  }
-  var_running
-}
-
-get_rho <- function(first_peek, psi_var, alpha = 0.05){
-  m <- first_peek; e <- exp(1)
-  rho <- -2 * log(alpha) + log(-2 * log(alpha)) + 1
-  rho <- rho / (psi_var * m * log(max(c(m, e))))
-  rho <- sqrt(rho)
-  rho
-}
-
-get_ugly_term <- function(t, rho, alpha){
-  out <- 2 * (t * rho^2 + 1) * log(sqrt(t * rho^2 + 1) / alpha)
-  out <- out / (t * rho)^2
-  sqrt(out)
-}
-
-get_asympcs <- function(trt_hist, rwd_hist, prpns_mat,
-                        trt_arm, placebo_arm, alpha = 0.05, first_peek = 50){
+require(drconfseq)
+library(parallel)
+basic_learner <- function(y, X, newX){
   # browser()
-  T_ <- length(trt_hist); K <- length(unique(trt_hist)); m <- first_peek
-  tr_ind <- sample(1:m, floor(m/2), replace = F)
-  te_ind <- setdiff(1:m, tr_ind)
-  e <- exp(1)
-  asymp_cs <- matrix(0, T_, 3)
-  
-  for(t in m:T_){
-    if(t > m){
-      p <- rbinom(1, 1, 0.5)
-      if(p == 0){
-        tr_ind <- c(tr_ind, t)
-      } else{
-        te_ind <- c(te_ind, t)
-      }
-    }
-    
-    aipw_mat <- get_aipw_score(t, K, trt_hist, rwd_hist, prpns_mat, tr_ind)
-    psi1 <- aipw_mat[tr_ind, trt_arm] - aipw_mat[tr_ind, placebo_arm]
-    psi2 <- aipw_mat[te_ind, trt_arm] - aipw_mat[te_ind, placebo_arm]
-    psi <- (sum(psi1) + sum(psi2))/t
-    psi_var <- (var(psi1) + var(psi2))/2
-    if(t == m){
-      rho <- get_rho(first_peek, psi_var, alpha)
-    }
-    half_width <- sqrt(psi_var) * get_ugly_term(t, rho, alpha)
-    asymp_cs[t, ] <- c(psi, psi - half_width, psi + half_width)
+  # mod <- lm(y ~ ., data.frame(y = y, X = X))
+  mod <- glmnet::glmnet(X, y, alpha = 0)
+  tmp <- predict(mod, newx = newX, s = 0.1)
+  as.numeric(tmp)
+}
+
+get_aipw_static <- function(y, reg_est, propensity, treatment, K){
+  # browser()
+  N <- length(y)
+  aipw <- matrix(0, N, K)
+  for(k in 1:K){
+    trt_ind <- as.numeric(treatment == k)
+    aipw[, k] <- reg_est[[k]] + (trt_ind / propensity[, k]) * (y - reg_est[[k]])
   }
-  asymp_cs
+  return(aipw)
+}
+
+get_aipw_seq <- function(treatment, y, propensity, X, 
+                         train_idx = NULL, times = NULL, n_cores = 1,
+                         cross_fit = TRUE, verbose = FALSE){
+  # browser()
+  if (is.null(train_idx)){
+    # train_idx <- rbinom(length(y), 1, 0.5)
+    train_idx <- rep(c(0, 1), length.out = length(y))
+  }
+  train_idx <- train_idx == TRUE
+  eval_idx <- 1 - train_idx == TRUE
+  if (any(is.null(times))) {
+    warning("\"times\" was left as null. Computing only at time n.")
+    times = length(y)
+  }
+  if (cross_fit) {
+    train_indices <- list(train_idx, eval_idx)
+  }
+  else {
+    train_indices <- list(train_idx)
+  }
+  K <- length(unique(treatment)); N <- length(y)
+  
+  aipw_master <- vector(mode = "list", length = length(times))
+  i <- 1
+  for(time in times){
+    aipw_master[[i]] <- matrix(NA, N, K)
+    if (verbose) {
+      print(paste("Fitting nuisance functions at time", 
+                  time))
+    }
+    for(train_idx in train_indices){
+      train_idx_t <- train_idx == TRUE
+      train_idx_t[1:length(train_idx) > time] = FALSE
+      eval_idx_t <- 1 - train_idx == TRUE
+      eval_idx_t[1:length(train_idx) > time] = FALSE
+      y_train <- y[train_idx_t]
+      y_eval <- y[eval_idx_t]
+      X_train <- X[train_idx_t, ]
+      X_eval <- X[eval_idx_t, ]
+      treatment_train <- treatment[train_idx_t]
+      treatment_eval <- treatment[eval_idx_t]
+      reg_est <- vector(mode = "list", length = K)
+      prpn_eval <- propensity[eval_idx_t, ]
+      for(k in 1:K){
+        # browser()
+        reg_est[[k]] <- tryCatch({
+          basic_learner(y = y_train[treatment_train == k], 
+                                        X = X_train[treatment_train == k, ], 
+                                        newX = X_eval)
+        }, error = function(e){
+          numeric(nrow(X_eval))
+        })
+        
+      }
+      aipw_master[[i]][eval_idx_t, ] <- get_aipw_static(y = y_eval, 
+                                                        reg_est = reg_est, 
+                                                        propensity = prpn_eval, 
+                                                        treatment = treatment_eval, K = K)
+    }
+    i <- i+1
+  }
+  
+  names(aipw_master) <- times
+  return(aipw_master)
 }
 
 
-trt <- ts_out$trt; rwd <- ts_out$reward; prpns_mat <- ts_out$log_dat$prpns_mat
+get_asympcs <- function(trt_hist, rwd_hist, prpns_mat, context_hist,
+                        placebo_arm, times, aipw_master = NULL,
+                        alpha = 0.05, first_peek = 50, n_cores = 1){
+  # browser()
+  if(times[1] > first_peek){
+    times <- c(first_peek, times)
+  }
+  N <- length(trt_hist); K <- length(unique(trt_hist)); m <- first_peek
+  asymp_cs <- matrix(0, N, 3)
+  aipw_master <- get_aipw_seq(y = rwd_hist, X = context_hist, 
+                              treatment = trt_hist, propensity = prpns_mat, 
+                              times = times)
+  rho2 <- drconfseq::best_rho2_exact(t_opt = m, alpha_opt = alpha)
+  if(any(is.null(aipw_master))){
+    aipw_mat <- get_aipw_score(t, K, trt_hist, rwd_hist, prpns_mat, tr_ind)
+  }
+  aipw_ate_list <- vector(mode = "list", length = length(aipw_master))
+  confseq <- vector(mode = "list", length = (K-1))
+  k <- 1
+  for(trt_arm in 1:K){
+    if(trt_arm == placebo_arm) next
+    i <- 1
+    for(time in times){
+      ate <- aipw_master[[paste(time)]][1:as.numeric(time), ]
+      ate <- ate[, trt_arm] - ate[, placebo_arm]
+      aipw_ate_list[[i]] <- ate
+      i <- i+1
+    }
+    names(aipw_ate_list) <- times
+    asympcs_list <- mclapply(aipw_ate_list, function(aipw_ate) {
+      acs <- drconfseq::lyapunov_asympcs(aipw_ate, rho2 = rho2, 
+                                         alpha = alpha, return_all_times = FALSE)
+      return(c(acs$l, acs$u))
+    }, mc.cores = n_cores)
+    
+    confseq[[k]] <- data.frame(do.call(rbind, asympcs_list))
+    colnames(confseq[[k]]) <- c("l", "u")
+    rownames(confseq[[k]]) <- times
+    k <- k+1
+  }
+  
+  return(confseq)
+}
+
+# tmp <- get_asympcs(ts_out$trt, ts_out$reward, ts_out$log_dat$prpns_mat,
+#                    ts_out$log_dat$context, 1, # times = seq(50, 1000, 10),
+#                    times = 50:length(ts_out$trt),
+#                    first_peek = 100)
+
+# # # trt <- ts_out$trt; rwd <- ts_out$reward; prpns_mat <- ts_out$log_dat$prpns_mat
 # true_mu <- get_true_avg_rwd(ts_out$log_dat$context, ts_out$trt, beta_true[, , 1])
-# true_mu_running <- cumsum(true_mu) / (1:length(true_mu))
-# trt <- ts_sim[[1]]$trt; rwd <- ts_sim[[1]]$reward; prpns_mat <- ts_sim[[1]]$log_dat$prpns_mat
-# trt <- rits_out$trt; rwd <- rits_out$reward_benf; prpns_mat <- rits_out$log_dat$prpns_mat
-par(mfrow = c(1, 3))
-for(k in 2:4){
-  tmp1 <- get_asympcs(trt, rwd, prpns_mat, k, 1, 0.05, first_peek = 30)
-
-  plot(tmp1[, 1], type = "l", ylim = c(-3, 3), xlab = "Patient", ylab = "ATE")
-  lines(tmp1[, 2])
-  lines(tmp1[, 3])
-  # lines(true_mu_running)
-  abline(h = mu_true[k] - mu_true[1])
-}
-par(mfrow = c(1, 1))
+# # # true_mu_running <- cumsum(true_mu) / (1:length(true_mu))
+# # # trt <- ts_sim[[1]]$trt; rwd <- ts_sim[[1]]$reward; prpns_mat <- ts_sim[[1]]$log_dat$prpns_mat
+# # trt <- rits_out$trt; rwd <- rits_out$reward_benf; prpns_mat <- rits_out$log_dat$prpns_mat
+# par(mfrow = c(1, 3))
+# for(k in 2:4){
+#   tmp1 <- tmp[[k-1]]
+# 
+#   plot(tmp1[, 1], type = "l", ylim = c(-3, 3), xlab = "Patient", ylab = "ATE")
+#   lines(tmp1[, 2])
+#   # lines(tmp[, 3])
+#   true_mu_running <- cumsum(true_mu[, k] - true_mu[, 1]) / (1:length(ts_out$trt))
+#   lines(true_mu_running[51:length(ts_out$trt)], col = "red")
+#   # abline(h = mu_true[k] - mu_true[1])
+# }
+# par(mfrow = c(1, 1))
 

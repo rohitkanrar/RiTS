@@ -23,6 +23,7 @@ reward_sig <- sim_choice$reward_sig
 
 
 n_iter <- 1000
+design <- "clip"
 ts_sim <- vector(mode = "list", length = n_iter)
 rand_sim <- ts_sim
 rits_sim <- ts_sim
@@ -39,26 +40,28 @@ for(iter in 1:n_iter){
   ts_sim[[iter]] <- do_ts_batch(X_true, X_true, beta_true, seed = seed, weight = weight, 
                                 placebo_arm = placebo_arm, tr_start = tr_start, 
                                 ate_start = ate_start, floor_start = floor_start, 
-                                floor_decay = floor_decay, rwd_sig = reward_sig)
+                                floor_decay = floor_decay, rwd_sig = reward_sig, 
+                                design = design)
   rits_sim[[iter]] <- do_rits_batch(X_true, X_true, beta_true, weight = weight, seed = seed, 
-                                        tr_start = tr_start, ate_start = ate_start,
-                                        floor_start = floor_start, floor_decay = floor_decay,
-                                        placebo_arm = placebo_arm, rwd_sig = reward_sig)
-  
-  ts_mis_sim[[iter]] <- do_ts_batch(X, X_true, beta_true, seed = seed, weight = weight, 
-                                placebo_arm = placebo_arm, tr_start = tr_start, 
-                                ate_start = ate_start, floor_start = floor_start, 
-                                floor_decay = floor_decay, rwd_sig = reward_sig)
-  rits_mis_sim[[iter]] <- do_rits_batch(X, X_true, beta_true, weight = weight, seed = seed, 
                                     tr_start = tr_start, ate_start = ate_start,
                                     floor_start = floor_start, floor_decay = floor_decay,
-                                    placebo_arm = placebo_arm, rwd_sig = reward_sig)
+                                    placebo_arm = placebo_arm, rwd_sig = reward_sig, 
+                                    design = design)
+  
+  # ts_mis_sim[[iter]] <- do_ts_batch(X, X_true, beta_true, seed = seed, weight = weight, 
+  #                               placebo_arm = placebo_arm, tr_start = tr_start, 
+  #                               ate_start = ate_start, floor_start = floor_start, 
+  #                               floor_decay = floor_decay, rwd_sig = reward_sig)
+  # rits_mis_sim[[iter]] <- do_rits_batch(X, X_true, beta_true, weight = weight, seed = seed, 
+  #                                   tr_start = tr_start, ate_start = ate_start,
+  #                                   floor_start = floor_start, floor_decay = floor_decay,
+  #                                   placebo_arm = placebo_arm, rwd_sig = reward_sig)
   
 }
 
 saveRDS(ts_sim, "output/ts_sim.RData")
 saveRDS(rand_sim, "output/rand_sim.RData")
 saveRDS(rits_sim, "output/rits_sim.RData")
-saveRDS(ts_mis_sim, "output/ts_sim.RData")
-saveRDS(rits_mis_sim, "output/rits_sim.RData")
+# saveRDS(ts_mis_sim, "output/ts_mis_sim.RData")
+# saveRDS(rits_mis_sim, "output/rits_mis_sim.RData")
 print(timestamp())
