@@ -3,8 +3,8 @@ source("code/function/asymp_cs.R")
 source("code/function/main_function.R")
 source("code/function/misc.R")
 
-out_dir <- "output/"
-# out_dir <- "/work/LAS/zhanruic-lab/rohitk/git_repos_data/RiTS/output/"
+# out_dir <- "output/"
+out_dir <- "/work/LAS/zhanruic-lab/rohitk/git_repos_data/RiTS/output/"
 
 sim_choice <- readRDS("metadata/sim_choice.RData")
 sim_dat <- readRDS("metadata/sim_dat.RData")
