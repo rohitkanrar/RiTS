@@ -103,31 +103,54 @@ get_asympcs <- function(trt_hist, rwd_hist, prpns_mat, context_hist,
     aipw_mat <- get_aipw_score(t, K, trt_hist, rwd_hist, prpns_mat, tr_ind)
   }
   aipw_ate_list <- vector(mode = "list", length = length(aipw_master))
-  confseq <- vector(mode = "list", length = (K-1))
+  aipw_contr_list <- aipw_ate_list
+  ate_seq <- array(NA, c(length(times), K, 3))
+  contr_seq <- array(NA, c(length(times), K-1, 3))
   k <- 1
   for(trt_arm in 1:K){
-    if(trt_arm == placebo_arm) next
     i <- 1
     for(time in times){
       ate <- aipw_master[[paste(time)]][1:as.numeric(time), ]
+      aipw_ate_list[[i]] <- ate[, trt_arm]
       ate <- ate[, trt_arm] - ate[, placebo_arm]
-      aipw_ate_list[[i]] <- ate
+      aipw_contr_list[[i]] <- ate
       i <- i+1
     }
     names(aipw_ate_list) <- times
+    names(aipw_contr_list) <- times
+    
     asympcs_list <- mclapply(aipw_ate_list, function(aipw_ate) {
       acs <- drconfseq::lyapunov_asympcs(aipw_ate, rho2 = rho2, 
-                                         alpha = alpha, return_all_times = FALSE)
-      return(c(acs$l, acs$u))
+                                         alpha = alpha/K, 
+                                         return_all_times = FALSE)
+      return(c((acs$l + acs$u)/2, acs$l, acs$u))
     }, mc.cores = n_cores)
     
-    confseq[[k]] <- data.frame(do.call(rbind, asympcs_list))
-    colnames(confseq[[k]]) <- c("l", "u")
-    rownames(confseq[[k]]) <- times
+    ate_seq[, k, ] <- do.call(rbind, asympcs_list)
+    
+    if(trt_arm == placebo_arm){
+      k <- k+1
+      next
+    }
+    asympcs_list <- mclapply(aipw_contr_list, function(aipw_contr) {
+      acs <- drconfseq::lyapunov_asympcs(aipw_contr, rho2 = rho2, 
+                                         alpha = alpha/(K-1), 
+                                         return_all_times = FALSE)
+      return(c((acs$l + acs$u)/2, acs$l, acs$u))
+    }, mc.cores = n_cores)
+    
+    contr_seq[, k-1, ] <- do.call(rbind, asympcs_list)
     k <- k+1
   }
+  dimnames(ate_seq) <- list(
+    Times = times, Arms = 1:K, CS = c("Center", "Lower", "Upper") 
+  )
+  dimnames(contr_seq) <- list(
+    Times = times, Arms = sort(setdiff(1:K, placebo_arm)), 
+    CS = c("Center", "Lower", "Upper") 
+  )
   
-  return(confseq)
+  return(list(ate_seq, contr_seq))
 }
 
 # tmp <- get_asympcs(ts_out$trt, ts_out$reward, ts_out$log_dat$prpns_mat,

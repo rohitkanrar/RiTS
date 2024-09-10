@@ -1,4 +1,4 @@
-source("code/function/awaipw_functions.R")
+source("code/function/asymp_cs.R")
 source("code/function/main_function.R")
 source("code/function/misc.R")
 
@@ -30,20 +30,19 @@ placebo_arm <- 1
 seed_ <- 1
 tr_start <- 30
 ate_start <- 30
-floor_start <- 0.005
-floor_decay <- 0.7
+min_prpn <- 0.05
+first_peek <- 100
 reward_sig <- 1
 # correct
 ts_out <- do_ts_batch(X, X_true, beta_true, seed = seed_, weight = weight, 
                       tr_start = tr_start, ate_start = ate_start,
                       placebo_arm = placebo_arm,
-                      floor_start = floor_start, floor_decay = floor_decay,
-                      rwd_sig = reward_sig, design = "clip")
+                      rwd_sig = reward_sig, design = "clip", 
+                      min_prpn = min_prpn, first_peek = first_peek)
 rits_out <- do_rits_batch(X, X_true, beta_true, weight = weight, seed = seed_, 
                           tr_start = tr_start, ate_start = ate_start,
-                          floor_start = floor_start, floor_decay = floor_decay,
                           placebo_arm = placebo_arm, rwd_sig = reward_sig,
-                          design = "clip")
+                          design = "clip", first_peek = first_peek)
 rand_out <- do_rand_biv(X_true, beta_true, seed = seed_, weight = weight, 
                         placebo_arm = placebo_arm)
 # # miss
