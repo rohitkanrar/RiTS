@@ -3,6 +3,9 @@ source("code/function/asymp_cs.R")
 source("code/function/main_function.R")
 source("code/function/misc.R")
 
+# out_dir <- "output/"
+out_dir <- "/work/LAS/zhanruic-lab/rohitk/git_repos_data/RiTS/output/"
+
 sim_choice <- readRDS("output/sim_choice.RData")
 sim_dat <- readRDS("output/sim_dat.RData")
 
@@ -67,9 +70,9 @@ for(min_prpn in min_prpns){
     #                                   placebo_arm = placebo_arm, rwd_sig = reward_sig)
     
   }
-  saveRDS(ts_sim, paste("output/ts_sim_", i, ".RData", sep = ""))
-  saveRDS(rand_sim, paste("output/rand_sim_", i, ".RData", sep = ""))
-  saveRDS(rits_sim, paste("output/rits_sim_", i, ".RData", sep = ""))
+  saveRDS(ts_sim, paste(out_dir, "ts_sim_", i, ".RData", sep = ""))
+  saveRDS(rand_sim, paste(out_dir, "rand_sim_", i, ".RData", sep = ""))
+  saveRDS(rits_sim, paste(out_dir, "rits_sim_", i, ".RData", sep = ""))
   # saveRDS(ts_mis_sim, "output/ts_mis_sim.RData")
   # saveRDS(rits_mis_sim, "output/rits_mis_sim.RData")
   i <- i + 1 
