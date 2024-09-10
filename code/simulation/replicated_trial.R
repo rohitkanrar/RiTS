@@ -3,11 +3,11 @@ source("code/function/asymp_cs.R")
 source("code/function/main_function.R")
 source("code/function/misc.R")
 
-# out_dir <- "output/"
-out_dir <- "/work/LAS/zhanruic-lab/rohitk/git_repos_data/RiTS/output/"
+out_dir <- "output/"
+# out_dir <- "/work/LAS/zhanruic-lab/rohitk/git_repos_data/RiTS/output/"
 
-sim_choice <- readRDS("output/sim_choice.RData")
-sim_dat <- readRDS("output/sim_dat.RData")
+sim_choice <- readRDS("metadata/sim_choice.RData")
+sim_dat <- readRDS("metadata/sim_dat.RData")
 
 N <- sim_choice$N
 K <- sim_choice$K # cannot be changed
@@ -27,7 +27,7 @@ reward_sig <- sim_choice$reward_sig
 alpha <- sim_choice$alpha
 
 
-n_iter <- 2
+n_iter <- 1000
 ts_sim <- vector(mode = "list", length = n_iter)
 rand_sim <- ts_sim
 rits_sim <- ts_sim
