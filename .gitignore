@@ -4,7 +4,9 @@
 *.Rproj
 .Rproj.user
 /.idea
-*.RData
+/output
 *.jpg
 *.xlsx
 /plot
+/data
+/output_legacy
