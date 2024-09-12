@@ -27,7 +27,7 @@ reward_sig <- sim_choice$reward_sig
 alpha <- sim_choice$alpha
 
 
-n_iter <- 1000
+n_iter <- 10
 ts_sim <- vector(mode = "list", length = n_iter)
 rand_sim <- ts_sim
 rits_sim <- ts_sim
@@ -37,8 +37,9 @@ X <- X_true[, 1:2]
 
 i <- 1
 for(min_prpn in min_prpns){
+  print(min_prpn)
   for(iter in 1:n_iter){
-    print(iter)
+    if(iter %% 100 == 0) print(iter)
     seed <- iter
     if(i == 1){
       rand_sim[[iter]] <- do_rand_biv(X_true, beta_true, seed = seed, 

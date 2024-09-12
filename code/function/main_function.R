@@ -1,3 +1,4 @@
+source("code/function/misc.R")
 get_propensities_ts <- function(t, x, K, d, param, M = 1000, tr_start = 10){
   if(t <= tr_start){
     return(rep(1/K, K))
@@ -131,7 +132,7 @@ one_step_ts_batch <- function(x, x_true, t, param, beta_true, K, d, log_dat,
     delt <- 1 / t^(0.24)
     prpns <- (1/K) * delt + (1 - delt) * prpns
   } else if(design == "clip"){
-    prpns <- pmax(prpns, min_prpn)
+    prpns <- apply_floor(prpns, min_prpn)
   } else if(design == "mad_clip"){
     delt <- min_prpn * K
     prpns <- (1/K) * delt + (1 - delt) * prpns
@@ -251,7 +252,7 @@ one_step_rits_batch <- function(x, x_true, t, param, beta_true, K, d,
     delt <- 1 / t^(0.24)
     prpns <- (1/K) * delt + (1 - delt) * prpns
   } else if(design == "clip"){
-    prpns <- pmax(prpns, min_prpn)
+    prpns <- apply_floor(prpns, min_prpn)
   } else if(design == "mad_clip"){
     delt <- min_prpn * K
     prpns <- (1/K) * delt + (1 - delt) * prpns
@@ -472,7 +473,7 @@ do_ts_batch <- function(X, X_true, beta_true, tr_start = 20, tr_batch = 5,
        regret_safe = regret_safe, subopt_trt = subopt_trt, alpha = alpha,
        subopt_trt_benf = subopt_trt_benf, subopt_trt_safe = subopt_trt_safe,
        ate = ate, contr = contr, first_peek = first_peek, min_prpn = min_prpn,
-       log_dat = log_dat, param = param, tr_first = tr_first)
+       log_dat = log_dat, param = param, tr_first = tr_start)
 }
 
 do_rits_batch <- function(X, X_true, beta_true, weight, rwd_sig = 0.1,
@@ -516,7 +517,6 @@ do_rits_batch <- function(X, X_true, beta_true, weight, rwd_sig = 0.1,
   subopt_trt_benf <- numeric(N)
   subopt_trt_safe <- numeric(N)
   placebo_arm <- 1
-  tr_first <- 0
   
   for(t in 1:N){
     if(t %% tr_batch == 0 && t >= tr_start){
@@ -560,5 +560,5 @@ do_rits_batch <- function(X, X_true, beta_true, weight, rwd_sig = 0.1,
        regret_safe = regret_safe, subopt_trt = subopt_trt, alpha = alpha,
        subopt_trt_benf = subopt_trt_benf, subopt_trt_safe = subopt_trt_safe, 
        ate = ate, contr = contr, first_peek = first_peek, min_prpn = min_prpn,
-       log_dat = log_dat, param = param, tr_first = tr_first)
+       log_dat = log_dat, param = param, tr_first = tr_start)
 }
