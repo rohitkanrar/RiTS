@@ -27,7 +27,7 @@ reward_sig <- sim_choice$reward_sig
 alpha <- sim_choice$alpha
 
 
-n_iter <- 10
+n_iter <- 1000
 ts_sim <- vector(mode = "list", length = n_iter)
 rand_sim <- ts_sim
 rits_sim <- ts_sim
