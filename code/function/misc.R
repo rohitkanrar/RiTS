@@ -24,18 +24,20 @@ apply_floor <- function(a, amin) {
   return(new - c * individual_slack)
 }
 
-get_cum_mis_cov <- function(sim, mu_true, contr_true){
-  cum_mis_cov_ate <- matrix(0, dim(sim[[1]]$ate)[1], dim(sim[[1]]$ate)[2])
-  cum_mis_cov_contr <- matrix(0, dim(sim[[1]]$contr)[1], dim(sim[[1]]$contr)[2])
+get_cum_mis_cov <- function(sim, mu_true, contr_true, delay = 0){
+  total_peek <- dim(sim[[1]]$ate)[1]
+  no_of_peek <- dim(sim[[1]]$ate)[1] - delay
+  cum_mis_cov_ate <- matrix(0, no_of_peek, dim(sim[[1]]$ate)[2])
+  cum_mis_cov_contr <- matrix(0, no_of_peek, dim(sim[[1]]$contr)[2])
   for(iter in 1:n_iter){
     for(k in 1:K){
       cum_mis_cov_ate[, k] <- cum_mis_cov_ate[, k] + 
-        cummax(sim[[iter]]$ate[, k,  2] > mu_true[k] | 
-                 sim[[iter]]$ate[, k, 3] < mu_true[k])
+        cummax(sim[[iter]]$ate[(delay+1):total_peek, k,  2] > mu_true[k] | 
+                 sim[[iter]]$ate[(delay+1):total_peek, k, 3] < mu_true[k])
       if(k > 1){
         cum_mis_cov_contr[, k-1] <-   cum_mis_cov_contr[, k-1] + 
-          cummax(sim[[iter]]$contr[, k-1,  2] > contr_true[k-1] | 
-                   sim[[iter]]$contr[, k-1, 3] < contr_true[k-1])
+          cummax(sim[[iter]]$contr[(delay+1):total_peek, k-1,  2] > contr_true[k-1] | 
+                   sim[[iter]]$contr[(delay+1):total_peek, k-1, 3] < contr_true[k-1])
       } 
     }
   }

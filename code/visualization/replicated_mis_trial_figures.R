@@ -1,9 +1,7 @@
-# stop_n <- data.frame(Rand = stop_n_rand, TS = stop_n_ts,
-#                      RiTS = stop_n_rits)
 file_choice <- 3
-ts_sim <- readRDS(paste("output/ts_sim_", file_choice, ".RData", sep = ""))
+ts_sim <- readRDS(paste("output/ts_mis_sim_", file_choice, ".RData", sep = ""))
 rand_sim <- readRDS(paste("output/rand_sim_", 1, ".RData", sep = ""))
-rits_sim <- readRDS(paste("output/rits_sim_", file_choice, ".RData", sep = ""))
+rits_sim <- readRDS(paste("output/rits_mis_sim_", file_choice, ".RData", sep = ""))
 n_iter <- length(ts_sim)
 N <- length(ts_sim[[1]]$trt)
 ind <- c(seq(50, 100, 10), 150, 200)
@@ -119,118 +117,11 @@ sim_reg_plot3 <- ggplot(df, aes(x = factor(Column),
 
 sim_regret_plot <- sim_reg_plot1 + sim_reg_plot2 + sim_reg_plot3 +
   plot_layout(ncol = 3, guides = "collect")
-ggsave(paste("plot/regret_sim_bwplot_", file_choice, ".jpg", sep = ""), 
+ggsave(paste("plot/regret_mis_sim_bwplot_", file_choice, ".jpg", sep = ""), 
        height = 4, width = 12, units = "in")
 
 
-### Sub-opt plot Combined
-## Utility Sub-optimal Treatment Count
-rand_sub <- t(sapply(1:n_iter, function(i){
-  cumsum(rand_sim[[i]]$subopt_trt)[ind]
-}))
-ts_sub <- t(sapply(1:n_iter, function(i){
-  cumsum(ts_sim[[i]]$subopt_trt)[ind]
-}))
-rits_sub <- t(sapply(1:n_iter, function(i){
-  cumsum(rits_sim[[i]]$subopt_trt)[ind]
-}))
-
-
-# Combine matrices into a single data frame
-df <- data.frame(
-  Value = c(rand_sub, ts_sub, rits_sub),
-  Method = rep(c("rand", "ts", "rits"), 
-               each = nrow(rand_sub)*ncol(rand_sub)),
-  Column = rep(rep(1:ncol(rand_sub), each = nrow(rand_sub), 
-                   times = 3))
-)
-library(ggplot2)
-
-# Plot grouped boxplot
-sim_sub_plot1 <- ggplot(df, aes(x = factor(Column), 
-                                y = Value, fill = Method)) +
-  geom_boxplot(position = position_dodge(width = 0.8), width = 0.7) +
-  labs(x = "Number of Participants", y = "Cumulative Sub-optimal Treatment Count", 
-       fill = "Method") +
-  scale_x_discrete(labels = ind) + ggtitle("Utility") +
-  scale_fill_manual(
-    values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00"),
-    labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS")
-  ) 
-
-## Efficacy Sub-optimal Treatment Count
-rand_sub <- t(sapply(1:n_iter, function(i){
-  cumsum(rand_sim[[i]]$subopt_trt_benf)[ind]
-}))
-ts_sub <- t(sapply(1:n_iter, function(i){
-  cumsum(ts_sim[[i]]$subopt_trt_benf)[ind]
-}))
-rits_sub <- t(sapply(1:n_iter, function(i){
-  cumsum(rits_sim[[i]]$subopt_trt_benf)[ind]
-}))
-
-
-# Combine matrices into a single data frame
-df <- data.frame(
-  Value = c(rand_sub, ts_sub, rits_sub),
-  Method = rep(c("rand", "ts", "rits"), 
-               each = nrow(rand_sub)*ncol(rand_sub)),
-  Column = rep(rep(1:ncol(rand_sub), each = nrow(rand_sub), 
-                   times = 3))
-)
-library(ggplot2)
-
-# Plot grouped boxplot
-sim_sub_plot2 <- ggplot(df, aes(x = factor(Column), 
-                                y = Value, fill = Method)) +
-  geom_boxplot(position = position_dodge(width = 0.8), width = 0.7) +
-  labs(x = "Number of Participants", y = "Cumulative Sub-optimal Treatment Count", 
-       fill = "Method") +
-  scale_x_discrete(labels = ind) + ggtitle("Efficacy") +
-  scale_fill_manual(
-    values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00"),
-    labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS")
-  ) 
-
-
-## Safety Sub-optimal Treatment Count
-rand_sub <- t(sapply(1:n_iter, function(i){
-  cumsum(rand_sim[[i]]$subopt_trt_safe)[ind]
-}))
-ts_sub <- t(sapply(1:n_iter, function(i){
-  cumsum(ts_sim[[i]]$subopt_trt_safe)[ind]
-}))
-rits_sub <- t(sapply(1:n_iter, function(i){
-  cumsum(rits_sim[[i]]$subopt_trt_safe)[ind]
-}))
-
-
-# Combine matrices into a single data frame
-df <- data.frame(
-  Value = c(rand_sub, ts_sub, rits_sub),
-  Method = rep(c("rand", "ts", "rits"), 
-               each = nrow(rand_sub)*ncol(rand_sub)),
-  Column = rep(rep(1:ncol(rand_sub), each = nrow(rand_sub), 
-                   times = 3))
-)
-library(ggplot2)
-
-# Plot grouped boxplot
-sim_sub_plot3 <- ggplot(df, aes(x = factor(Column), 
-                                y = Value, fill = Method)) +
-  geom_boxplot(position = position_dodge(width = 0.8), width = 0.7) +
-  labs(x = "Number of Participants", y = "Cumulative Sub-optimal Treatment Count", 
-       fill = "Method") +
-  scale_x_discrete(labels = ind)  + ggtitle("Safety") +
-  scale_fill_manual(
-    values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00"),
-    labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS")
-  ) 
-
-sim_subopt_plot <- sim_sub_plot1 + sim_sub_plot2 + sim_sub_plot3 +
-  plot_layout(ncol = 3, guides = "collect")
-ggsave(paste("plot/subopt_sim_bwplot_", file_choice, ".jpg", sep = ""), 
-       height = 4, width = 12, units = "in")
+# ------------------------------------------- #
 
 ## Arm Allocation Boxplot 
 trt_rand <- t(sapply(1:n_iter, function(i) table(rand_sim[[i]]$trt)))
@@ -253,8 +144,10 @@ ggplot(df, aes(x = factor(Arm),
     labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS")
   ) +
   ggtitle("Frequency of Arm Allocations by Different Methods Across 1000 Trials")
-ggsave(paste("plot/freq_arm_alloc_sim_", file_choice, ".jpg", sep = ""), 
+ggsave(paste("plot/freq_arm_alloc_mis_sim_", file_choice, ".jpg", sep = ""), 
        height = 4, width = 8, units = "in")
+
+# -------------------------------------------- #
 
 sim_choice <- readRDS("metadata/sim_choice.RData")
 ate_start <- sim_choice$ate_start
@@ -360,8 +253,10 @@ sim_wid_plot3 <- ggplot(df, aes(x = factor(Column),
 
 sim_wid_plot <- sim_wid_plot1 + sim_wid_plot2 + sim_wid_plot3 +
   plot_layout(ncol = 3, guides = "collect")
-ggsave(paste("plot/width_sim_bwplot_", file_choice, ".jpg", sep = ""), 
+ggsave(paste("plot/width_mis_sim_bwplot_", file_choice, ".jpg", sep = ""), 
        height = 4, width = 12, units = "in")
+
+# ------------------------------------------------------ #
 
 ## bias
 sim_dat <- readRDS("metadata/sim_dat.RData")
@@ -471,98 +366,68 @@ sim_bias_plot3 <- ggplot(df, aes(x = factor(Column),
 
 sim_bias_plot <- sim_bias_plot1 + sim_bias_plot2 + sim_bias_plot3 +
   plot_layout(ncol = 3, guides = "collect")
-ggsave(paste("plot/bias_sim_bwplot_", file_choice, ".jpg", sep = ""), 
+ggsave(paste("plot/bias_mis_sim_bwplot_", file_choice, ".jpg", sep = ""), 
        height = 4, width = 12, units = "in")
 
+# ---------------------------------------------- #
 
 # Cumulative Miscoverage Rates
 source("code/function/misc.R")
 library(reshape2)
 K <- length(unique(rand_sim[[1]]$trt))
-# # Rand
-# cum_miscov <- get_cum_mis_cov(rand_sim, mu_true = mu_true, 
-#                               contr_true = contr_true, delay = 20)
-# 
-# df <- as.data.frame(cum_miscov[[2]] / length(rand_sim))
-# colnames(df) <- paste("Arm", 2:K)
-# df$obs <- (ate_start+20):N  # Adding a column for observation number
-# 
-# # Melt the data frame to long format for ggplot
-# df_long <- melt(df, id.vars = "obs", variable.name = "Arm", value.name = "Miscov")
-# 
-# # Plot using ggplot
-# plot_cum_miscov_rand <- ggplot(df_long, aes(x = obs, y = Miscov, color = Arm)) +
-#   geom_line(linewidth = 0.5) + ylim(c(0, 0.2)) + 
-#   geom_hline(yintercept = sim_choice$alpha/(K-1), linetype = "dashed", color = "blue") +
-#   labs(x = "Patient", y = "Cumulative Miscoverage", 
-#        title = "Random Allocation") +
-#   theme(text = element_text(size = 10)) +
-#   scale_color_manual(
-#     values = c("Arm 1" = "#E69F00", "Arm 2" = "#56B4E9", 
-#                "Arm 3" = "#009E73", "Arm 4" = "#CC79A7")
-#   )
+delays <- c(20, 70, 120)
 
-# TS
-cum_miscov <- get_cum_mis_cov(ts_sim, mu_true = mu_true, 
-                              contr_true = contr_true, delay = 20)
-
-df <- as.data.frame(cum_miscov[[2]] / length(rand_sim))
-colnames(df) <- paste("Arm", 2:K)
-df$obs <- (ate_start+20):N  # Adding a column for observation number
-
-# Melt the data frame to long format for ggplot
-df_long <- melt(df, id.vars = "obs", variable.name = "Arm", value.name = "Miscov")
-
-# Plot using ggplot
-plot_cum_miscov_ts <- ggplot(df_long, aes(x = obs, y = Miscov, color = Arm)) +
-  geom_line(linewidth = 0.5) + ylim(c(0, 0.1)) + 
-  geom_hline(yintercept = sim_choice$alpha/(K-1), linetype = "dashed", color = "blue") +
-  labs(x = "Patient", y = "Cumulative Miscoverage", 
-       title = "TS Allocation") +
-  theme(text = element_text(size = 10)) +
-  scale_color_manual(
-    values = c("Arm 1" = "#E69F00", "Arm 2" = "#56B4E9", 
-               "Arm 3" = "#009E73", "Arm 4" = "#CC79A7")
-  )
-
-# RiTS
-cum_miscov <- get_cum_mis_cov(rits_sim, mu_true = mu_true, 
-                              contr_true = contr_true, delay = 20)
-
-df <- as.data.frame(cum_miscov[[2]] / length(rand_sim))
-colnames(df) <- paste("Arm", 2:K)
-df$obs <- (ate_start+20):N  # Adding a column for observation number
-
-
-# Melt the data frame to long format for ggplot
-df_long <- melt(df, id.vars = "obs", variable.name = "Arm", value.name = "Miscov")
-
-# Plot using ggplot
-plot_cum_miscov_rits <- ggplot(df_long, aes(x = obs, y = Miscov, color = Arm)) +
-  geom_line(linewidth = 0.5) + ylim(c(0, 0.1)) + 
-  geom_hline(yintercept = sim_choice$alpha/(K-1), linetype = "dashed", color = "blue") +
-  labs(x = "Patient", y = "Cumulative Miscoverage", 
-       title = "RiTS Allocation") +
-  theme(text = element_text(size = 10)) +
-  scale_color_manual(
-    values = c("Arm 1" = "#E69F00", "Arm 2" = "#56B4E9", 
-               "Arm 3" = "#009E73", "Arm 4" = "#CC79A7")
-  )
-
-plot_cum_miscov <- plot_cum_miscov_ts + plot_cum_miscov_rits +
-  plot_layout(ncol = 2, guides = "collect")
-ggsave(paste("plot/cum_miscov_contr_", file_choice, ".jpg", sep = ""), 
-       height = 4, width = 8, units = "in")
-
-# rand is not working
-
-
-# stop_n_long <- pivot_longer(stop_n, cols = everything(), names_to = "Variable", values_to = "Value")
-# 
-# # Plot using ggplot
-# ggplot(stop_n_long, aes(x = Variable, y = Value, fill = Variable)) +
-#   geom_boxplot() +
-#   theme(text = element_text(size = 8)) +
-#   labs(x = "Method", y = "Sample Size", 
-#        title = "Minimum sample sizes required by different methods to stop the trial")
-# ggsave("plot/stop_trial.jpg", height = 4, width = 6, units = "in")
+for(delay in delays){
+  # TS
+  cum_miscov <- get_cum_mis_cov(ts_sim, mu_true = mu_true, 
+                                contr_true = contr_true, delay = delay)
+  
+  df <- as.data.frame(cum_miscov[[2]] / length(rand_sim))
+  colnames(df) <- paste("Arm", 2:K)
+  df$obs <- (ate_start+delay):N  # Adding a column for observation number
+  
+  # Melt the data frame to long format for ggplot
+  df_long <- melt(df, id.vars = "obs", variable.name = "Arm", value.name = "Miscov")
+  
+  # Plot using ggplot
+  plot_cum_miscov_ts <- ggplot(df_long, aes(x = obs, y = Miscov, color = Arm)) +
+    geom_line(linewidth = 0.5) + ylim(c(0, 0.2)) + 
+    geom_hline(yintercept = sim_choice$alpha/(K-1), linetype = "dashed", color = "blue") +
+    labs(x = "Patient", y = "Cumulative Miscoverage", 
+         title = "TS Allocation") +
+    theme(text = element_text(size = 10)) +
+    scale_color_manual(
+      values = c("Arm 1" = "#E69F00", "Arm 2" = "#56B4E9", 
+                 "Arm 3" = "#009E73", "Arm 4" = "#CC79A7")
+    )
+  
+  # RiTS
+  cum_miscov <- get_cum_mis_cov(rits_sim, mu_true = mu_true, 
+                                contr_true = contr_true, delay = delay)
+  
+  df <- as.data.frame(cum_miscov[[2]] / length(rand_sim))
+  colnames(df) <- paste("Arm", 2:K)
+  df$obs <- (ate_start+delay):N  # Adding a column for observation number
+  
+  
+  # Melt the data frame to long format for ggplot
+  df_long <- melt(df, id.vars = "obs", variable.name = "Arm", value.name = "Miscov")
+  
+  # Plot using ggplot
+  plot_cum_miscov_rits <- ggplot(df_long, aes(x = obs, y = Miscov, color = Arm)) +
+    geom_line(linewidth = 0.5) + ylim(c(0, 0.2)) + 
+    geom_hline(yintercept = sim_choice$alpha/(K-1), linetype = "dashed", color = "blue") +
+    labs(x = "Patient", y = "Cumulative Miscoverage", 
+         title = "RiTS Allocation") +
+    theme(text = element_text(size = 10)) +
+    scale_color_manual(
+      values = c("Arm 1" = "#E69F00", "Arm 2" = "#56B4E9", 
+                 "Arm 3" = "#009E73", "Arm 4" = "#CC79A7")
+    )
+  
+  plot_cum_miscov <- plot_cum_miscov_ts + plot_cum_miscov_rits +
+    plot_layout(ncol = 2, guides = "collect")
+  ggsave(paste("plot/cum_miscov_mis_contr_", file_choice, "_peek_", 
+               delay+ate_start, ".jpg", sep = ""), 
+         height = 4, width = 8, units = "in")
+}

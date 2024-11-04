@@ -9,6 +9,7 @@ X_real <- cbind(1, X_real, (as.numeric(real_dat$severity)-1))
 source("code/function/main_function.R")
 source("code/real_data/application_function.R")
 source("code/function/misc.R")
+source("code/function/asymp_cs.R")
 source("code/function/awaipw_functions.R")
 set.seed(2024)
 
