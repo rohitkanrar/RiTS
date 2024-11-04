@@ -1,7 +1,8 @@
 one_step_ts_batch_real <- function(x, t, param, eff, safe, K, d, log_dat,  
-                              floor_start = 0.005, floor_decay = 0.7, M = 1000,
-                              tr_start = 30, tr_lag = 10, ate_start = 30, 
-                              weight = 1, train = FALSE){
+                                   min_prpn = 0.01, M = 1000, tr_start = 10, 
+                                   tr_batch = 5, tr_lag = 10, ate_start = 20, 
+                                   weight = 2, train = FALSE, rwd_sig = 0.1, 
+                                   design = "no_clip"){
   # browser()
   last_tr_ind <- log_dat$last_tr_ind
   trt_hist <- log_dat$trt
@@ -22,11 +23,21 @@ one_step_ts_batch_real <- function(x, t, param, eff, safe, K, d, log_dat,
   }
   param <- list(beta_mean = beta_mean, beta_cov = beta_cov, 
                 beta_eff = beta_eff)
-  
   # compute propensity scores
   prpns <- get_propensities_ts(t, x, K, d, param, tr_start = tr_start, M = M)
-  prpn_min <- floor_start / (t^floor_decay)
-  prpns <- apply_floor(prpns, prpn_min)
+  
+  if(design == "mad"){
+    delt <- 1 / t^(0.24)
+    prpns <- (1/K) * delt + (1 - delt) * prpns
+  } else if(design == "clip"){
+    prpns <- apply_floor(prpns, min_prpn)
+  } else if(design == "mad_clip"){
+    delt <- min_prpn * K
+    prpns <- (1/K) * delt + (1 - delt) * prpns
+  } else{ 
+    prpns <- prpns # equivalent to "no_clip"
+  }
+  
   prpns_mat[t, ] <- prpns
   
   if(t <= 2*K){
@@ -101,11 +112,10 @@ one_step_ts_batch_real <- function(x, t, param, eff, safe, K, d, log_dat,
 
 
 one_step_rits_batch_real <- function(x, t, param, eff, safe, K, d, 
-                                log_dat, floor_start = 0.005, 
-                                floor_decay = 0.7, tr_start = 10, 
-                                tr_lag = 10, M = 1000,
-                                ate_start = 20, tr_batch = 10, weight = 2, 
-                                train = FALSE){
+                                log_dat, min_prpn = 0.01, M = 1000, 
+                                tr_batch = 5, tr_start = 10, tr_lag = 10, 
+                                ate_start = 20, weight = 2, train = FALSE, 
+                                rwd_sig = 0.1, design = "no_clip"){
   last_tr_ind <- log_dat$last_tr_ind
   trt_hist <- log_dat$trt
   rwd_safe_hist <- log_dat$reward_safe
@@ -128,10 +138,19 @@ one_step_rits_batch_real <- function(x, t, param, eff, safe, K, d,
   
   # compute propensity scores
   prpns <- get_propensities_rits(t, x, K, d, param, tr_start = tr_start, 
-                                 weight = weight, 
-                                 last_tr_ind = last_tr_ind, M = M)
-  prpn_min <- floor_start / (t^floor_decay)
-  prpns <- apply_floor(prpns, prpn_min)
+                                 weight = weight, last_tr_ind = last_tr_ind, 
+                                 M = M)
+  if(design == "mad"){
+    delt <- 1 / t^(0.24)
+    prpns <- (1/K) * delt + (1 - delt) * prpns
+  } else if(design == "clip"){
+    prpns <- apply_floor(prpns, min_prpn)
+  } else if(design == "mad_clip"){
+    delt <- min_prpn * K
+    prpns <- (1/K) * delt + (1 - delt) * prpns
+  } else{ 
+    prpns <- prpns # equivalent to "no_clip"
+  }
   prpns_mat[t, ] <- prpns
   
   if(t <= 2*K){
@@ -214,10 +233,11 @@ one_step_rits_batch_real <- function(x, t, param, eff, safe, K, d,
 
 
 
-do_ts_batch_real <- function(X, eff, safe, K, tr_start = 30, tr_batch = 5, 
-                        weight = 1, tr_lag = 10, ate_start = 30, M = 1000,
-                        v = 10, placebo_arm = 1, floor_start = 0.005, 
-                        floor_decay = 0.7, seed = 2024){
+do_ts_batch_real <- function(X, eff, safe, K, tr_start = 30, tr_batch = 5,
+                        weight = 1, tr_lag = 10, min_prpn = 0.01, ate_start = 30,
+                        M = 1000, v = 10, placebo_arm = 1, alpha = 0.05, 
+                        rwd_sig = 0.1, seed = 2024, design = "clip", 
+                        first_peek = NULL){
   # browser()
   set.seed(seed)
   N <- nrow(X)
@@ -258,29 +278,11 @@ do_ts_batch_real <- function(X, eff, safe, K, tr_start = 30, tr_batch = 5,
     step <- one_step_ts_batch_real(X[t, ], t, param, eff, safe, K, d,
                               log_dat, tr_start = tr_start, tr_lag = tr_lag,
                               ate_start = ate_start, train = train, M = M, 
-                              weight = weight, floor_start = floor_start, 
-                              floor_decay = floor_decay)
+                              weight = weight, rwd_sig = rwd_sig, 
+                              design = design, min_prpn = min_prpn)
     param <- step$param
     log_dat <- step$log_dat
-    if(t >= ate_start){
-      if(tr_first == 0){
-        tr_first <- t
-      }
-      ind <- 1:(t - tr_lag)
-      tmp <- get_arm_ate(t-tr_lag, K, log_dat$trt[ind], 
-                         log_dat$reward[ind], 
-                         log_dat$prpns_mat[ind, ], 
-                         log_dat$context[ind, ], floor_decay = floor_decay,
-                         alpha = 0.05)
-      tmp1 <- get_arm_contr(tmp, placebo_arm)
-      ate[t, , 1] <- tmp$estimate
-      ate[t, , 2] <- tmp$low
-      ate[t, , 3] <- tmp$high
-      contr[t, , 1] <- tmp1$contrs
-      contr[t, , 2] <- tmp1$low
-      contr[t, , 3] <- tmp1$high
-      
-    }
+    
     trt[t] <- step$trt_new
     reward[t] <- step$rwd_new
     regret[t] <- step$metrics$regret
@@ -290,10 +292,19 @@ do_ts_batch_real <- function(X, eff, safe, K, tr_start = 30, tr_batch = 5,
     subopt_trt_benf[t] <- step$metrics$subopt_cnt_benf
     subopt_trt_safe[t] <- step$metrics$subopt_cnt_safe
   }
+  times_ <- seq(ate_start, N)
+  if(is.null(first_peek)) first_peek <- floor(N/2)
+  asympcs <- get_asympcs(trt_hist = trt, rwd_hist = reward, 
+                         prpns_mat = log_dat$prpns_mat, 
+                         context_hist = X, placebo_arm = placebo_arm,
+                         times = times_, alpha = alpha, first_peek = first_peek)
+  ate <- asympcs[[1]]
+  contr <- asympcs[[2]]
+  
   list(trt = trt, reward = reward, regret = regret, regret_benf = regret_benf,
        regret_safe = regret_safe, subopt_trt = subopt_trt, 
        subopt_trt_benf = subopt_trt_benf, subopt_trt_safe = subopt_trt_safe,
-       ate = ate, contr = contr,
+       ate = ate, contr = contr, first_peek = first_peek, min_prpn = min_prpn,
        log_dat = log_dat, param = param, tr_first = tr_first)
 }
 
@@ -301,8 +312,8 @@ do_ts_batch_real <- function(X, eff, safe, K, tr_start = 30, tr_batch = 5,
 do_rits_batch_real <- function(X, eff, safe, K, weight,
                           tr_start = 30, M = 1000, placebo_arm = 1,
                           tr_batch = 5, tr_lag = 10, ate_start = 30, 
-                          floor_start = 0.005, floor_decay = 0.7,
-                          v = 10, seed = 2024){
+                          v = 10, seed = 2024, design = "clip", alpha = 0.05,
+                          rwd_sig = 0.1, min_prpn = 0.01, first_peek = NULL){
   # browser()
   set.seed(seed)
   N <- nrow(X)
@@ -348,32 +359,14 @@ do_rits_batch_real <- function(X, eff, safe, K, weight,
     }
     step <- one_step_rits_batch_real(X[t, ], t, param, eff, safe, K, d, log_dat, 
                                 tr_start = tr_start, tr_lag = tr_lag, 
-                                tr_batch = tr_batch, M = M,
-                                ate_start = ate_start, 
-                                train = train, weight = weight, 
-                                floor_start = floor_start, 
-                                floor_decay = floor_decay)
+                                tr_batch = tr_batch, M = M, 
+                                ate_start = ate_start, train = train, 
+                                weight = weight, rwd_sig = rwd_sig, 
+                                design = design, min_prpn = min_prpn
+                                )
     param <- step$param
     log_dat <- step$log_dat
-    if(t >= ate_start){
-      if(tr_first == 0){
-        tr_first <- t
-      }
-      ind <- 1:(t - tr_lag)
-      tmp <- get_arm_ate(t-tr_lag, K, log_dat$trt[ind], 
-                         log_dat$reward_benf[ind], 
-                         log_dat$prpns_mat[ind, ], 
-                         log_dat$context[ind, ], floor_decay = floor_decay,
-                         alpha = 0.05)
-      tmp1 <- get_arm_contr(tmp, placebo_arm)
-      ate[t, , 1] <- tmp$estimate
-      ate[t, , 2] <- tmp$low
-      ate[t, , 3] <- tmp$high
-      contr[t, , 1] <- tmp1$contrs
-      contr[t, , 2] <- tmp1$low
-      contr[t, , 3] <- tmp1$high
-      
-    }
+    
     trt[t] <- step$trt_new
     reward_safe[t] <- step$rwd_safe_new
     reward_benf[t] <- step$rwd_benf_new
@@ -384,12 +377,21 @@ do_rits_batch_real <- function(X, eff, safe, K, weight,
     subopt_trt_benf[t] <- step$metrics$subopt_cnt_benf
     subopt_trt_safe[t] <- step$metrics$subopt_cnt_safe
   }
+  
+  times_ <- seq(ate_start, N)
+  if(is.null(first_peek)) first_peek <- floor(N/2)
+  asympcs <- get_asympcs(trt_hist = trt, rwd_hist = reward_benf, 
+                         prpns_mat = log_dat$prpns_mat, 
+                         context_hist = X, placebo_arm = placebo_arm,
+                         times = times_, alpha = alpha, first_peek = first_peek)
+  ate <- asympcs[[1]]
+  contr <- asympcs[[2]]
+  
   list(trt = trt, reward_safe = reward_safe, reward_benf = reward_benf, 
-       regret = regret, regret_benf = regret_benf,
-       regret_safe = regret_safe, subopt_trt = subopt_trt, 
-       subopt_trt_benf = subopt_trt_benf, subopt_trt_safe = subopt_trt_safe, 
-       ate = ate, contr = contr,
-       log_dat = log_dat, param = param, tr_first = tr_first)
+       regret = regret, regret_benf = regret_benf, regret_safe = regret_safe, 
+       subopt_trt = subopt_trt, subopt_trt_benf = subopt_trt_benf, 
+       subopt_trt_safe = subopt_trt_safe, ate = ate, contr = contr, 
+       log_dat = log_dat, param = param, tr_first = tr_start)
 }
 
 get_metrics_rand <- function(eff, safe, arm, weight = 1){
