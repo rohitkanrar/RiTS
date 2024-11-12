@@ -119,7 +119,7 @@ alloc_real_rand <- ggplot(df, aes(x = factor(patient_id), y = dose,
   theme(axis.text.x = element_blank(),  # Hide x-axis text
         axis.ticks.x = element_blank(),
         text = element_text(size = 12)) +
-  labs(title = "Actual Allocation")
+  labs(title = "Actual Randomized Allocation")
 
 
 # ts_real
@@ -211,16 +211,16 @@ mu_true <- sapply(1:K, function(k){
 }
   )
 
-ate_start <- ts_real$tr_first
+ate_start <- 30
 ate <- ts_real$ate
 # ATE
 ## TS
 df_ts <- data.frame(
   Patient = ate_start:N,
   Arm = rep(1:K, each = N - (ate_start-1)),
-  ATE = c(ate[ate_start:N, , 1]),
-  ATEL = c(ate[ate_start:N, , 2]),
-  ATEH = c(ate[ate_start:N, , 3]),
+  ATE = c(ate[, , 1]),
+  ATEL = c(ate[, , 2]),
+  ATEH = c(ate[, , 3]),
   TrueATE = rep(mu_true, each = N - (ate_start-1))
 )
 
@@ -229,9 +229,9 @@ ate <- rits_real$ate
 df_rits <- data.frame(
   Patient = ate_start:N,
   Arm = rep(1:K, each = N - (ate_start-1)),
-  ATE = c(ate[ate_start:N, , 1]),
-  ATEL = c(ate[ate_start:N, , 2]),
-  ATEH = c(ate[ate_start:N, , 3]),
+  ATE = c(ate[, , 1]),
+  ATEL = c(ate[, , 2]),
+  ATEH = c(ate[, , 3]),
   TrueATE = rep(mu_true, each = N - (ate_start-1))
 )
 
@@ -263,7 +263,7 @@ plot3 <- ggplot(df_ts, aes(x = Patient, y = TrueATE, color = factor(Arm))) +
   # geom_hline(yintercept = mu[1], color = "red") +
   facet_wrap(~Arm) +
   labs(x = "Patient", y = "Average Arm Efficacy", 
-       title = "AW-AIPW + TS") +
+       title = "AsympCS + TS") +
   scale_color_manual(values = c("#E69F00", "#56B4E9", "#009E73", 
                                 "#0072B2", "#D55E00", "#CC79A7"),
                      name = "Arm") +
@@ -278,29 +278,29 @@ plot4 <- ggplot(df_rits, aes(x = Patient, y = TrueATE, color = factor(Arm))) +
   # geom_hline(yintercept = mu[1], color = "red") +
   facet_wrap(~Arm) +
   labs(x = "Patient", y = "Average Arm Efficacy", 
-       title = "AW-AIPW + RiTS") +
+       title = "AsympCS + RiTS") +
   scale_color_manual(values = c("#E69F00", "#56B4E9", "#009E73", 
                                 "#0072B2", "#D55E00", "#CC79A7"),
                      name = "Arm") +
   theme(text = element_text(size = 8)) +
   scale_y_continuous(limits = c(min_ylim, max_ylim))
 
-plot5 <- ggplot(df_rand, aes(x = Patient, y = TrueATE, color = factor(Arm))) +
-  geom_line() +
-  geom_line(aes(y = ATEL), linetype = "dashed") +
-  geom_line(aes(y = ATEH), linetype = "dashed") +
-  geom_line(aes(y = ATE), linetype = "longdash") +
-  # geom_hline(yintercept = mu[1], color = "red") +
-  facet_wrap(~Arm) +
-  labs(x = "Patient", y = "Average Arm Efficacy", 
-       title = "Simple Average + Rand") +
-  scale_color_manual(values = c("#E69F00", "#56B4E9", "#009E73", 
-                                "#0072B2", "#D55E00", "#CC79A7"),
-                     name = "Arm") +
-  theme(text = element_text(size = 8)) +
-  scale_y_continuous(limits = c(min_ylim, max_ylim))
+# plot5 <- ggplot(df_rand, aes(x = Patient, y = TrueATE, color = factor(Arm))) +
+#   geom_line() +
+#   geom_line(aes(y = ATEL), linetype = "dashed") +
+#   geom_line(aes(y = ATEH), linetype = "dashed") +
+#   geom_line(aes(y = ATE), linetype = "longdash") +
+#   # geom_hline(yintercept = mu[1], color = "red") +
+#   facet_wrap(~Arm) +
+#   labs(x = "Patient", y = "Average Arm Efficacy", 
+#        title = "Simple Average + Rand") +
+#   scale_color_manual(values = c("#E69F00", "#56B4E9", "#009E73", 
+#                                 "#0072B2", "#D55E00", "#CC79A7"),
+#                      name = "Arm") +
+#   theme(text = element_text(size = 8)) +
+#   scale_y_continuous(limits = c(min_ylim, max_ylim))
 
-plot345 <- plot3 + plot4 + plot5 + plot_layout(ncol = 3, guides = "collect")
+plot345 <- plot3 + plot4 + plot_layout(ncol = 2, guides = "collect")
 ggsave("plot/ate_ts_rand_real.jpg", height = 3, width = 9, units = "in")
 
 
@@ -312,18 +312,18 @@ contr_ts <- ts_real$contr
 df_ts <- data.frame(
   Patient = ate_start:N,
   Arm = rep(2:K, each = N - (ate_start-1)),
-  Contr = c(contr_ts[ate_start:N, , 1]),
-  ContrL = c(contr_ts[ate_start:N, , 2]),
-  ContrH = c(contr_ts[ate_start:N, , 3]),
+  Contr = c(contr_ts[, , 1]),
+  ContrL = c(contr_ts[, , 2]),
+  ContrH = c(contr_ts[, , 3]),
   TrueContr = rep(true_contr, each = N - (ate_start-1))
 )
 contr_rits <- rits_real$contr
 df_rits <- data.frame(
   Patient = ate_start:N,
   Arm = rep(2:K, each = N - (ate_start-1)),
-  Contr = c(contr_rits[ate_start:N, , 1]),
-  ContrL = c(contr_rits[ate_start:N, , 2]),
-  ContrH = c(contr_rits[ate_start:N, , 3]),
+  Contr = c(contr_rits[, , 1]),
+  ContrL = c(contr_rits[, , 2]),
+  ContrH = c(contr_rits[, , 3]),
   TrueContr = rep(true_contr, each = N - (ate_start-1))
 )
 
@@ -345,8 +345,8 @@ plot6 <- ggplot(df_ts, aes(x = Patient, y = TrueContr, color = factor(Arm))) +
   geom_line(aes(y = ContrH), linetype = "dashed") +
   geom_line(aes(y = Contr), linetype = "longdash") +
   facet_wrap(~Arm) +
-  labs(x = "Patient", y = "Differene of Average Arm Efficacy over Placebo", 
-       title = "AW-AIPW + TS Contrast") +
+  labs(x = "Patient", y = "Effect Size", 
+       title = "AsympCS + TS Contrast") +
   scale_color_manual(values = c("#56B4E9", "#009E73", 
                                 "#0072B2", "#D55E00", "#CC79A7"),
                      name = "Arm") +
@@ -359,27 +359,27 @@ plot7 <- ggplot(df_rits, aes(x = Patient, y = TrueContr, color = factor(Arm))) +
   geom_line(aes(y = ContrH), linetype = "dashed") +
   geom_line(aes(y = Contr), linetype = "longdash") +
   facet_wrap(~Arm) +
-  labs(x = "Patient", y = "Differene of Average Arm Efficacy over Placebo", 
-       title = "AW-AIPW + RiTS Contrast") +
+  labs(x = "Patient", y = "Effect Size", 
+       title = "AsympCS + RiTS Contrast") +
   scale_color_manual(values = c("#56B4E9", "#009E73", 
                                 "#0072B2", "#D55E00", "#CC79A7"),
                      name = "Arm") +
   theme(text = element_text(size = 8)) +
   scale_y_continuous(limits = c(min_ylim, max_ylim))
 
-plot8 <- ggplot(df_rand, aes(x = Patient, y = TrueContr, color = factor(Arm))) +
-  geom_line() +
-  geom_line(aes(y = ContrL), linetype = "dashed") +
-  geom_line(aes(y = ContrH), linetype = "dashed") +
-  geom_line(aes(y = Contr), linetype = "longdash") +
-  facet_wrap(~Arm) +
-  labs(x = "Patient", y = "Differene of Average Arm Efficacy over Placebo", 
-       title = "Simple Average + Rand Contrast") + 
-  scale_color_manual(values = c("#56B4E9", "#009E73", 
-                                "#0072B2", "#D55E00", "#CC79A7"),
-                     name = "Arm") +
-  theme(text = element_text(size = 8)) +
-  scale_y_continuous(limits = c(min_ylim, max_ylim))
+# plot8 <- ggplot(df_rand, aes(x = Patient, y = TrueContr, color = factor(Arm))) +
+#   geom_line() +
+#   geom_line(aes(y = ContrL), linetype = "dashed") +
+#   geom_line(aes(y = ContrH), linetype = "dashed") +
+#   geom_line(aes(y = Contr), linetype = "longdash") +
+#   facet_wrap(~Arm) +
+#   labs(x = "Patient", y = "Differene of Average Arm Efficacy over Placebo", 
+#        title = "Simple Average + Rand Contrast") + 
+#   scale_color_manual(values = c("#56B4E9", "#009E73", 
+#                                 "#0072B2", "#D55E00", "#CC79A7"),
+#                      name = "Arm") +
+#   theme(text = element_text(size = 8)) +
+#   scale_y_continuous(limits = c(min_ylim, max_ylim))
 
-plot678 <- plot6 + plot7 + plot8 + plot_layout(ncol = 3, guides = "collect")
+plot678 <- plot6 + plot7 + plot_layout(ncol = 2, guides = "collect")
 ggsave("plot/contr_ts_rand_real.jpg", height = 3, width = 9, units = "in")

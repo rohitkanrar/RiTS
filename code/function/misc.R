@@ -17,6 +17,7 @@ get_true_avg_rwd <- function(X, trt, beta_true){
 }
 
 apply_floor <- function(a, amin) {
+  browser()
   new <- pmax(a, amin)
   total_slack <- sum(new) - 1
   individual_slack <- new - amin

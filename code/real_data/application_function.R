@@ -412,7 +412,7 @@ get_metrics_rand <- function(eff, safe, arm, weight = 1){
     subopt_cnt_benf[i] <- as.numeric(which.max(eff[i, ]) != trt)
     subopt_cnt_safe[i] <- as.numeric(which.max(safe[i, ]) != trt)
   }
-  metrics <- list(regret = regret, regret_benf = regret_benf,
+  metrics <- list(trt = arm, regret = regret, regret_benf = regret_benf,
                   regret_safe = regret_safe,
                   subopt_trt = subopt_cnt, subopt_trt_benf = subopt_cnt_benf, 
                   subopt_trt_safe = subopt_cnt_safe)
