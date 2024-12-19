@@ -195,6 +195,7 @@ trt_tab_real <- rbind("Rand" = table(real_dat[["arm"]]),
                       "TS" = table(ts_real$trt), 
                       "RiTS" = table(rits_real$trt))
 tab_grob <- gridExtra::tableGrob(trt_tab_real)
+print(xtable::xtable(trt_tab_real))
 
 plot12 <- plot_prop_ts + plot_prop_rits + tab_grob +
   plot_layout(ncol = 3, guides = "collect")
