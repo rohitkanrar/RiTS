@@ -15,7 +15,7 @@ d <- sim_choice$d # cannot be changed
 E <- 2 # cannot be changed
 X <- sim_dat$X_true
 X_true <- sim_dat$X_true
-beta_true <- sim_dat$beta_true
+beta_true <- sim_dat$beta_true * (2/5) # changed due to AE's comment
 placebo_arm <- sim_dat$placebo_arm
 weight <- sim_dat$weight
 tr_start <- sim_choice$tr_start

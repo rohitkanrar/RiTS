@@ -24,6 +24,10 @@ beta_true <- 5 * beta_true
 (mu_true <- 5*c(1-1.25*0.005*2, 1.35-1.25*0.1*2, 1.35-1.25*0.05*2, 
               1.6-1.25*0.1*2))
 (nu_true <- 5*c(1, 1-0.005, 1-0.05, 1-0.3))
+
+beta_true <- (2/5) * beta_true
+mu_true <- (2/5) * mu_true; nu_true <- (2/5) * nu_true
+
 weight <- 1
 (util_true <- (mu_true + nu_true * weight) / (1+weight))
 placebo_arm <- 1

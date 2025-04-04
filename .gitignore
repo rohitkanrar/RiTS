@@ -5,6 +5,7 @@
 .Rproj.user
 /.idea
 /output
+/output_biometrics_v1
 *.jpg
 *.xlsx
 /plot
