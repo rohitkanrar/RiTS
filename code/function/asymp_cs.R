@@ -121,7 +121,7 @@ get_asympcs <- function(trt_hist, rwd_hist, prpns_mat, context_hist,
     
     asympcs_list <- mclapply(aipw_ate_list, function(aipw_ate) {
       acs <- drconfseq::lyapunov_asympcs(aipw_ate, rho2 = rho2, 
-                                         alpha = alpha/K, 
+                                         alpha = alpha/K, # Bonferroni's correction
                                          return_all_times = FALSE)
       return(c((acs$l + acs$u)/2, acs$l, acs$u))
     }, mc.cores = n_cores)
@@ -134,7 +134,7 @@ get_asympcs <- function(trt_hist, rwd_hist, prpns_mat, context_hist,
     }
     asympcs_list <- mclapply(aipw_contr_list, function(aipw_contr) {
       acs <- drconfseq::lyapunov_asympcs(aipw_contr, rho2 = rho2, 
-                                         alpha = alpha/(K-1), 
+                                         alpha = alpha/(K-1), # Bonferroni's correction
                                          return_all_times = FALSE)
       return(c((acs$l + acs$u)/2, acs$l, acs$u))
     }, mc.cores = n_cores)

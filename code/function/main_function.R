@@ -55,13 +55,18 @@ get_rwd_cont <- function(x, a, beta_true, sd = 0.1){
   list(avg_rwd = avg_rwd, rwd = r)
 }
 
-one_step_rand_biv <- function(x, K, beta_true, log_dat, weight, rwd_sig = 0.1){
+one_step_rand_biv <- function(x, K, beta_true, log_dat, weight, rwd_sig = 0.1, 
+                              trt = NULL){
   x <- matrix(as.numeric(x), ncol = 1)
   trt_hist <- log_dat$trt
   rwd_benf_hist <- log_dat$reward_benf
   rwd_safe_hist <- log_dat$reward_safe
   
-  trt_new <- sample(1:K, 1)
+  if(is.null(trt)){
+    trt_new <- sample(1:K, 1)
+  } else{
+    trt_new <- trt
+  }
   prpns <- rep(1/K, K)
   prpns_mat <- log_dat$prpns_mat
   prpns_mat <- rbind(prpns_mat, prpns)
@@ -103,7 +108,7 @@ one_step_ts_batch <- function(x, x_true, t, param, beta_true, K, d, log_dat,
                               min_prpn = 0.01, M = 1000,
                               tr_start = 10, tr_lag = 10, ate_start = 20, 
                               weight = 2, train = FALSE, rwd_sig = 0.1,
-                              design = "no_clip"){
+                              design = "no_clip", trt = NULL){
   # browser()
   last_tr_ind <- log_dat$last_tr_ind
   trt_hist <- log_dat$trt
@@ -140,15 +145,13 @@ one_step_ts_batch <- function(x, x_true, t, param, beta_true, K, d, log_dat,
     prpns <- prpns # equivalent to "no_clip"
   }
   
-  prpns_mat[t, ] <- prpns
-  
-  if(t <= 2*K){
-    trt_new <- t %% K
-    if(trt_new == 0) trt_new <- K
+  if(!is.null(trt)){
+    trt_new <- trt
+    prpns <- rep(1/K, K)
   } else{
     trt_new <- which.max(as.numeric(rmultinom(1, 1, prpns)))
   }
-  
+  prpns_mat[t, ] <- prpns
   
   # Generative Reward (Has to be modified)
   true_mu <- matrix(0, 2, K)
@@ -222,7 +225,7 @@ one_step_rits_batch <- function(x, x_true, t, param, beta_true, K, d,
                                 min_prpn = 0.01, tr_start = 10, tr_lag = 10, 
                                 M = 1000, ate_start = 20, tr_batch = 10, 
                                 weight = 2, train = FALSE, rwd_sig = 0.1, 
-                                design = "clip"){
+                                design = "clip", trt = NULL){
   last_tr_ind <- log_dat$last_tr_ind
   trt_hist <- log_dat$trt
   rwd_safe_hist <- log_dat$reward_safe
@@ -260,14 +263,13 @@ one_step_rits_batch <- function(x, x_true, t, param, beta_true, K, d,
     prpns <- prpns # equivalent to "no_clip"
   }
   
-  prpns_mat[t, ] <- prpns
-  
-  if(t <= 2*K){
-    trt_new <- t %% K
-    if(trt_new == 0) trt_new <- K
+  if(!is.null(trt)){
+    trt_new <- trt
+    prpns <- rep(1/K, K)
   } else{
     trt_new <- which.max(as.numeric(rmultinom(1, 1, prpns)))
   }
+  prpns_mat[t, ] <- prpns
   
   # Generative Reward (Has to be modified)
   true_mu <- matrix(0, 2, K)
@@ -347,7 +349,7 @@ one_step_rits_batch <- function(x, x_true, t, param, beta_true, K, d,
 }
 
 
-do_rand_biv <- function(X_true, beta_true, tr_lag = 10, ate_start = 30, 
+do_rand_biv <- function(X_true, beta_true, tr_lag = 10, ate_start = 20, 
                         placebo_arm = 1, weight = 1, seed = 2024, 
                         rwd_sig = 0.1, alpha = 0.05, first_peek = 100){
   # browser()
@@ -358,7 +360,7 @@ do_rand_biv <- function(X_true, beta_true, tr_lag = 10, ate_start = 30,
                   reward_benf = numeric(0),
                   reward_safe = numeric(0),
                   context = X, prpns_mat = numeric(0))
-  
+  trt_init <- sample(rep(1:K, ate_start %/% 4), ate_start)
   trt <- numeric(N)
   reward_benf <- numeric(N)
   reward_safe <- numeric(N)
@@ -370,8 +372,14 @@ do_rand_biv <- function(X_true, beta_true, tr_lag = 10, ate_start = 30,
   subopt_trt_safe <- numeric(N)
   
   for(t in 1:N){
-    step <- one_step_rand_biv(X_true[t, ], K, beta_true, log_dat, weight, 
-                              rwd_sig)
+    if(t <= ate_start){
+      step <- one_step_rand_biv(X_true[t, ], K, beta_true, log_dat, weight, 
+                                rwd_sig, trt_init[t])
+    } else{
+      step <- one_step_rand_biv(X_true[t, ], K, beta_true, log_dat, weight, 
+                                rwd_sig)
+    }
+    
     log_dat <- step$log_dat
     trt[t] <- step$trt_new
     reward_benf[t] <- step$rwd_benf_new
@@ -397,20 +405,21 @@ do_rand_biv <- function(X_true, beta_true, tr_lag = 10, ate_start = 30,
        subopt_trt = subopt_trt, subopt_trt_benf = subopt_trt_benf, 
        subopt_trt_safe = subopt_trt_safe, ate = ate, contr = contr,
        log_dat = log_dat)
+  
 }
 
 
 do_ts_batch <- function(X, X_true, beta_true, tr_start = 20, tr_batch = 5, 
-                        weight = 2, tr_lag = 10, ate_start = 30, M = 1000,
+                        weight = 2, tr_lag = 10, ate_start = 20, M = 1000,
                         v = 10, placebo_arm = 1, min_prpn = 0.01, alpha = 0.05,
                         rwd_sig = 0.1, seed = 2024, design = "clip",
-                        first_peek = NULL){
+                        first_peek = NULL, trt_init){
   # browser()
   set.seed(seed)
   N <- nrow(X)
   d <- ncol(X)
   K <- dim(beta_true)[2]
-  
+  trt_init <- sample(rep(1:K, ate_start %/% 4), ate_start)
   param <- list(beta_mean = array(0, c(d, K, N)), 
                 beta_cov = array(0, c(d, d, K, N)), 
                 beta_eff = array(0, c(d, d, K)))
@@ -443,11 +452,21 @@ do_ts_batch <- function(X, X_true, beta_true, tr_start = 20, tr_batch = 5,
     } else{
       train <- FALSE
     }
-    step <- one_step_ts_batch(X[t, ], X_true[t, ], t, param, beta_true, K, d,
-                              log_dat, tr_start = tr_start, tr_lag = tr_lag,
-                              ate_start = ate_start, train = train, M = M, 
-                              weight = weight, rwd_sig = rwd_sig,
-                              design = design, min_prpn = min_prpn)
+    if(t <= ate_start){
+      step <- one_step_ts_batch(X[t, ], X_true[t, ], t, param, beta_true, K, d,
+                                log_dat, tr_start = tr_start, tr_lag = tr_lag,
+                                ate_start = ate_start, train = train, M = M, 
+                                weight = weight, rwd_sig = rwd_sig,
+                                design = design, min_prpn = min_prpn, 
+                                trt = trt_init[t])
+    } else{
+      step <- one_step_ts_batch(X[t, ], X_true[t, ], t, param, beta_true, K, d,
+                                log_dat, tr_start = tr_start, tr_lag = tr_lag,
+                                ate_start = ate_start, train = train, M = M, 
+                                weight = weight, rwd_sig = rwd_sig,
+                                design = design, min_prpn = min_prpn)
+    }
+    
     param <- step$param
     log_dat <- step$log_dat
     
@@ -487,7 +506,7 @@ do_rits_batch <- function(X, X_true, beta_true, weight, rwd_sig = 0.1,
   d <- ncol(X)
   K <- dim(beta_true)[2]
   E <- dim(beta_true)[3]
-  
+  trt_init <- sample(rep(1:K, ate_start %/% 4), ate_start)
   param <- list(beta_mean = array(0, c(d, K, N, E)), 
                 beta_cov = array(0, c(d, d, K, N, E)), 
                 beta_eff = array(0, c(d, d, K, E)))
@@ -524,14 +543,25 @@ do_rits_batch <- function(X, X_true, beta_true, weight, rwd_sig = 0.1,
     } else{
       train <- FALSE
     }
-    step <- one_step_rits_batch(X[t, ], X_true[t, ], t, param, 
-                                    beta_true, K, d, log_dat, 
-                                    tr_start = tr_start, tr_lag = tr_lag, 
-                                    tr_batch = tr_batch, M = M,
-                                    ate_start = ate_start, 
-                                    train = train, weight = weight, 
-                                    rwd_sig = rwd_sig, design = design,
-                                min_prpn = min_prpn)
+    if(t <= ate_start){
+      step <- one_step_rits_batch(X[t, ], X_true[t, ], t, param, 
+                                  beta_true, K, d, log_dat, 
+                                  tr_start = tr_start, tr_lag = tr_lag, 
+                                  tr_batch = tr_batch, M = M,
+                                  ate_start = ate_start, 
+                                  train = train, weight = weight, 
+                                  rwd_sig = rwd_sig, design = design,
+                                  min_prpn = min_prpn, trt = trt_init[t])
+    } else{
+      step <- one_step_rits_batch(X[t, ], X_true[t, ], t, param, 
+                                  beta_true, K, d, log_dat, 
+                                  tr_start = tr_start, tr_lag = tr_lag, 
+                                  tr_batch = tr_batch, M = M,
+                                  ate_start = ate_start, 
+                                  train = train, weight = weight, 
+                                  rwd_sig = rwd_sig, design = design,
+                                  min_prpn = min_prpn)
+    }
     param <- step$param
     log_dat <- step$log_dat
     
