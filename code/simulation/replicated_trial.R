@@ -28,7 +28,7 @@ reward_sig <- sim_choice$reward_sig
 alpha <- sim_choice$alpha
 dgp <- c("low", "high")
 
-n_iter <- 10
+n_iter <- 1000
 ts_sim <- vector(mode = "list", length = n_iter)
 rand_sim <- ts_sim
 rits_sim <- ts_sim
