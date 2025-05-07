@@ -1,6 +1,7 @@
-ts_sim <- readRDS("output/ts_sim_4.RData")
-rand_sim <- readRDS("output/rand_sim_4.RData")
-rits_sim <- readRDS("output/rits_sim_4.RData")
+file_choice <- 3
+ts_sim <- readRDS(paste("output/ts_sim_", file_choice, ".RData", sep = ""))
+rand_sim <- readRDS(paste("output/rand_sim_", 1, ".RData", sep = ""))
+rits_sim <- readRDS(paste("output/rits_sim_", file_choice, ".RData", sep = ""))
 n_iter <- length(ts_sim)
 N <- length(ts_sim[[1]]$trt)
 ind <- c(seq(50, 100, 10), 150, 200)
@@ -42,7 +43,7 @@ K <- length(unique(rand_sim[[1]]$trt))
 ### Quality of Causal Effects
 
 sim_dat <- readRDS("metadata/sim_dat.RData")
-mu_true <- sim_dat$mu_true
+mu_true <- sim_dat$mu_true * (1/5)
 # mu_true <- apply(X %*% beta_true[, , 1], 2, mean)
 contr_true <- mu_true - mu_true[1]
 contr_true <- contr_true[-1]
@@ -50,6 +51,7 @@ contr_true <- contr_true[-1]
 sim_choice <- readRDS("metadata/sim_choice.RData")
 ate_start <- sim_choice$ate_start
 ate_ind <- ind - ate_start
+std_ind <- ind - 49
 
 # RAND
 sim <- rand_sim
@@ -59,6 +61,11 @@ bias_ate_rand <- matrix(0, K, length(ind))
 covr_contr_rand <- matrix(0, K-1, length(ind))
 width_contr_rand <- matrix(0, K-1, length(ind))
 bias_contr_rand <- matrix(0, K-1, length(ind))
+rmse_contr_rand <- matrix(0, K-1, length(ind))
+covr_contr_std <- matrix(0, K-1, length(ind))
+width_contr_std <- matrix(0, K-1, length(ind))
+bias_contr_std <- matrix(0, K-1, length(ind))
+rmse_contr_std <- matrix(0, K-1, length(ind))
 # stop_n_rand <- sapply(1:n_iter, function(i) stop_trial(sim[[i]], thres))
 for(k in 1:K){
   for(i in 1:length(ind)){
@@ -69,7 +76,7 @@ for(k in 1:K){
       width_ate_rand[k, i] <- width_ate_rand[k, i] + 
         abs(sim[[iter]]$ate[ate_ind[i], k, 3] - sim[[iter]]$ate[ate_ind[i], k, 2])
       bias_ate_rand[k, i] <- bias_ate_rand[k, i] + 
-        abs(sim[[iter]]$ate[ate_ind[i], k, 1] - mu_true[k])
+        sim[[iter]]$ate[ate_ind[i], k, 1] - mu_true[k]
       
       if(k > 1){
         cond <- (sim[[iter]]$contr[ate_ind[i], k-1, 2] <= contr_true[k-1]) &&
@@ -78,7 +85,20 @@ for(k in 1:K){
         width_contr_rand[k-1, i] <- width_contr_rand[k-1, i] + 
           abs(sim[[iter]]$contr[ate_ind[i], k-1, 3] - sim[[iter]]$contr[ate_ind[i], k-1, 2])
         bias_contr_rand[k-1, i] <- bias_contr_rand[k-1, i] + 
-          abs(sim[[iter]]$contr[ate_ind[i], k-1, 1] - contr_true[k-1])
+          sim[[iter]]$contr[ate_ind[i], k-1, 1] - contr_true[k-1]
+        rmse_contr_rand[k-1, i] <- rmse_contr_rand[k-1, i] + 
+          (sim[[iter]]$contr[ate_ind[i], k-1, 1] - contr_true[k-1])^2
+        
+        cond <- (sim[[iter]]$contr_standard[std_ind[i], k-1, 2] <= contr_true[k-1]) &&
+          (sim[[iter]]$contr_standard[std_ind[i], k-1, 3] >= contr_true[k-1])
+        covr_contr_std[k-1, i] <- covr_contr_std[k-1, i] + ifelse(cond, 1, 0)
+        width_contr_std[k-1, i] <- width_contr_std[k-1, i] + 
+          abs(sim[[iter]]$contr_standard[std_ind[i], k-1, 3] - 
+                sim[[iter]]$contr_standard[std_ind[i], k-1, 2])
+        bias_contr_std[k-1, i] <- bias_contr_std[k-1, i] + 
+          sim[[iter]]$contr_standard[std_ind[i], k-1, 1] - contr_true[k-1]
+        rmse_contr_std[k-1, i] <- rmse_contr_std[k-1, i] + 
+          (sim[[iter]]$contr_standard[std_ind[i], k-1, 1] - contr_true[k-1])^2
       }
     }
     covr_ate_rand[k, i] <- covr_ate_rand[k, i] / n_iter
@@ -89,6 +109,12 @@ for(k in 1:K){
       covr_contr_rand[k-1, i] <- covr_contr_rand[k-1, i] / n_iter
       width_contr_rand[k-1, i] <- width_contr_rand[k-1, i] / n_iter
       bias_contr_rand[k-1, i] <- bias_contr_rand[k-1, i] / n_iter
+      rmse_contr_rand[k-1, i] <- sqrt(rmse_contr_rand[k-1, i] / (n_iter))
+      
+      covr_contr_std[k-1, i] <- covr_contr_std[k-1, i] / n_iter
+      width_contr_std[k-1, i] <- width_contr_std[k-1, i] / n_iter
+      bias_contr_std[k-1, i] <- bias_contr_std[k-1, i] / n_iter
+      rmse_contr_std[k-1, i] <- sqrt(rmse_contr_std[k-1, i] / (n_iter))
     }
   }
 }
@@ -102,6 +128,7 @@ bias_ate_ts <- matrix(0, K, length(ind))
 covr_contr_ts <- matrix(0, K-1, length(ind))
 width_contr_ts <- matrix(0, K-1, length(ind))
 bias_contr_ts <- matrix(0, K-1, length(ind))
+rmse_contr_ts <- matrix(0, K-1, length(ind))
 # stop_n_ts <- sapply(1:n_iter, function(i) stop_trial(sim[[i]], thres))
 for(k in 1:K){
   for(i in 1:length(ind)){
@@ -114,7 +141,7 @@ for(k in 1:K){
       width_ate_ts[k, i] <- width_ate_ts[k, i] + 
         abs(sim[[iter]]$ate[ate_ind[i], k, 3] - sim[[iter]]$ate[ate_ind[i], k, 2])
       bias_ate_ts[k, i] <- bias_ate_ts[k, i] + 
-        abs(sim[[iter]]$ate[ate_ind[i], k, 1] - mu_true[k])
+        sim[[iter]]$ate[ate_ind[i], k, 1] - mu_true[k]
       
       if(k > 1){
         cond <- (sim[[iter]]$contr[ate_ind[i], k-1, 2] <= contr_true[k-1]) &&
@@ -123,7 +150,9 @@ for(k in 1:K){
         width_contr_ts[k-1, i] <- width_contr_ts[k-1, i] + 
           abs(sim[[iter]]$contr[ate_ind[i], k-1, 3] - sim[[iter]]$contr[ate_ind[i], k-1, 2])
         bias_contr_ts[k-1, i] <- bias_contr_ts[k-1, i] + 
-          abs(sim[[iter]]$contr[ate_ind[i], k-1, 1] - contr_true[k-1])
+          sim[[iter]]$contr[ate_ind[i], k-1, 1] - contr_true[k-1]
+        rmse_contr_ts[k-1, i] <- rmse_contr_ts[k-1, i] + 
+          (sim[[iter]]$contr[ate_ind[i], k-1, 1] - contr_true[k-1])^2
       }
     }
     covr_ate_ts[k, i] <- covr_ate_ts[k, i] / n_iter
@@ -134,6 +163,7 @@ for(k in 1:K){
       covr_contr_ts[k-1, i] <- covr_contr_ts[k-1, i] / n_iter
       width_contr_ts[k-1, i] <- width_contr_ts[k-1, i] / n_iter
       bias_contr_ts[k-1, i] <- bias_contr_ts[k-1, i] / n_iter
+      rmse_contr_ts[k-1, i] <- sqrt(rmse_contr_ts[k-1, i] / n_iter)
     }
   }
 }
@@ -147,6 +177,7 @@ bias_ate_rits <- matrix(0, K, length(ind))
 covr_contr_rits <- matrix(0, K-1, length(ind))
 width_contr_rits <- matrix(0, K-1, length(ind))
 bias_contr_rits <- matrix(0, K-1, length(ind))
+rmse_contr_rits <- matrix(0, K-1, length(ind))
 # stop_n_rits <- sapply(1:n_iter, function(i) stop_trial(sim[[i]], thres))
 for(k in 1:K){
   for(i in 1:length(ind)){
@@ -159,7 +190,7 @@ for(k in 1:K){
       width_ate_rits[k, i] <- width_ate_rits[k, i] + 
         abs(sim[[iter]]$ate[ate_ind[i], k, 3] - sim[[iter]]$ate[ate_ind[i], k, 2])
       bias_ate_rits[k, i] <- bias_ate_rits[k, i] + 
-        abs(sim[[iter]]$ate[ate_ind[i], k, 1] - mu_true[k])
+        sim[[iter]]$ate[ate_ind[i], k, 1] - mu_true[k]
       
       if(k > 1){
         cond <- (sim[[iter]]$contr[ate_ind[i], k-1, 2] <= contr_true[k-1]) &&
@@ -168,7 +199,9 @@ for(k in 1:K){
         width_contr_rits[k-1, i] <- width_contr_rits[k-1, i] + 
           abs(sim[[iter]]$contr[ate_ind[i], k-1, 3] - sim[[iter]]$contr[ate_ind[i], k-1, 2])
         bias_contr_rits[k-1, i] <- bias_contr_rits[k-1, i] + 
-          abs(sim[[iter]]$contr[ate_ind[i], k-1, 1] - contr_true[k-1])
+          sim[[iter]]$contr[ate_ind[i], k-1, 1] - contr_true[k-1]
+        rmse_contr_rits[k-1, i] <- rmse_contr_rits[k-1, i] + 
+          (sim[[iter]]$contr[ate_ind[i], k-1, 1] - contr_true[k-1])^2
       }
     }
     covr_ate_rits[k, i] <- covr_ate_rits[k, i] / n_iter
@@ -179,10 +212,34 @@ for(k in 1:K){
       covr_contr_rits[k-1, i] <- covr_contr_rits[k-1, i] / n_iter
       width_contr_rits[k-1, i] <- width_contr_rits[k-1, i] / n_iter
       bias_contr_rits[k-1, i] <- bias_contr_rits[k-1, i] / n_iter
+      rmse_contr_rits[k-1, i] <- sqrt(rmse_contr_rits[k-1, i] / n_iter)
     }
   }
 }
 
+
+# Bias + RMSE Table (requested by AE)
+bias_tab <- matrix(NA, 4*(K-1), length(ind))
+for(k in 1:(K-1)){
+  bias_tab[4*(k-1)+1, ] <- bias_contr_std[k, ]
+  bias_tab[4*(k-1)+2, ] <- bias_contr_rand[k, ]
+  bias_tab[4*(k-1)+3, ] <- bias_contr_ts[k, ]
+  bias_tab[4*(k-1)+4, ] <- bias_contr_rits[k, ]
+}
+rmse_tab <- matrix(NA, 4*(K-1), length(ind))
+for(k in 1:(K-1)){
+  rmse_tab[4*(k-1)+1, ] <- rmse_contr_std[k, ]
+  rmse_tab[4*(k-1)+2, ] <- rmse_contr_rand[k, ]
+  rmse_tab[4*(k-1)+3, ] <- rmse_contr_ts[k, ]
+  rmse_tab[4*(k-1)+4, ] <- rmse_contr_rits[k, ]
+}
+
+est_err_tab <- matrix(paste(round(bias_tab, 2), "(", round(rmse_tab, 2), ")", sep = ""), 
+       nrow = nrow(bias_tab))
+colnames(est_err_tab) <- paste(ind)
+rownames(est_err_tab) <- paste(c("Std", "Rand", "TS", "RiTS"), 
+                               "(Arm", rep(2:4, each = 4), ")", sep = "")
+xtable::xtable(est_err_tab)
 # colnames(tab_metric) <- paste(ind)
 # rownames(tab_metric) <- rep(c("Rand", "TS", "RiTS"), 2)
 # print(xtable::xtable(tab_metric))
@@ -203,3 +260,87 @@ print(xtable::xtable(covr_contr))
 # rownames(bias_contr) <- paste("Arm", 2:K, "- Arm 1")
 # colnames(bias_contr) <- rep(paste(ind), 3)
 # print(xtable::xtable(bias_contr))
+
+# Proportion of times Arm 3 is selected for Phase III
+
+n_comp <- 151
+prop_top_std <- numeric(n_comp)
+prop_top_rand <- numeric(n_comp)
+prop_top_ts <- numeric(n_comp)
+prop_top_rits <- numeric(n_comp)
+for(i in 1:n_iter){
+  prop_top_std <- prop_top_std + as.numeric(
+    sapply(1:n_comp, function(t) which.max(rand_sim[[i]]$contr_standard[t, , 1]) == 3)
+  )
+  prop_top_rand <- prop_top_rand + as.numeric(
+    sapply(1:n_comp, function(t) which.max(rand_sim[[i]]$contr[20+t, , 1]) == 3)
+  )
+  prop_top_ts <- prop_top_ts + as.numeric(
+    sapply(1:n_comp, function(t) which.max(ts_sim[[i]]$contr[20+t, , 1]) == 3)
+  )
+  prop_top_rits <- prop_top_rits + as.numeric(
+    sapply(1:n_comp, function(t) which.max(rits_sim[[i]]$contr[20+t, , 1]) == 3)
+  )
+}
+prop_top_std <- prop_top_std / n_iter
+prop_top_rand <- prop_top_rand / n_iter
+prop_top_ts <- prop_top_ts / n_iter
+prop_top_rits <- prop_top_rits / n_iter
+
+plot(50:200, prop_top_std, type = "l")
+lines(50:200, prop_top_rand, col = "red")
+lines(50:200, prop_top_ts, col = "blue")
+lines(50:200, prop_top_rits, col = "green")
+
+zero_in_intv <- function(intv){
+  a <- intv[1]; b <- intv[2]
+  if(a < 0 && b > 0){
+    return(TRUE)
+  } else{
+    return(FALSE)
+  }
+}
+
+power_std <- numeric(n_comp)
+power_rand <- numeric(n_comp)
+power_ts <- numeric(n_comp)
+power_rits <- numeric(n_comp)
+
+for(i in 1:n_iter){
+  power_std <- power_std + sapply(1:n_comp, function(t){
+    rej <- sapply(1:3, function(k){
+      zero_in_intv(rand_sim[[i]]$contr_standard[t, k, 2:3])
+    })
+    as.numeric(FALSE %in% rej)
+  })
+  power_rand <- power_rand + sapply(1:n_comp, function(t){
+    rej <- sapply(1:3, function(k){
+      zero_in_intv(rand_sim[[i]]$contr[t+20, k, 2:3])
+    })
+    as.numeric(FALSE %in% rej)
+  })
+  power_ts <- power_ts + sapply(1:n_comp, function(t){
+    rej <- sapply(1:3, function(k){
+      zero_in_intv(ts_sim[[i]]$contr[t+20, k, 2:3])
+    })
+    as.numeric(FALSE %in% rej)
+  })
+  power_rits <- power_rits + sapply(1:n_comp, function(t){
+    rej <- sapply(1:3, function(k){
+      zero_in_intv(rits_sim[[i]]$contr[t+20, k, 2:3])
+    })
+    as.numeric(FALSE %in% rej)
+  })
+}
+
+power_std <- power_std / n_iter
+power_rand <- power_rand / n_iter
+power_ts <- power_ts / n_iter
+power_rits <- power_rits / n_iter
+
+plot(50:200, power_std, type = "l", ylim = c(0.95, 1))
+lines(50:200, power_rand, col = "red")
+lines(50:200, power_ts, col = "blue")
+lines(50:200, power_rits, col = "green")
+
+

@@ -285,7 +285,7 @@ sim_wid_plot1 <- ggplot(df, aes(x = factor(Column),
                                 y = Width, fill = Method)) +
   geom_boxplot(position = position_dodge(width = 0.8), width = 0.7) +
   labs(x = "Number of Participants", y = "Width", 
-       fill = "Arm") + ylim(0, 15) +
+       fill = "Arm") + ylim(0, 10) +
   scale_fill_manual(
     values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00"),
     labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS")
@@ -318,7 +318,7 @@ sim_wid_plot2 <- ggplot(df, aes(x = factor(Column),
                                 y = Width, fill = Method)) +
   geom_boxplot(position = position_dodge(width = 0.8), width = 0.7) +
   labs(x = "Number of Participants", y = "Width", 
-       fill = "Arm") + ylim(0, 15) +
+       fill = "Arm") + ylim(0, 10) +
   scale_fill_manual(
     values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00"),
     labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS")
@@ -351,7 +351,7 @@ sim_wid_plot3 <- ggplot(df, aes(x = factor(Column),
                                 y = Width, fill = Method)) +
   geom_boxplot(position = position_dodge(width = 0.8), width = 0.7) +
   labs(x = "Number of Participants", y = "Width", 
-       fill = "Arm") + ylim(0, 15) +
+       fill = "Arm") + ylim(0, 10) +
   scale_fill_manual(
     values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00"),
     labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS")
@@ -365,7 +365,7 @@ ggsave(paste("plot/width_sim_bwplot_", file_choice, ".jpg", sep = ""),
 
 ## bias
 sim_dat <- readRDS("metadata/sim_dat.RData")
-mu_true <- sim_dat$mu_true
+mu_true <- sim_dat$mu_true * (2/5)
 contr_true <- mu_true - mu_true[1]
 contr_true <- contr_true[setdiff(1:K, sim_dat$placebo_arm)]
 
@@ -394,7 +394,7 @@ sim_bias_plot1 <- ggplot(df, aes(x = factor(Column),
                                  y = Bias, fill = Method)) +
   geom_boxplot(position = position_dodge(width = 0.8), width = 0.7) +
   labs(x = "Number of Participants", y = "Bias", 
-       fill = "Arm") + ylim(-3, 3) +
+       fill = "Arm") + ylim(-2, 2) +
   scale_fill_manual(
     values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00"),
     labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS")
@@ -428,7 +428,7 @@ sim_bias_plot2 <- ggplot(df, aes(x = factor(Column),
                                  y = Bias, fill = Method)) +
   geom_boxplot(position = position_dodge(width = 0.8), width = 0.7) +
   labs(x = "Number of Participants", y = "Bias", 
-       fill = "Arm") + ylim(-3, 3) +
+       fill = "Arm") + ylim(-2, 2) +
   scale_fill_manual(
     values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00"),
     labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS")
@@ -462,7 +462,7 @@ sim_bias_plot3 <- ggplot(df, aes(x = factor(Column),
                                  y = Bias, fill = Method)) +
   geom_boxplot(position = position_dodge(width = 0.8), width = 0.7) +
   labs(x = "Number of Participants", y = "Bias", 
-       fill = "Arm") + ylim(-3, 3) +
+       fill = "Arm") + ylim(-2, 2) +
   scale_fill_manual(
     values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00"),
     labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS")
