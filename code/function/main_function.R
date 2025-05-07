@@ -349,7 +349,8 @@ one_step_rits_batch <- function(x, x_true, t, param, beta_true, K, d,
 }
 
 
-do_rand_biv <- function(X_true, beta_true, tr_lag = 10, ate_start = 20, 
+do_rand_biv <- function(X_true, beta_true, trt_init, 
+                        tr_lag = 10, ate_start = 20, 
                         placebo_arm = 1, weight = 1, seed = 2024, 
                         rwd_sig = 0.1, alpha = 0.05, first_peek = 100){
   # browser()
@@ -409,11 +410,12 @@ do_rand_biv <- function(X_true, beta_true, tr_lag = 10, ate_start = 20,
 }
 
 
-do_ts_batch <- function(X, X_true, beta_true, tr_start = 20, tr_batch = 5, 
+do_ts_batch <- function(X, X_true, beta_true, trt_init, 
+                        tr_start = 20, tr_batch = 5, 
                         weight = 2, tr_lag = 10, ate_start = 20, M = 1000,
                         v = 10, placebo_arm = 1, min_prpn = 0.01, alpha = 0.05,
                         rwd_sig = 0.1, seed = 2024, design = "clip",
-                        first_peek = NULL, trt_init){
+                        first_peek = NULL, reg_estm = "lm"){
   # browser()
   set.seed(seed)
   N <- nrow(X)
@@ -484,7 +486,8 @@ do_ts_batch <- function(X, X_true, beta_true, tr_start = 20, tr_batch = 5,
   asympcs <- get_asympcs(trt_hist = trt, rwd_hist = reward, 
                          prpns_mat = log_dat$prpns_mat, 
                          context_hist = X, placebo_arm = placebo_arm,
-                         times = times_, alpha = alpha, first_peek = first_peek)
+                         times = times_, alpha = alpha, 
+                         first_peek = first_peek, reg_estm = reg_estm)
   ate <- asympcs[[1]]
   contr <- asympcs[[2]]
   
@@ -495,11 +498,11 @@ do_ts_batch <- function(X, X_true, beta_true, tr_start = 20, tr_batch = 5,
        log_dat = log_dat, param = param, tr_first = tr_start)
 }
 
-do_rits_batch <- function(X, X_true, beta_true, weight, rwd_sig = 0.1,
+do_rits_batch <- function(X, X_true, beta_true, trt_init, weight, rwd_sig = 0.1,
                           tr_start = 20, M = 1000, placebo_arm = 1,
                           tr_batch = 5, tr_lag = 10, ate_start = 30, 
                           v = 10, seed = 2024, design = "clip", alpha = 0.05,
-                          min_prpn = 0.01, first_peek = NULL){
+                          min_prpn = 0.01, first_peek = NULL, reg_estm = "lm"){
   # browser()
   set.seed(seed)
   N <- nrow(X)
@@ -581,7 +584,8 @@ do_rits_batch <- function(X, X_true, beta_true, weight, rwd_sig = 0.1,
   asympcs <- get_asympcs(trt_hist = trt, rwd_hist = reward_benf, 
                          prpns_mat = log_dat$prpns_mat, 
                          context_hist = X, placebo_arm = placebo_arm,
-                         times = times_, alpha = alpha, first_peek = first_peek)
+                         times = times_, alpha = alpha, 
+                         first_peek = first_peek, reg_estm = reg_estm)
   ate <- asympcs[[1]]
   contr <- asympcs[[2]]
   

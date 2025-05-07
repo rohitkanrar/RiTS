@@ -21,7 +21,7 @@ get_aipw_static <- function(y, reg_est, propensity, treatment, K){
 
 get_aipw_seq <- function(treatment, y, propensity, X, 
                          train_idx = NULL, times = NULL, n_cores = 1,
-                         cross_fit = TRUE, verbose = FALSE){
+                         cross_fit = TRUE, verbose = FALSE, reg_estm = "avg"){
   # browser()
   if (is.null(train_idx)){
     # train_idx <- rbinom(length(y), 1, 0.5)
@@ -64,14 +64,17 @@ get_aipw_seq <- function(treatment, y, propensity, X,
       prpn_eval <- propensity[eval_idx_t, ]
       for(k in 1:K){
         # browser()
-        reg_est[[k]] <- tryCatch({
-          basic_learner(y = y_train[treatment_train == k], 
-                                        X = X_train[treatment_train == k, ], 
-                                        newX = X_eval)
-        }, error = function(e){
-          numeric(nrow(X_eval))
-        })
-        
+        if(reg_estm == "avg"){
+          reg_est[[k]] <- mean(y_train[treatment_train == k])
+        } else{
+          reg_est[[k]] <- tryCatch({
+            basic_learner(y = y_train[treatment_train == k],
+                          X = X_train[treatment_train == k, ],
+                          newX = X_eval)
+          }, error = function(e){
+            numeric(nrow(X_eval))
+          })
+        }
       }
       aipw_master[[i]][eval_idx_t, ] <- get_aipw_static(y = y_eval, 
                                                         reg_est = reg_est, 
@@ -88,7 +91,8 @@ get_aipw_seq <- function(treatment, y, propensity, X,
 
 get_asympcs <- function(trt_hist, rwd_hist, prpns_mat, context_hist,
                         placebo_arm, times, aipw_master = NULL,
-                        alpha = 0.05, first_peek = 50, n_cores = 1){
+                        alpha = 0.05, first_peek = 50, n_cores = 1, 
+                        lyapounov = TRUE, reg_estm = "lm"){
   # browser()
   if(times[1] > first_peek){
     times <- c(first_peek, times)
@@ -97,7 +101,7 @@ get_asympcs <- function(trt_hist, rwd_hist, prpns_mat, context_hist,
   asymp_cs <- matrix(0, N, 3)
   aipw_master <- get_aipw_seq(y = rwd_hist, X = context_hist, 
                               treatment = trt_hist, propensity = prpns_mat, 
-                              times = times)
+                              times = times, reg_estm = reg_estm)
   rho2 <- drconfseq::best_rho2_exact(t_opt = m, alpha_opt = alpha)
   if(any(is.null(aipw_master))){
     aipw_mat <- get_aipw_score(t, K, trt_hist, rwd_hist, prpns_mat, tr_ind)
@@ -120,9 +124,15 @@ get_asympcs <- function(trt_hist, rwd_hist, prpns_mat, context_hist,
     names(aipw_contr_list) <- times
     
     asympcs_list <- mclapply(aipw_ate_list, function(aipw_ate) {
-      acs <- drconfseq::lyapunov_asympcs(aipw_ate, rho2 = rho2, 
-                                         alpha = alpha/K, # Bonferroni's correction
-                                         return_all_times = FALSE)
+      if(lyapounov){
+        acs <- drconfseq::lyapunov_asympcs(aipw_ate, rho2 = rho2,
+                                           alpha = alpha/K, # Bonferroni's correction
+                                           return_all_times = FALSE)
+      } else{
+        acs <- drconfseq::asymptotic_confseq(aipw_ate, first_peek, 
+                                             alpha = alpha/K, # Bonferroni's correction
+                                             return_all_times = FALSE)
+      }
       return(c((acs$l + acs$u)/2, acs$l, acs$u))
     }, mc.cores = n_cores)
     
@@ -133,9 +143,15 @@ get_asympcs <- function(trt_hist, rwd_hist, prpns_mat, context_hist,
       next
     }
     asympcs_list <- mclapply(aipw_contr_list, function(aipw_contr) {
-      acs <- drconfseq::lyapunov_asympcs(aipw_contr, rho2 = rho2, 
-                                         alpha = alpha/(K-1), # Bonferroni's correction
-                                         return_all_times = FALSE)
+      if(lyapounov){
+        acs <- drconfseq::lyapunov_asympcs(aipw_contr, rho2 = rho2,
+                                           alpha = alpha/(K-1), # Bonferroni's correction
+                                           return_all_times = FALSE)
+      } else{
+        acs <- drconfseq::asymptotic_confseq(aipw_contr, first_peek, 
+                                             alpha = alpha/(K-1), # Bonferroni's correction
+                                             return_all_times = FALSE)
+      }
       return(c((acs$l + acs$u)/2, acs$l, acs$u))
     }, mc.cores = n_cores)
     
