@@ -26,8 +26,7 @@ design <- sim_choice$design
 first_peek <- sim_choice$first_peek
 reward_sig <- sim_choice$reward_sig
 alpha <- sim_choice$alpha
-dgp <- c("low", "high")
-trt_init <- sample(rep(1:4, times = tr_start %/% K), ate_start)
+trt_init <- sample(rep(1:4, times = tr_start %/% K), tr_start)
 reg_estms <- c("avg", "lm")
 
 n_iter <- 1000
@@ -43,7 +42,7 @@ for(i in 1:2){
   for(iter in 1:n_iter){
     # if(iter %% 100 == 0) print(iter)
     print(iter)
-    seed <- iter
+    seed <- 4681 + iter
     rand_sim[[iter]] <- do_rand_biv(X_true = X_true, beta_true = beta_true, 
                                     trt_init = trt_init, seed = seed, 
                                     weight = weight, placebo_arm = placebo_arm, 

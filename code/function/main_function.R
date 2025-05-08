@@ -361,7 +361,7 @@ do_rand_biv <- function(X_true, beta_true, trt_init,
                   reward_benf = numeric(0),
                   reward_safe = numeric(0),
                   context = X, prpns_mat = numeric(0))
-  trt_init <- sample(rep(1:K, ate_start %/% 4), ate_start)
+  # trt_init <- sample(rep(1:K, ate_start %/% 4), ate_start)
   trt <- numeric(N)
   reward_benf <- numeric(N)
   reward_safe <- numeric(N)
@@ -421,7 +421,7 @@ do_ts_batch <- function(X, X_true, beta_true, trt_init,
   N <- nrow(X)
   d <- ncol(X)
   K <- dim(beta_true)[2]
-  trt_init <- sample(rep(1:K, ate_start %/% 4), ate_start)
+  # trt_init <- sample(rep(1:K, ate_start %/% 4), ate_start)
   param <- list(beta_mean = array(0, c(d, K, N)), 
                 beta_cov = array(0, c(d, d, K, N)), 
                 beta_eff = array(0, c(d, d, K)))
@@ -509,7 +509,7 @@ do_rits_batch <- function(X, X_true, beta_true, trt_init, weight, rwd_sig = 0.1,
   d <- ncol(X)
   K <- dim(beta_true)[2]
   E <- dim(beta_true)[3]
-  trt_init <- sample(rep(1:K, ate_start %/% 4), ate_start)
+  # trt_init <- sample(rep(1:K, ate_start %/% 4), ate_start)
   param <- list(beta_mean = array(0, c(d, K, N, E)), 
                 beta_cov = array(0, c(d, d, K, N, E)), 
                 beta_eff = array(0, c(d, d, K, E)))
