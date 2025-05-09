@@ -128,16 +128,16 @@ gen_bias_bwplot <- function(out_rand, out_ts, out_rits, ate_ind, arm,
   n_iter <- length(out_rand)
   titl <- paste("Arm ",  arm, " - Arm 1", sep = "")
   contr_std_bias <- t(sapply(1:n_iter, function(iter){
-    out_rand[[iter]]$contr_standard[ate_ind, arm-1, 1] - contr_true[arm-1]
+    out_rand[[iter]]$contr_standard[ate_ind, arm-1, 1] - contr_true[1]
   }))
   contr_rand_bias <- t(sapply(1:n_iter, function(iter){
-    out_rand[[iter]]$contr[ate_ind, arm-1, 1] - contr_true[arm-1]
+    out_rand[[iter]]$contr[ate_ind, arm-1, 1] - contr_true[1]
   }))
   contr_ts_bias <- t(sapply(1:n_iter, function(iter){
-    out_ts[[iter]]$contr[ate_ind, arm-1, 1] - contr_true[arm-1]
+    out_ts[[iter]]$contr[ate_ind, arm-1, 1] - contr_true[1]
   }))
   contr_rits_bias <- t(sapply(1:n_iter, function(iter){
-    out_rits[[iter]]$contr[ate_ind, arm-1, 1] - contr_true[arm-1]
+    out_rits[[iter]]$contr[ate_ind, arm-1, 1] - contr_true[1]
   }))
   
   df <- data.frame(
