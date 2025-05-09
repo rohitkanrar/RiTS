@@ -99,9 +99,6 @@ get_asympcs <- function(trt_hist, rwd_hist, prpns_mat, context_hist,
                               treatment = trt_hist, propensity = prpns_mat, 
                               times = times)
   rho2 <- drconfseq::best_rho2_exact(t_opt = m, alpha_opt = alpha)
-  if(any(is.null(aipw_master))){
-    aipw_mat <- get_aipw_score(t, K, trt_hist, rwd_hist, prpns_mat, tr_ind)
-  }
   aipw_ate_list <- vector(mode = "list", length = length(aipw_master))
   aipw_contr_list <- aipw_ate_list
   ate_seq <- array(NA, c(length(times), K, 3))
@@ -152,6 +149,43 @@ get_asympcs <- function(trt_hist, rwd_hist, prpns_mat, context_hist,
   
   return(list(ate_seq, contr_seq))
 }
+
+add_asympcs <- function(out, ate_start, batch = 5, placebo_arm = 1, 
+                        alpha = 0.05, first_peek = NULL){
+  if(is.null(first_peek)) first_peek <- ate_start
+  trt <- out$trt; N <- length(trt)
+  if(!is.null(out$reward_benf)){
+    reward <- out$reward_benf
+  } else{
+    reward <- out$reward
+  }
+  times_ <- seq(ate_start, N, batch)
+  asympcs <- get_asympcs(trt_hist = trt, rwd_hist = reward, 
+                         prpns_mat = out$log_dat$prpns_mat, 
+                         context_hist = out$log_dat$context, 
+                         placebo_arm = placebo_arm, times = times_, 
+                         alpha = alpha, first_peek = first_peek)
+  ate <- asympcs[[1]]
+  contr <- asympcs[[2]]
+  out[["alpha"]] <- alpha
+  out[["ate"]] <- ate
+  out[["contr"]] <- contr
+  out[["first_peek"]] <- first_peek
+  out[["ate_start"]] <- ate_start
+  return(out)
+}
+
+add_asympcs_sim <- function(out_list, ate_start, batch = 5, placebo_arm = 1, 
+                            alpha = 0.05, first_peek = NULL, n_cores = 1){
+  n_iter <- length(out_list)
+  out_list <- mclapply(out_list, function(out){
+    out <- add_asympcs(out = out, ate_start = ate_start, batch = batch, 
+                       placebo_arm = placebo_arm, alpha = alpha, 
+                       first_peek = first_peek)
+    return(out)
+  }, mc.cores = n_cores)
+}
+# tmp_list1 <- add_asympcs_sim(tmp_list, 20)
 
 # tmp <- get_asympcs(ts_out$trt, ts_out$reward, ts_out$log_dat$prpns_mat,
 #                    ts_out$log_dat$context, 1, # times = seq(50, 1000, 10),

@@ -2,7 +2,7 @@ source("code/function/asymp_cs.R")
 source("code/function/main_function.R")
 source("code/function/misc.R")
 
-set.seed(2024)
+# set.seed(2024)
 N <- 200
 K <- 4 # cannot be changed
 d <- 3 # cannot be changed
@@ -32,23 +32,29 @@ weight <- 1
 (util_true <- (mu_true + nu_true * weight) / (1+weight))
 placebo_arm <- 1
 seed_ <- 1
-tr_start <- 30
-ate_start <- 30
+tr_start <- 20
+ate_start <- 20
 min_prpn <- 0.05
-first_peek <- 100
+first_peek <- 30
 reward_sig <- 1
 # correct
-ts_out <- do_ts_batch(X, X_true, beta_true, seed = seed_, weight = weight, 
-                      tr_start = tr_start, ate_start = ate_start,
-                      placebo_arm = placebo_arm,
-                      rwd_sig = reward_sig, design = "clip", 
-                      min_prpn = min_prpn, first_peek = first_peek)
-rits_out <- do_rits_batch(X, X_true, beta_true, weight = weight, seed = seed_, 
-                          tr_start = tr_start, ate_start = ate_start,
-                          placebo_arm = placebo_arm, rwd_sig = reward_sig,
-                          design = "clip", first_peek = first_peek)
-rand_out <- do_rand_biv(X_true, beta_true, seed = seed_, weight = weight, 
-                        placebo_arm = placebo_arm)
+rand_out <- do_rand_biv(X = X_true, X_true = X_true, beta_true = beta_true, 
+                        weight = weight, seed = NULL, rwd_sig = reward_sig, 
+                        asympcs = TRUE, ate_start = ate_start, placebo_arm = 1, 
+                        alpha = 0.05, first_peek = first_peek)
+ts_out <- do_ts_batch(X = X_true, X_true = X_true, beta_true = beta_true, 
+                      weight = weight, seed = NULL, rwd_sig = reward_sig,
+                      tr_start = tr_start, tr_batch = 5, tr_lag = 10,
+                      M = 1000, v = 10, asympcs = TRUE, ate_start = ate_start, 
+                      placebo_arm = 1, alpha = 0.05, first_peek = first_peek, 
+                      min_prpn = min_prpn, design = "clip")
+rits_out <- do_rits_batch(X = X_true, X_true = X_true, beta_true = beta_true, 
+                        weight = weight, seed = NULL, rwd_sig = reward_sig,
+                        tr_start = tr_start, tr_batch = 5, tr_lag = 10,
+                        M = 1000, v = 10, asympcs = TRUE,ate_start = ate_start, 
+                        placebo_arm = 1, alpha = 0.05, first_peek = first_peek, 
+                        min_prpn = min_prpn, design = "clip")
+
 # # miss
 # X <- X_true[, 1:2]
 # ts_mis_out <- do_ts_batch(X, X_true, beta_true, seed = seed_, weight = weight, 

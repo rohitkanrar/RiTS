@@ -61,6 +61,7 @@ one_step_rand_biv <- function(x, K, beta_true, log_dat, weight, rwd_sig = 0.1,
   trt_hist <- log_dat$trt
   rwd_benf_hist <- log_dat$reward_benf
   rwd_safe_hist <- log_dat$reward_safe
+  cntx_hist <- log_dat$context
   
   if(is.null(trt)){
     trt_new <- sample(1:K, 1)
@@ -96,6 +97,7 @@ one_step_rand_biv <- function(x, K, beta_true, log_dat, weight, rwd_sig = 0.1,
   log_dat <- list(trt = c(trt_hist, trt_new), 
                   reward_benf = c(rwd_benf_hist, rwd_benf_new),
                   reward_safe = c(rwd_safe_hist, rwd_safe_new),
+                  context = rbind(cntx_hist, t(x)),
                   prpns_mat = prpns_mat)
   
   list(trt_new = trt_new, rwd_benf_new = rwd_benf_new, 
@@ -105,7 +107,7 @@ one_step_rand_biv <- function(x, K, beta_true, log_dat, weight, rwd_sig = 0.1,
 
 
 one_step_ts_batch <- function(x, x_true, t, param, beta_true, K, d, log_dat,  
-                              min_prpn = 0.01, M = 1000,
+                              min_prpn = 0.05, M = 1000,
                               tr_start = 10, tr_lag = 10, ate_start = 20, 
                               weight = 2, train = FALSE, rwd_sig = 0.1,
                               design = "no_clip", trt = NULL){
@@ -222,7 +224,7 @@ one_step_ts_batch <- function(x, x_true, t, param, beta_true, K, d, log_dat,
 
 one_step_rits_batch <- function(x, x_true, t, param, beta_true, K, d, 
                                 log_dat, floor_start = 0.005, 
-                                min_prpn = 0.01, tr_start = 10, tr_lag = 10, 
+                                min_prpn = 0.05, tr_start = 10, tr_lag = 10, 
                                 M = 1000, ate_start = 20, tr_batch = 10, 
                                 weight = 2, train = FALSE, rwd_sig = 0.1, 
                                 design = "clip", trt = NULL){
@@ -349,18 +351,22 @@ one_step_rits_batch <- function(x, x_true, t, param, beta_true, K, d,
 }
 
 
-do_rand_biv <- function(X_true, beta_true, tr_lag = 10, ate_start = 20, 
-                        placebo_arm = 1, weight = 1, seed = 2024, 
-                        rwd_sig = 0.1, alpha = 0.05, first_peek = 100){
+do_rand_biv <- function(X, X_true, beta_true, weight = 1, seed = NULL, 
+                        rwd_sig = 0.1, asympcs = FALSE, ate_start = 20, 
+                        placebo_arm = 1, alpha = 0.05, first_peek = NULL){
   # browser()
-  set.seed(seed)
-  N <- nrow(X)
+  if(!is.null(seed)){
+    set.seed(seed)
+  }
+  N <- nrow(X_true)
   K <- dim(beta_true)[2]
   log_dat <- list(trt = numeric(0), 
                   reward_benf = numeric(0),
                   reward_safe = numeric(0),
-                  context = X, prpns_mat = numeric(0))
-  trt_init <- sample(rep(1:K, ate_start %/% 4), ate_start)
+                  context = numeric(0), prpns_mat = numeric(0))
+  stopifnot("tr_start must be multiple of the number of Arms" = 
+              (tr_start %% K == 0))
+  trt_init <- sample(rep(1:K, tr_start %/% K), tr_start)
   trt <- numeric(N)
   reward_benf <- numeric(N)
   reward_safe <- numeric(N)
@@ -372,13 +378,13 @@ do_rand_biv <- function(X_true, beta_true, tr_lag = 10, ate_start = 20,
   subopt_trt_safe <- numeric(N)
   
   for(t in 1:N){
-    if(t <= ate_start){
-      step <- one_step_rand_biv(X_true[t, ], K, beta_true, log_dat, weight, 
-                                rwd_sig, trt_init[t])
+    if(t <= tr_start){
+      trt_new <- trt_init[t]
     } else{
-      step <- one_step_rand_biv(X_true[t, ], K, beta_true, log_dat, weight, 
-                                rwd_sig)
+      trt_new <- NULL
     }
+    step <- one_step_rand_biv(X_true[t, ], K, beta_true, log_dat = log_dat, 
+                              weight = weight, rwd_sig = rwd_sig, trt = trt_new)
     
     log_dat <- step$log_dat
     trt[t] <- step$trt_new
@@ -391,35 +397,45 @@ do_rand_biv <- function(X_true, beta_true, tr_lag = 10, ate_start = 20,
     subopt_trt_benf[t] <- step$metrics$subopt_cnt_benf
     subopt_trt_safe[t] <- step$metrics$subopt_cnt_safe
   }
-  times_ <- seq(ate_start, N)
-  if(is.null(first_peek)) first_peek <- floor(N/2)
-  asympcs <- get_asympcs(trt_hist = trt, rwd_hist = reward_benf, 
-                         prpns_mat = log_dat$prpns_mat, 
-                         context_hist = X, placebo_arm = placebo_arm,
-                         times = times_, alpha = alpha, first_peek = first_peek)
-  ate <- asympcs[[1]]
-  contr <- asympcs[[2]]
-  
-  list(trt = trt, reward_benf = reward_benf, reward_safe = reward_safe, 
-       regret = regret, regret_safe = regret_safe, regret_benf = regret_benf, 
-       subopt_trt = subopt_trt, subopt_trt_benf = subopt_trt_benf, 
-       subopt_trt_safe = subopt_trt_safe, ate = ate, contr = contr,
-       log_dat = log_dat)
-  
+  out_list <- 
+    list(trt = trt, reward_benf = reward_benf, reward_safe = reward_safe, 
+         regret = regret, regret_safe = regret_safe, regret_benf = regret_benf, 
+         subopt_trt = subopt_trt, subopt_trt_benf = subopt_trt_benf, 
+         subopt_trt_safe = subopt_trt_safe, log_dat = log_dat)
+  if(asympcs){
+    times_ <- seq(ate_start, N)
+    if(is.null(first_peek)) first_peek <- ate_start
+    asympcs <- get_asympcs(trt_hist = trt, rwd_hist = reward_benf, 
+                           prpns_mat = log_dat$prpns_mat, 
+                           context_hist = X, placebo_arm = placebo_arm,
+                           times = times_, alpha = alpha, first_peek = first_peek)
+    ate <- asympcs[[1]]
+    contr <- asympcs[[2]]
+    out_list[["alpha"]] <- alpha
+    out_list[["ate"]] <- ate
+    out_list[["contr"]] <- contr
+    out_list[["first_peek"]] <- first_peek
+    out_list[["ate_start"]] <- ate_start
+  }
+  return(out_list)
 }
 
 
-do_ts_batch <- function(X, X_true, beta_true, tr_start = 20, tr_batch = 5, 
-                        weight = 2, tr_lag = 10, ate_start = 20, M = 1000,
-                        v = 10, placebo_arm = 1, min_prpn = 0.01, alpha = 0.05,
-                        rwd_sig = 0.1, seed = 2024, design = "clip",
-                        first_peek = NULL, trt_init){
+do_ts_batch <- function(X, X_true, beta_true, weight = 1, seed = NULL, 
+                        rwd_sig = 0.1, tr_start = 20, tr_batch = 5, tr_lag = 10,
+                        M = 1000, v = 10, min_prpn = 0.05, 
+                        asympcs = FALSE, ate_start = 20, placebo_arm = 1, 
+                        alpha = 0.05, first_peek = NULL, design = "clip"){
   # browser()
-  set.seed(seed)
+  if(!is.null(seed)){
+    set.seed(seed)
+  }
   N <- nrow(X)
   d <- ncol(X)
   K <- dim(beta_true)[2]
-  trt_init <- sample(rep(1:K, ate_start %/% 4), ate_start)
+  stopifnot("tr_start must be multiple of the number of Arms" = 
+              (tr_start %% K == 0))
+  trt_init <- sample(rep(1:K, tr_start %/% K), tr_start)
   param <- list(beta_mean = array(0, c(d, K, N)), 
                 beta_cov = array(0, c(d, d, K, N)), 
                 beta_eff = array(0, c(d, d, K)))
@@ -452,20 +468,17 @@ do_ts_batch <- function(X, X_true, beta_true, tr_start = 20, tr_batch = 5,
     } else{
       train <- FALSE
     }
-    if(t <= ate_start){
-      step <- one_step_ts_batch(X[t, ], X_true[t, ], t, param, beta_true, K, d,
-                                log_dat, tr_start = tr_start, tr_lag = tr_lag,
-                                ate_start = ate_start, train = train, M = M, 
-                                weight = weight, rwd_sig = rwd_sig,
-                                design = design, min_prpn = min_prpn, 
-                                trt = trt_init[t])
+    if(t <= tr_start){
+      trt_new <- trt_init[t]
     } else{
-      step <- one_step_ts_batch(X[t, ], X_true[t, ], t, param, beta_true, K, d,
-                                log_dat, tr_start = tr_start, tr_lag = tr_lag,
-                                ate_start = ate_start, train = train, M = M, 
-                                weight = weight, rwd_sig = rwd_sig,
-                                design = design, min_prpn = min_prpn)
+      trt_new <- NULL
     }
+    step <- one_step_ts_batch(X[t, ], X_true[t, ], t, param, beta_true, K, d,
+                              log_dat, tr_start = tr_start, tr_lag = tr_lag,
+                              ate_start = ate_start, train = train, M = M, 
+                              weight = weight, rwd_sig = rwd_sig,
+                              design = design, min_prpn = min_prpn, 
+                              trt = trt_new)
     
     param <- step$param
     log_dat <- step$log_dat
@@ -479,34 +492,48 @@ do_ts_batch <- function(X, X_true, beta_true, tr_start = 20, tr_batch = 5,
     subopt_trt_benf[t] <- step$metrics$subopt_cnt_benf
     subopt_trt_safe[t] <- step$metrics$subopt_cnt_safe
   }
-  times_ <- seq(ate_start, N)
-  if(is.null(first_peek)) first_peek <- floor(N/2)
-  asympcs <- get_asympcs(trt_hist = trt, rwd_hist = reward, 
-                         prpns_mat = log_dat$prpns_mat, 
-                         context_hist = X, placebo_arm = placebo_arm,
-                         times = times_, alpha = alpha, first_peek = first_peek)
-  ate <- asympcs[[1]]
-  contr <- asympcs[[2]]
+  out_list <- 
+    list(trt = trt, reward = reward, regret = regret, regret_benf = regret_benf,
+         regret_safe = regret_safe, subopt_trt = subopt_trt, 
+         subopt_trt_benf = subopt_trt_benf, subopt_trt_safe = subopt_trt_safe,
+         log_dat = log_dat, param = param, tr_first = tr_start)
   
-  list(trt = trt, reward = reward, regret = regret, regret_benf = regret_benf,
-       regret_safe = regret_safe, subopt_trt = subopt_trt, alpha = alpha,
-       subopt_trt_benf = subopt_trt_benf, subopt_trt_safe = subopt_trt_safe,
-       ate = ate, contr = contr, first_peek = first_peek, min_prpn = min_prpn,
-       log_dat = log_dat, param = param, tr_first = tr_start)
+  if(asympcs){
+    times_ <- seq(ate_start, N)
+    if(is.null(first_peek)) first_peek <- ate_start
+    asympcs <- get_asympcs(trt_hist = trt, rwd_hist = reward, 
+                           prpns_mat = log_dat$prpns_mat, 
+                           context_hist = X, placebo_arm = placebo_arm,
+                           times = times_, alpha = alpha, first_peek = first_peek)
+    ate <- asympcs[[1]]
+    contr <- asympcs[[2]]
+    out_list[["alpha"]] <- alpha
+    out_list[["ate"]] <- ate
+    out_list[["contr"]] <- contr
+    out_list[["first_peek"]] <- first_peek
+    out_list[["ate_start"]] <- ate_start
+    out_list[["min_prpn"]] <- min_prpn
+  }
+  return(out_list)
 }
 
-do_rits_batch <- function(X, X_true, beta_true, weight, rwd_sig = 0.1,
-                          tr_start = 20, M = 1000, placebo_arm = 1,
-                          tr_batch = 5, tr_lag = 10, ate_start = 30, 
-                          v = 10, seed = 2024, design = "clip", alpha = 0.05,
-                          min_prpn = 0.01, first_peek = NULL){
+
+do_rits_batch <- function(X, X_true, beta_true, weight = 1, seed = NULL, 
+                          rwd_sig = 0.1, tr_start = 20, tr_batch = 5, tr_lag = 10,
+                          M = 1000, v = 10, min_prpn = 0.05, 
+                          asympcs = FALSE, ate_start = 20, placebo_arm = 1, 
+                          alpha = 0.05, first_peek = NULL, design = "clip"){
   # browser()
-  set.seed(seed)
+  if(!is.null(seed)){
+    set.seed(seed)
+  }
   N <- nrow(X)
   d <- ncol(X)
   K <- dim(beta_true)[2]
   E <- dim(beta_true)[3]
-  trt_init <- sample(rep(1:K, ate_start %/% 4), ate_start)
+  stopifnot("tr_start must be multiple of the number of Arms" = 
+              (tr_start %% K == 0))
+  trt_init <- sample(rep(1:K, tr_start %/% K), tr_start)
   param <- list(beta_mean = array(0, c(d, K, N, E)), 
                 beta_cov = array(0, c(d, d, K, N, E)), 
                 beta_eff = array(0, c(d, d, K, E)))
@@ -543,25 +570,19 @@ do_rits_batch <- function(X, X_true, beta_true, weight, rwd_sig = 0.1,
     } else{
       train <- FALSE
     }
-    if(t <= ate_start){
-      step <- one_step_rits_batch(X[t, ], X_true[t, ], t, param, 
-                                  beta_true, K, d, log_dat, 
-                                  tr_start = tr_start, tr_lag = tr_lag, 
-                                  tr_batch = tr_batch, M = M,
-                                  ate_start = ate_start, 
-                                  train = train, weight = weight, 
-                                  rwd_sig = rwd_sig, design = design,
-                                  min_prpn = min_prpn, trt = trt_init[t])
+    if(t <= tr_start){
+      trt_new <- trt_init[t]
     } else{
-      step <- one_step_rits_batch(X[t, ], X_true[t, ], t, param, 
-                                  beta_true, K, d, log_dat, 
-                                  tr_start = tr_start, tr_lag = tr_lag, 
-                                  tr_batch = tr_batch, M = M,
-                                  ate_start = ate_start, 
-                                  train = train, weight = weight, 
-                                  rwd_sig = rwd_sig, design = design,
-                                  min_prpn = min_prpn)
+      trt_new <- NULL
     }
+    step <- one_step_rits_batch(X[t, ], X_true[t, ], t, param, 
+                                beta_true, K, d, log_dat, 
+                                tr_start = tr_start, tr_lag = tr_lag, 
+                                tr_batch = tr_batch, M = M,
+                                ate_start = ate_start, 
+                                train = train, weight = weight, 
+                                rwd_sig = rwd_sig, design = design,
+                                min_prpn = min_prpn, trt = trt_new)
     param <- step$param
     log_dat <- step$log_dat
     
@@ -575,20 +596,29 @@ do_rits_batch <- function(X, X_true, beta_true, weight, rwd_sig = 0.1,
     subopt_trt_benf[t] <- step$metrics$subopt_cnt_benf
     subopt_trt_safe[t] <- step$metrics$subopt_cnt_safe
   }
+  out_list <- 
+    list(trt = trt, reward_safe = reward_safe, reward_benf = reward_benf, 
+         regret = regret, regret_benf = regret_benf, regret_safe = regret_safe, 
+         subopt_trt = subopt_trt, subopt_trt_benf = subopt_trt_benf, 
+         subopt_trt_safe = subopt_trt_safe, log_dat = log_dat, param = param, 
+         tr_first = tr_start)
   
-  times_ <- seq(ate_start, N)
-  if(is.null(first_peek)) first_peek <- floor(N/2)
-  asympcs <- get_asympcs(trt_hist = trt, rwd_hist = reward_benf, 
-                         prpns_mat = log_dat$prpns_mat, 
-                         context_hist = X, placebo_arm = placebo_arm,
-                         times = times_, alpha = alpha, first_peek = first_peek)
-  ate <- asympcs[[1]]
-  contr <- asympcs[[2]]
-  
-  list(trt = trt, reward_safe = reward_safe, reward_benf = reward_benf, 
-       regret = regret, regret_benf = regret_benf,
-       regret_safe = regret_safe, subopt_trt = subopt_trt, alpha = alpha,
-       subopt_trt_benf = subopt_trt_benf, subopt_trt_safe = subopt_trt_safe, 
-       ate = ate, contr = contr, first_peek = first_peek, min_prpn = min_prpn,
-       log_dat = log_dat, param = param, tr_first = tr_start)
+  if(asympcs){
+    times_ <- seq(ate_start, N)
+    if(is.null(first_peek)) first_peek <- ate_start
+    asympcs <- get_asympcs(trt_hist = trt, rwd_hist = reward_benf, 
+                           prpns_mat = log_dat$prpns_mat, 
+                           context_hist = X, placebo_arm = placebo_arm,
+                           times = times_, alpha = alpha, first_peek = first_peek)
+    ate <- asympcs[[1]]
+    contr <- asympcs[[2]]
+    
+    out_list[["alpha"]] <- alpha
+    out_list[["ate"]] <- ate
+    out_list[["contr"]] <- contr
+    out_list[["first_peek"]] <- first_peek
+    out_list[["ate_start"]] <- ate_start
+    out_list[["min_prpn"]] <- min_prpn
+  }
+  return(out_list)
 }
