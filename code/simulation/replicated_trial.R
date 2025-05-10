@@ -1,8 +1,6 @@
 print(timestamp())
 source("code/function/main_function.R")
 source("code/function/misc.R")
-# source("code/function/classical_ci.R")
-# source("code/function/asymp_cs.R")
 
 sim_choice <- readRDS("metadata/sim_choice.RData")
 sim_dat <- readRDS("metadata/sim_dat.RData")
@@ -79,6 +77,6 @@ results <- mclapply(1:nrow(cases), function(i, cases, sim_choice, sim_dat, n_ite
   saveRDS(rits_mis_sim, paste(out_dir, "rits_mis_sim_", case_str, ".RData", sep = ""))
   
   return(NULL)
-}, mc.cores = 8, cases = cases, sim_dat = sim_dat, sim_choice = sim_choice, n_iter = n_iter)
+}, mc.cores = num_cores, cases = cases, sim_dat = sim_dat, sim_choice = sim_choice, n_iter = n_iter)
 
 print(timestamp())
