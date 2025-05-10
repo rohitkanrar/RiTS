@@ -23,21 +23,13 @@ results <- mclapply(1:nrow(cases), function(i, cases, sim_choice){
   for(mod in mods){
     file_name <- paste(out_dir, mod, "_", case_str, ".RData", sep = "")
     out_sim <- readRDS(file_name)
-    counter <- 0
-    if(is.null(out_sim[[1]]$contr)){
-      out_sim <- add_asympcs_sim(out_list = out_sim, ate_start = 20, batch = 5, 
-                                 placebo_arm = 1, alpha = 0.05, first_peek = 50, 
-                                 n_cores = 1)
-      counter <- counter + 1
-    }
-    if(is.null(out_sim[[1]]$contr_standard)){
-      out_sim <- add_standard_ci(out = out_sim, ate_start = 20, batch = 5, 
-                                 placebo_arm = 1, alpha = 0.05)
-      counter <- counter + 1
-    }
-    if(counter > 0){
-      saveRDS(out_sim, file_name)
-    } 
+    out_sim <- add_asympcs_sim(out_list = out_sim, ate_start = 20, batch = 5, 
+                               placebo_arm = 1, alpha = 0.05, first_peek = 50, 
+                               n_cores = 1, force_compute = FALSE)
+    out_sim <- add_standard_ci(out = out_sim, ate_start = 20, batch = 5, 
+                               placebo_arm = 1, alpha = 0.05, force_compute = FALSE)
+    
+    saveRDS(out_sim, file_name) 
   }
   return(NULL)
 }, mc.cores = num_cores, cases = cases, sim_choice = sim_choice)

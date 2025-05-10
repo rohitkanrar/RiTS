@@ -176,12 +176,15 @@ add_asympcs <- function(out, ate_start, batch = 5, placebo_arm = 1,
 }
 
 add_asympcs_sim <- function(out_list, ate_start, batch = 5, placebo_arm = 1, 
-                            alpha = 0.05, first_peek = NULL, n_cores = 1){
+                            alpha = 0.05, first_peek = NULL, n_cores = 1,
+                            force_compute = FALSE){
   n_iter <- length(out_list)
   out_list <- mclapply(out_list, function(out){
-    out <- add_asympcs(out = out, ate_start = ate_start, batch = batch, 
-                       placebo_arm = placebo_arm, alpha = alpha, 
-                       first_peek = first_peek)
+    if(is.null(out$ate) || is.null(out$contr) || force_compute){
+      out <- add_asympcs(out = out, ate_start = ate_start, batch = batch, 
+                         placebo_arm = placebo_arm, alpha = alpha, 
+                         first_peek = first_peek)
+    }
     return(out)
   }, mc.cores = n_cores)
 }
