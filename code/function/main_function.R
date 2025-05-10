@@ -352,7 +352,7 @@ one_step_rits_batch <- function(x, x_true, t, param, beta_true, K, d,
 
 
 do_rand_biv <- function(X, X_true, beta_true, weight = 1, seed = NULL, 
-                        rwd_sig = 0.1, asympcs = FALSE, ate_start = 20, 
+                        rwd_sig = 0.1, tr_start = 20, asympcs = FALSE, 
                         placebo_arm = 1, alpha = 0.05, first_peek = NULL){
   # browser()
   if(!is.null(seed)){
