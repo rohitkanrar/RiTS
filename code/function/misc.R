@@ -44,3 +44,12 @@ get_cum_mis_cov <- function(sim, mu_true, contr_true, delay = 0){
   }
   list(cum_mis_cov_ate, cum_mis_cov_contr)
 }
+
+zero_in_intv <- function(intv, zero = 0.1){
+  a <- intv[1]; b <- intv[2]
+  if(a < zero && b > zero){
+    return(TRUE)
+  } else{
+    return(FALSE)
+  }
+}

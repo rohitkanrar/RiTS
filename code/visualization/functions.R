@@ -171,7 +171,7 @@ gen_cum_miscov_plot <- function(out, ate_true, contr_true, alpha,
   
   df <- as.data.frame(cum_miscov[[2]] / n_iter)
   colnames(df) <- paste("Arm", 2:K)
-  df$obs <- ate_start:N  
+  df$obs <- as.numeric(dimnames(out[[1]]$ate)[[1]])  
   df_long <- melt(df, id.vars = "obs", variable.name = "Arm", 
                   value.name = "Miscov")
   
@@ -186,4 +186,102 @@ gen_cum_miscov_plot <- function(out, ate_true, contr_true, alpha,
       values = c("Arm 1" = "#E69F00", "Arm 2" = "#56B4E9", 
                  "Arm 3" = "#009E73", "Arm 4" = "#CC79A7")
     )
+}
+
+gen_winner_curve <- function(rand_out, ts_out, rits_out, titl = "High SNR", 
+                             true_best_arm = 4){
+  n_iter <- length(rand_out)
+  true_best_arm <- true_best_arm - 1
+  n_comp <- dim(rand_sim_high[[1]]$contr)[1]
+  power_std <- numeric(n_comp)
+  power_rand <- numeric(n_comp)
+  power_ts <- numeric(n_comp)
+  power_rits <- numeric(n_comp)
+  for(i in 1:n_iter){
+    power_std <- power_std + as.numeric(
+      sapply(1:n_comp, function(t) which.max(rand_out[[i]]$contr_standard[t, , 1]) == true_best_arm)
+    )
+    power_rand <- power_rand + as.numeric(
+      sapply(1:n_comp, function(t) which.max(rand_out[[i]]$contr[t, , 1]) == true_best_arm)
+    )
+    power_ts <- power_ts + as.numeric(
+      sapply(1:n_comp, function(t) which.max(ts_out[[i]]$contr[t, , 1]) == true_best_arm)
+    )
+    power_rits <- power_rits + as.numeric(
+      sapply(1:n_comp, function(t) which.max(rits_out[[i]]$contr[t, , 1]) == true_best_arm)
+    )
+  }
+  power_std <- power_std / n_iter
+  power_rand <- power_rand / n_iter
+  power_ts <- power_ts / n_iter
+  power_rits <- power_rits / n_iter
+  
+  df <- data.frame(std = power_std, rand = power_rand, ts = power_ts,
+                   rits = power_rits, 
+                   participant = as.numeric(dimnames(rand_out[[1]]$contr)[[1]]))
+  df_long <- tidyr::gather(df, key = "Methods", value = "value", -participant)
+  out_plot <- ggplot(df_long, aes(x = participant, y = value, color = Methods)) +
+    geom_line() + labs(x = "Participant", y = "Proportion") +
+    scale_color_manual(
+      values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00", 
+                 "std" = "#009E73"),
+      labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS", "std" = "Std")
+    ) + ggtitle(titl)
+  return(out_plot)
+}
+
+gen_power_curve <- function(rand_out, ts_out, rits_out, titl = "High SNR", 
+                            min_thresh = 0.1){
+  n_iter <- length(rand_out)
+  n_comp <- dim(rand_sim_high[[1]]$contr)[1]
+  
+  power_std <- numeric(n_comp)
+  power_rand <- numeric(n_comp)
+  power_ts <- numeric(n_comp)
+  power_rits <- numeric(n_comp)
+  
+  for(i in 1:n_iter){
+    power_std <- power_std + sapply(1:n_comp, function(t){
+      rej <- sapply(1:3, function(k){
+        zero_in_intv(rand_out[[i]]$contr_standard[t, k, 2:3], zero = min_thresh)
+      })
+      as.numeric(FALSE %in% rej)
+    })
+    power_rand <- power_rand + sapply(1:n_comp, function(t){
+      rej <- sapply(1:3, function(k){
+        zero_in_intv(rand_out[[i]]$contr[t, k, 2:3], zero = min_thresh)
+      })
+      as.numeric(FALSE %in% rej)
+    })
+    power_ts <- power_ts + sapply(1:n_comp, function(t){
+      rej <- sapply(1:3, function(k){
+        zero_in_intv(ts_out[[i]]$contr[t, k, 2:3], zero = min_thresh)
+      })
+      as.numeric(FALSE %in% rej)
+    })
+    power_rits <- power_rits + sapply(1:n_comp, function(t){
+      rej <- sapply(1:3, function(k){
+        zero_in_intv(rits_out[[i]]$contr[t, k, 2:3], zero = min_thresh)
+      })
+      as.numeric(FALSE %in% rej)
+    })
+  }
+  
+  power_std <- power_std / n_iter
+  power_rand <- power_rand / n_iter
+  power_ts <- power_ts / n_iter
+  power_rits <- power_rits / n_iter
+  
+  df <- data.frame(std = power_std, rand = power_rand, ts = power_ts,
+                   rits = power_rits, 
+                   participant = as.numeric(dimnames(rand_out[[1]]$contr)[[1]]))
+  df_long <- tidyr::gather(df, key = "Methods", value = "value", -participant)
+  out_plot <- ggplot(df_long, aes(x = participant, y = value, color = Methods)) +
+    geom_line() + labs(x = "Participant", y = "Power") +
+    scale_color_manual(
+      values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00", 
+                 "std" = "#009E73"),
+      labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS", "std" = "Std")
+    ) + ggtitle(titl)
+  return(out_plot)
 }

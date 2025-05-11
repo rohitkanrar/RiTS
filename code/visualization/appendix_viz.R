@@ -2,9 +2,9 @@ source("code/visualization/functions.R")
 ### Section A.1 (Empirical Behavior of Cumulative Regret)
 ## Cumulative Regret Plot
 # High SNR
-ts_sim_high <- readRDS("output/ts_sim_high.RData")
-rand_sim_high <- readRDS("output/rand_sim_high.RData")
-rits_sim_high <- readRDS("output/rits_sim_high.RData")
+ts_sim_high <- readRDS("output/ts_sim_dgp_high_min_prpn_0.05_tr_start_20.RData")
+rand_sim_high <- readRDS("output/rand_sim_dgp_high_min_prpn_0.005_tr_start_20.RData")
+rits_sim_high <- readRDS("output/rits_sim_dgp_high_min_prpn_0.05_tr_start_20.RData")
 n_iter <- length(ts_sim_high)
 N <- length(ts_sim_high[[1]]$trt)
 ind <- seq(20, 200, 20)
@@ -28,9 +28,9 @@ ggsave("plot/regret_sim_bwplot_high.jpg", height = 4, width = 12, units = "in")
 
 
 # Low SNR
-ts_sim_low <- readRDS("output/ts_sim_low.RData")
-rand_sim_low <- readRDS("output/rand_sim_low.RData")
-rits_sim_low <- readRDS("output/rits_sim_low.RData")
+ts_sim_low <- readRDS("output/ts_sim_dgp_low_min_prpn_0.05_tr_start_20.RData")
+rand_sim_low <- readRDS("output/rand_sim_dgp_low_min_prpn_0.005_tr_start_20.RData")
+rits_sim_low <- readRDS("output/rits_sim_dgp_low_min_prpn_0.05_tr_start_20.RData")
 
 sim_reg_plot1 <- gen_cum_reg_bwplot(out_rand = rand_sim_low,
                                     out_ts = ts_sim_low,
@@ -68,9 +68,9 @@ ggsave("plot/freq_arm_alloc.jpg", height = 4, width = 10, units = "in")
 
 ### Section A.2 (Quality of AsympCS)
 sim_choice <- readRDS("metadata/sim_choice.RData")
-ate_start <- sim_choice$ate_start
-ind <- c(seq(20, 50, 10), 70, 100, 150, 200)
-ate_ind <- ind - ate_start + 1
+ate_start <- rand_sim_high[[1]]$ate_start
+ind <- as.numeric(dimnames(rand_sim_high[[1]]$contr)[[1]][ate_ind])
+ate_ind <- c(seq(1, 7, 2), 11, 17, 27, 37)
 
 ## Box plot of Width for CS
 # High SNR
@@ -172,6 +172,10 @@ mu_true <- sim_dat$mu_true * 2
 contr_true <- mu_true - mu_true[1]
 contr_true <- contr_true[setdiff(1:K, sim_dat$placebo_arm)]
 
+cum_miscov_rand_high <- gen_cum_miscov_plot(out = rand_sim_high, ate_true = mu_true, 
+                                          contr_true = contr_true, 
+                                          alpha = alpha, ate_start = ate_start,
+                                          titl = "Rand")
 cum_miscov_ts_high <- gen_cum_miscov_plot(out = ts_sim_high, ate_true = mu_true, 
                                           contr_true = contr_true, 
                                           alpha = alpha, ate_start = ate_start,
@@ -180,9 +184,9 @@ cum_miscov_rits_high <- gen_cum_miscov_plot(out = rits_sim_high, ate_true = mu_t
                                           contr_true = contr_true, 
                                           alpha = alpha, ate_start = ate_start,
                                           titl = "RiTS")
-cum_miscov_high <- cum_miscov_ts_high + cum_miscov_rits_high +
-  plot_layout(ncol = 2, guides = "collect")
-ggsave("plot/cum_miscov_contr_high.jpg", height = 4, width = 8, units = "in")
+cum_miscov_high <- cum_miscov_rand_high + cum_miscov_ts_high + 
+  cum_miscov_rits_high + plot_layout(ncol = 3, guides = "collect")
+ggsave("plot/cum_miscov_contr_high.jpg", height = 4, width = 12, units = "in")
 
 
 ## Low SNR
@@ -190,6 +194,10 @@ mu_true <- sim_dat$mu_true
 contr_true <- mu_true - mu_true[1]
 contr_true <- contr_true[setdiff(1:K, sim_dat$placebo_arm)]
 
+cum_miscov_rand_low <- gen_cum_miscov_plot(out = rand_sim_low, ate_true = mu_true, 
+                                            contr_true = contr_true, 
+                                            alpha = alpha, ate_start = ate_start,
+                                            titl = "Rand")
 cum_miscov_ts_low <- gen_cum_miscov_plot(out = ts_sim_low, ate_true = mu_true, 
                                           contr_true = contr_true, 
                                           alpha = alpha, ate_start = ate_start,
@@ -198,6 +206,6 @@ cum_miscov_rits_low <- gen_cum_miscov_plot(out = rits_sim_low, ate_true = mu_tru
                                             contr_true = contr_true, 
                                             alpha = alpha, ate_start = ate_start,
                                             titl = "RiTS")
-cum_miscov_low <- cum_miscov_ts_low + cum_miscov_rits_low +
-  plot_layout(ncol = 2, guides = "collect")
-ggsave("plot/cum_miscov_contr_low.jpg", height = 4, width = 8, units = "in")
+cum_miscov_low <- cum_miscov_rand_low + cum_miscov_ts_low + cum_miscov_rits_low +
+  plot_layout(ncol = 3, guides = "collect")
+ggsave("plot/cum_miscov_contr_low.jpg", height = 4, width = 12, units = "in")
