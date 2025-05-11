@@ -10,7 +10,7 @@ min_prpns <- sim_choice$min_prpns
 cases <- expand.grid(dgp = dgps, min_prpn = min_prpns, tr_start = tr_starts)
 
 library(parallel)
-num_cores <- 16
+num_cores <- 8
 results <- mclapply(1:nrow(cases), function(i, cases, sim_choice){
   # browser()
   out_dir <- "output/"
@@ -22,23 +22,17 @@ results <- mclapply(1:nrow(cases), function(i, cases, sim_choice){
             "rits_mis_sim")
   for(mod in mods){
     file_name <- paste(out_dir, mod, "_", case_str, ".RData", sep = "")
-    out_sim <- readRDS(file_name)
-    tryCatch({
+    if(file.exists(file_name)){
+      out_sim <- readRDS(file_name)
       out_sim <- add_asympcs_sim(out_list = out_sim, ate_start = 20, batch = 5, 
                                  placebo_arm = 1, alpha = 0.05, first_peek = 50, 
                                  n_cores = 1, force_compute = FALSE)
-    }, error = function(e){
-      print(e)
-      print(file_name)
-    })
-    tryCatch({
       out_sim <- add_standard_ci(out = out_sim, ate_start = 20, batch = 5, 
                                  placebo_arm = 1, alpha = 0.05, force_compute = FALSE)
-    }, error = function(e){
-      print(e)
-      print(file_name)
-    })
-    saveRDS(out_sim, file_name) 
+      saveRDS(out_sim, file_name) 
+    } else{
+      next
+    }
   }
   return(NULL)
 }, mc.cores = num_cores, cases = cases, sim_choice = sim_choice)

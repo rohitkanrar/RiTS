@@ -2,7 +2,7 @@ source("code/function/asymp_cs.R")
 source("code/function/main_function.R")
 source("code/function/misc.R")
 
-# set.seed(2024)
+set.seed(787)
 N <- 200
 K <- 4 # cannot be changed
 d <- 3 # cannot be changed
@@ -39,21 +39,17 @@ first_peek <- 30
 reward_sig <- 1
 # correct
 rand_out <- do_rand_biv(X = X_true, X_true = X_true, beta_true = beta_true, 
-                        weight = weight, seed = NULL, rwd_sig = reward_sig, 
-                        asympcs = TRUE, ate_start = ate_start, placebo_arm = 1, 
-                        alpha = 0.05, first_peek = first_peek)
+                                weight = weight, seed = seed_, 
+                                rwd_sig = reward_sig, tr_start = tr_start,
+                                asympcs = FALSE)
 ts_out <- do_ts_batch(X = X_true, X_true = X_true, beta_true = beta_true, 
-                      weight = weight, seed = NULL, rwd_sig = reward_sig,
-                      tr_start = tr_start, tr_batch = 5, tr_lag = 10,
-                      M = 1000, v = 10, asympcs = TRUE, ate_start = ate_start, 
-                      placebo_arm = 1, alpha = 0.05, first_peek = first_peek, 
-                      min_prpn = min_prpn, design = "clip")
+                              weight = weight, seed = seed_, rwd_sig = reward_sig,
+                              tr_start = tr_start, tr_batch = 5, tr_lag = 10,
+                              M = 1000, v = 10, min_prpn = min_prpn, asympcs = FALSE)
 rits_out <- do_rits_batch(X = X_true, X_true = X_true, beta_true = beta_true, 
-                        weight = weight, seed = NULL, rwd_sig = reward_sig,
-                        tr_start = tr_start, tr_batch = 5, tr_lag = 10,
-                        M = 1000, v = 10, asympcs = TRUE,ate_start = ate_start, 
-                        placebo_arm = 1, alpha = 0.05, first_peek = first_peek, 
-                        min_prpn = min_prpn, design = "clip")
+                                  weight = weight, seed = seed_, rwd_sig = reward_sig,
+                                  tr_start = tr_start, tr_batch = 5, tr_lag = 10,
+                                  M = 1000, v = 10, min_prpn = min_prpn, asympcs = FALSE)
 
 # # miss
 # X <- X_true[, 1:2]

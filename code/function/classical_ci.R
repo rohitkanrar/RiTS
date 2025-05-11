@@ -1,28 +1,30 @@
-standard_ci <- function(rwd_hist, trt_hist, placebo_arm = 1, alpha = 0.05){
+standard_ci <- function(rwd_hist, trt_hist, K, placebo_arm = 1, alpha = 0.05){
   # browser()
-  K <- length(unique(trt_hist))
-  n_trt <- as.numeric(table(trt_hist))
-  out <- sapply(setdiff(1:K, placebo_arm), function(k){
-    tryCatch({
-      tmp <- t.test(rwd_hist[trt_hist == k], rwd_hist[trt_hist == placebo_arm], 
-                    var.equal = FALSE)
-      c(tmp$estimate[1] - tmp$estimate[2], tmp$conf.int)
-    }, error = function(e){
-      if(K < 4){
+  if(sum(trt_hist == placebo_arm) == 0){
+    out <- matrix(NA, K-1, 3)
+  } else{
+    n_trt <- as.numeric(table(trt_hist))
+    out <- sapply(setdiff(1:K, placebo_arm), function(k){
+      if(sum(trt_hist == k) == 0){
         c(NA, NA, NA)
-      } else{
-        c(mean(rwd_hist[trt_hist == k]) - mean(rwd_hist[trt_hist == placebo_arm]), 
+      } else if(sum(trt_hist == placebo_arm) == 1 || sum(trt_hist == k) == 1){
+        c(mean(rwd_hist[trt_hist == k]) - mean(rwd_hist[trt_hist == placebo_arm]),
           NA, NA)
+      } else{
+        tmp <- t.test(rwd_hist[trt_hist == k], rwd_hist[trt_hist == placebo_arm], 
+                      var.equal = FALSE)
+        c(tmp$estimate[1] - tmp$estimate[2], tmp$conf.int)
       }
     })
-  })
-  out <- t(out)
+    out <- t(out)
+  }
+  
   dimnames(out) <- list(Arms = setdiff(1:K, placebo_arm), 
                         CI = c("Center", "Lower", "Upper"))
   return(as.matrix(out))
 }
 
-add_standard_ci <- function(out, ate_start, batch, placebo_arm = 1, 
+add_standard_ci <- function(out, ate_start, batch = 5, placebo_arm = 1, 
                             alpha = 0.05, force_compute = FALSE){
   # browser()
   n_iter <- length(out)
@@ -39,7 +41,7 @@ add_standard_ci <- function(out, ate_start, batch, placebo_arm = 1,
       for(j in 1:length(times)){
         t <- times[j]
         ci_tmp[j, , ] <- standard_ci(rwd_hist = reward_benf[1:t], 
-                                     trt_hist = out[[i]]$trt[1:t],
+                                     trt_hist = out[[i]]$trt[1:t], K = K,
                                      placebo_arm = placebo_arm, alpha = alpha/(K-1)) # Bonferroni's correction
       }
       dimnames(ci_tmp) <- list(Times = times,
