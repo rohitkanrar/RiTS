@@ -8,10 +8,10 @@ dgps <- c("low", "high")
 tr_starts <- sim_choice$tr_start
 min_prpns <- sim_choice$min_prpns
 cases <- expand.grid(dgp = dgps, min_prpn = min_prpns, tr_start = tr_starts)
-n_iter <- 1000
+n_iter <- 10000
 
 library(parallel)
-num_cores <- 8
+num_cores <- 16
 results <- mclapply(1:nrow(cases), function(i, cases, sim_choice, sim_dat, n_iter){
   # browser()
   out_dir <- "output/"
