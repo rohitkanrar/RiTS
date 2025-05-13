@@ -3,7 +3,6 @@ source("code/function/classical_ci.R")
 source("code/function/asymp_cs.R")
 
 sim_choice <- readRDS("metadata/sim_choice.RData")
-sim_dat <- readRDS("metadata/sim_dat.RData")
 dgps <- c("low", "high")
 tr_starts <- sim_choice$tr_start
 min_prpns <- sim_choice$min_prpns
@@ -13,7 +12,7 @@ library(parallel)
 num_cores <- 16
 results <- mclapply(1:nrow(cases), function(i, cases, sim_choice){
   # browser()
-  out_dir <- "output/"
+  out_dir <- "output/varyingX/"
   dgp <- cases[i, "dgp"]; min_prpn <- cases[i, "min_prpn"]
   tr_start <- cases[i, "tr_start"]
   case_str <- paste("dgp", dgp, "min_prpn", min_prpn, "tr_start", tr_start, 
