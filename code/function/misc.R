@@ -5,6 +5,11 @@ get_beta <- function(a, b, c) c(a-2*b*c^2, 0, -2*b)
 # y = a - b x^2
 get_gamma <- function(a, b) c(a, 0, -b)
 
+get_X <- function(N){
+  x <- rnorm(N)
+  cbind(1, x, x^2)
+}
+
 get_true_avg_rwd <- function(X, trt, beta_true){
   # browser()
   N <- nrow(X)

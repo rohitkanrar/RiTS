@@ -8,19 +8,17 @@ dgps <- c("low", "high")
 tr_starts <- sim_choice$tr_start
 min_prpns <- sim_choice$min_prpns
 cases <- expand.grid(dgp = dgps, min_prpn = min_prpns, tr_start = tr_starts)
-n_iter <- 10000
+n_iter <- 1000
 
 library(parallel)
-num_cores <- 16
+num_cores <- 8
 results <- mclapply(1:nrow(cases), function(i, cases, sim_choice, sim_dat, n_iter){
   # browser()
-  out_dir <- "output/"
+  out_dir <- "output/varyingX/"
   N <- sim_choice$N
   K <- sim_choice$K # cannot be changed
   d <- sim_choice$d # cannot be changed
   E <- 2 # cannot be changed
-  X_true <- sim_dat$X_true
-  X <- X_true[, 1:2]
   beta_true_low <- sim_dat$beta_true
   beta_true_high <- 2 * beta_true_low
   placebo_arm <- sim_dat$placebo_arm
@@ -48,6 +46,8 @@ results <- mclapply(1:nrow(cases), function(i, cases, sim_choice, sim_dat, n_ite
   for(iter in 1:n_iter){
     # if(iter %% 100 == 0) print(iter)
     seed_ <- iter
+    X_true <- get_X(N = N)
+    X <- X_true[, 1:2]
     ts_sim[[iter]] <- do_ts_batch(X = X_true, X_true = X_true, beta_true = beta_true, 
                                   weight = weight, seed = seed_, rwd_sig = reward_sig,
                                   tr_start = tr_start, tr_batch = 5, tr_lag = 10,
