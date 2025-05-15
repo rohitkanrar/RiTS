@@ -1,4 +1,5 @@
-source("code/function/classical_ci.R")
+# source("code/function/classical_ci.R")
+source("code/function/asymp_cs.R")
 require(parallel)
 rand_files <- list.files("output/varyingX/", pattern = "^rand_")
 mclapply(1:length(rand_files), function(i){
