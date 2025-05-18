@@ -6,15 +6,20 @@ sim_choice <- readRDS("metadata/sim_choice.RData")
 sim_dat <- readRDS("metadata/sim_dat.RData")
 dgps <- c("low", "high")
 tr_starts <- sim_choice$tr_start
-min_prpns <- sim_choice$min_prpns
-cases <- expand.grid(dgp = dgps, min_prpn = min_prpns, tr_start = tr_starts)
+# min_prpns <- sim_choice$min_prpns
+# cases <- expand.grid(dgp = dgps, min_prpn = min_prpns, tr_start = tr_starts)
+cases <- expand.grid(dgp = dgps, tr_start = tr_starts)
 n_iter <- 1000
+out_dir <- "output/varyingXandClip/"
+if(!dir.exists(out_dir)){
+  dir.create(out_dir)
+}
 
 library(parallel)
 num_cores <- 16
 results <- mclapply(1:nrow(cases), function(i, cases, sim_choice, sim_dat, n_iter){
   # browser()
-  out_dir <- "output/varyingX/"
+  out_dir <- "output/varyingXandClip/"
   N <- sim_choice$N
   K <- sim_choice$K # cannot be changed
   d <- sim_choice$d # cannot be changed
@@ -26,8 +31,7 @@ results <- mclapply(1:nrow(cases), function(i, cases, sim_choice, sim_dat, n_ite
   design <- sim_choice$design
   reward_sig <- sim_choice$reward_sig
   
-  dgp <- cases[i, "dgp"]; min_prpn <- cases[i, "min_prpn"]
-  tr_start <- cases[i, "tr_start"]
+  dgp <- cases[i, "dgp"]; min_prpn <- 0.05; tr_start <- cases[i, "tr_start"]
   case_str <- paste("dgp", dgp, "min_prpn", min_prpn, "tr_start", tr_start, 
                     sep = "_")
   case_str0 <- paste("dgp", dgp, "min_prpn", 0.005, "tr_start", 20, 
@@ -51,19 +55,23 @@ results <- mclapply(1:nrow(cases), function(i, cases, sim_choice, sim_dat, n_ite
     ts_sim[[iter]] <- do_ts_batch(X = X_true, X_true = X_true, beta_true = beta_true, 
                                   weight = weight, seed = seed_, rwd_sig = reward_sig,
                                   tr_start = tr_start, tr_batch = 5, tr_lag = 10,
-                                  M = 1000, v = 10, min_prpn = min_prpn, asympcs = FALSE)
+                                  M = 1000, v = 10, min_prpn = min_prpn, 
+                                  asympcs = FALSE, design = "clip_varying")
     rits_sim[[iter]] <- do_rits_batch(X = X_true, X_true = X_true, beta_true = beta_true, 
                                       weight = weight, seed = seed_, rwd_sig = reward_sig,
                                       tr_start = tr_start, tr_batch = 5, tr_lag = 10,
-                                      M = 1000, v = 10, min_prpn = min_prpn, asympcs = FALSE)
+                                      M = 1000, v = 10, min_prpn = min_prpn, 
+                                      asympcs = FALSE, design = "clip_varying")
     ts_mis_sim[[iter]] <- do_ts_batch(X = X, X_true = X_true, beta_true = beta_true, 
                                       weight = weight, seed = seed_, rwd_sig = reward_sig,
                                       tr_start = tr_start, tr_batch = 5, tr_lag = 10,
-                                      M = 1000, v = 10, min_prpn = min_prpn, asympcs = FALSE)
+                                      M = 1000, v = 10, min_prpn = min_prpn, 
+                                      asympcs = FALSE, design = "clip_varying")
     rits_mis_sim[[iter]] <- do_rits_batch(X = X, X_true = X_true, beta_true = beta_true, 
                                           weight = weight, seed = seed_, rwd_sig = reward_sig,
                                           tr_start = tr_start, tr_batch = 5, tr_lag = 10,
-                                          M = 1000, v = 10, min_prpn = min_prpn, asympcs = FALSE)
+                                          M = 1000, v = 10, min_prpn = min_prpn, 
+                                          asympcs = FALSE, design = "clip_varying")
     if(!file.exists(rand_file_name)){
       rand_sim[[iter]] <- do_rand_biv(X = X_true, X_true = X_true, beta_true = beta_true, 
                                       weight = weight, seed = seed_, 
