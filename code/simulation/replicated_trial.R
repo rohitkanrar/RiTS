@@ -16,7 +16,7 @@ if(!dir.exists(out_dir)){
 }
 
 library(parallel)
-num_cores <- 16
+num_cores <- 8
 results <- mclapply(1:nrow(cases), function(i, cases, sim_choice, sim_dat, n_iter){
   # browser()
   out_dir <- "output/varyingXandClip/"
@@ -34,10 +34,12 @@ results <- mclapply(1:nrow(cases), function(i, cases, sim_choice, sim_dat, n_ite
   dgp <- cases[i, "dgp"]; min_prpn <- 0.05; tr_start <- cases[i, "tr_start"]
   case_str <- paste("dgp", dgp, "min_prpn", min_prpn, "tr_start", tr_start, 
                     sep = "_")
-  case_str0 <- paste("dgp", dgp, "min_prpn", 0.005, "tr_start", 20, 
-                    sep = "_")
-  rand_file_name <- paste(out_dir, "rand_sim_", case_str0, ".RData", sep = "")
-  rand_mis_file_name <- paste(out_dir, "rand_mis_sim_", case_str0, ".RData", sep = "")
+  # case_str0 <- paste("dgp", dgp, "min_prpn", 0.005, "tr_start", 20, 
+  #                   sep = "_")
+  # rand_file_name <- paste(out_dir, "rand_sim_", case_str0, ".RData", sep = "")
+  # rand_mis_file_name <- paste(out_dir, "rand_mis_sim_", case_str0, ".RData", sep = "")
+  rand_file_name <- paste(out_dir, "rand_sim_", case_str, ".RData", sep = "")
+  rand_mis_file_name <- paste(out_dir, "rand_mis_sim_", case_str, ".RData", sep = "")
   
   ts_sim <- vector(mode = "list", length = n_iter)
   rand_sim <- ts_sim; rits_sim <- ts_sim; rand_mis_sim <- ts_sim; 
