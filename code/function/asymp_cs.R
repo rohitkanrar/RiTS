@@ -7,6 +7,26 @@ basic_learner <- function(y, X, newX){
   tmp <- predict(mod, newx = newX, s = 0.1)
   as.numeric(tmp)
 }
+main_effect_ridge <- function(y, X, newX, trt_ind, K){
+  # browser()
+  nte <- nrow(newX)
+  trt_ind <- factor(trt_ind, levels = 1:K)
+  X <- model.matrix(~0+trt_ind+X)
+  X <- X[, -1]
+  mod <- glmnet::glmnet(X, y, alpha = 0)
+  reg_est <- vector(mode = "list", length = K)
+  tmp <- matrix(0, nte, K-1)
+  newX <- cbind(tmp, newX)
+  colnames(newX) <- colnames(X)
+  for(k in 1:K){
+    newX_k <- newX
+    if(k != 1){
+      newX_k[, k-1] <- 1
+    }
+    reg_est[[k]] <- as.numeric(predict(mod, newx = newX_k, s = 0.1))
+  }
+  reg_est
+}
 
 get_aipw_static <- function(y, reg_est, propensity, treatment, K){
   # browser()
@@ -21,8 +41,9 @@ get_aipw_static <- function(y, reg_est, propensity, treatment, K){
 
 get_aipw_seq <- function(treatment, y, propensity, X, 
                          train_idx = NULL, times = NULL, n_cores = 1,
-                         cross_fit = TRUE, verbose = FALSE){
+                         cross_fit = TRUE, verbose = FALSE, learner = "main_ridge"){
   # browser()
+  K <- length(unique(treatment))
   if (is.null(train_idx)){
     # train_idx <- rbinom(length(y), 1, 0.5)
     train_idx <- rep(c(0, 1), length.out = length(y))
@@ -62,17 +83,23 @@ get_aipw_seq <- function(treatment, y, propensity, X,
       treatment_eval <- treatment[eval_idx_t]
       reg_est <- vector(mode = "list", length = K)
       prpn_eval <- propensity[eval_idx_t, ]
-      for(k in 1:K){
-        # browser()
-        reg_est[[k]] <- tryCatch({
-          basic_learner(y = y_train[treatment_train == k], 
-                                        X = X_train[treatment_train == k, ], 
-                                        newX = X_eval)
-        }, error = function(e){
-          numeric(nrow(X_eval))
-        })
-        
+      if(learner == "main_ridge"){
+        reg_est <- main_effect_ridge(y = y_train, X = X_train, newX = X_eval, 
+                                   trt_ind = treatment_train, K = K)
+      } else{
+        for(k in 1:K){
+          # browser()
+          reg_est[[k]] <- tryCatch({
+            basic_learner(y = y_train[treatment_train == k], 
+                          X = X_train[treatment_train == k, ], 
+                          newX = X_eval)
+          }, error = function(e){
+            numeric(nrow(X_eval))
+          })
+          
+        }
       }
+      # browser()
       aipw_master[[i]][eval_idx_t, ] <- get_aipw_static(y = y_eval, 
                                                         reg_est = reg_est, 
                                                         propensity = prpn_eval, 
@@ -88,7 +115,8 @@ get_aipw_seq <- function(treatment, y, propensity, X,
 
 get_asympcs <- function(trt_hist, rwd_hist, prpns_mat, context_hist,
                         placebo_arm, times, aipw_master = NULL,
-                        alpha = 0.05, first_peek = 50, n_cores = 1){
+                        alpha = 0.05, first_peek = 50, n_cores = 1, 
+                        learner = "main_ridge"){
   # browser()
   if(times[1] > first_peek){
     times <- c(first_peek, times)
@@ -97,7 +125,7 @@ get_asympcs <- function(trt_hist, rwd_hist, prpns_mat, context_hist,
   asymp_cs <- matrix(0, N, 3)
   aipw_master <- get_aipw_seq(y = rwd_hist, X = context_hist, 
                               treatment = trt_hist, propensity = prpns_mat, 
-                              times = times)
+                              times = times, learner = learner)
   rho2 <- drconfseq::best_rho2_exact(t_opt = m, alpha_opt = alpha)
   aipw_ate_list <- vector(mode = "list", length = length(aipw_master))
   aipw_contr_list <- aipw_ate_list
@@ -151,7 +179,7 @@ get_asympcs <- function(trt_hist, rwd_hist, prpns_mat, context_hist,
 }
 
 add_asympcs <- function(out, ate_start, batch = 5, placebo_arm = 1, 
-                        alpha = 0.05, first_peek = NULL){
+                        alpha = 0.05, first_peek = NULL, learner = "main_ridge"){
   if(is.null(first_peek)) first_peek <- ate_start
   trt <- out$trt; N <- length(trt)
   if(!is.null(out$reward_benf)){
@@ -164,7 +192,8 @@ add_asympcs <- function(out, ate_start, batch = 5, placebo_arm = 1,
                          prpns_mat = out$log_dat$prpns_mat, 
                          context_hist = out$log_dat$context, 
                          placebo_arm = placebo_arm, times = times_, 
-                         alpha = alpha, first_peek = first_peek)
+                         alpha = alpha, first_peek = first_peek, 
+                         learner = learner)
   ate <- asympcs[[1]]
   contr <- asympcs[[2]]
   out[["alpha"]] <- alpha
@@ -177,13 +206,13 @@ add_asympcs <- function(out, ate_start, batch = 5, placebo_arm = 1,
 
 add_asympcs_sim <- function(out_list, ate_start, batch = 5, placebo_arm = 1, 
                             alpha = 0.05, first_peek = NULL, n_cores = 1,
-                            force_compute = FALSE){
+                            force_compute = FALSE, learner = "main_ridge"){
   n_iter <- length(out_list)
   out_list <- mclapply(out_list, function(out){
     if(is.null(out$ate) || is.null(out$contr) || force_compute){
       out <- add_asympcs(out = out, ate_start = ate_start, batch = batch, 
                          placebo_arm = placebo_arm, alpha = alpha, 
-                         first_peek = first_peek)
+                         first_peek = first_peek, learner = learner)
     }
     return(out)
   }, mc.cores = n_cores)

@@ -82,10 +82,10 @@ results <- mclapply(1:nrow(cases), function(i, cases, sim_choice, sim_dat, n_ite
   saveRDS(ts_mis_sim, paste(out_dir, "ts_mis_sim_", case_str, ".RData", sep = ""))
   saveRDS(rits_mis_sim, paste(out_dir, "rits_mis_sim_", case_str, ".RData", sep = ""))
   if(!file.exists(rand_file_name)){
-    saveRDS(rand_sim, paste(out_dir, "rand_sim_", case_str, ".RData", sep = ""))
+    saveRDS(rand_sim, paste(out_dir, "rand_sim_", case_str0, ".RData", sep = ""))
   }
   if(!file.exists(rand_mis_file_name)){
-    saveRDS(rand_mis_sim, paste(out_dir, "rand_mis_sim_", case_str, ".RData", sep = ""))
+    saveRDS(rand_mis_sim, paste(out_dir, "rand_mis_sim_", case_str0, ".RData", sep = ""))
   }
   return(NULL)
 }, mc.cores = num_cores, cases = cases, sim_dat = sim_dat, sim_choice = sim_choice, n_iter = n_iter)
