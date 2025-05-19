@@ -30,16 +30,6 @@ apply_floor <- function(a, amin) {
   return(new - c * individual_slack)
 }
 
-apply_floor_varying <- function(a, t, K, rate = 0.5) {
-  # browser()
-  amin <- (1/K) * t^(-rate)
-  new <- pmax(a, amin)
-  total_slack <- sum(new) - 1
-  individual_slack <- new - amin
-  c <- total_slack / sum(individual_slack)
-  return(new - c * individual_slack)
-}
-
 get_cum_mis_cov <- function(sim, mu_true, contr_true, delay = 0){
   total_peek <- dim(sim[[1]]$ate)[1]
   no_of_peek <- dim(sim[[1]]$ate)[1] - delay

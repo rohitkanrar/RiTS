@@ -110,7 +110,7 @@ one_step_ts_batch <- function(x, x_true, t, param, beta_true, K, d, log_dat,
                               min_prpn = 0.05, M = 1000,
                               tr_start = 10, tr_lag = 10, ate_start = 20, 
                               weight = 2, train = FALSE, rwd_sig = 0.1,
-                              design = "clip_varying", trt = NULL){
+                              design = "no_clip", trt = NULL){
   # browser()
   last_tr_ind <- log_dat$last_tr_ind
   trt_hist <- log_dat$trt
@@ -140,8 +140,6 @@ one_step_ts_batch <- function(x, x_true, t, param, beta_true, K, d, log_dat,
     prpns <- (1/K) * delt + (1 - delt) * prpns
   } else if(design == "clip"){
     prpns <- apply_floor(prpns, min_prpn)
-  } else if(design == "clip_varying"){
-    prpns <- apply_floor_varying(prpns, t, K)
   } else if(design == "mad_clip"){
     delt <- min_prpn * K
     prpns <- (1/K) * delt + (1 - delt) * prpns
@@ -229,7 +227,7 @@ one_step_rits_batch <- function(x, x_true, t, param, beta_true, K, d,
                                 min_prpn = 0.05, tr_start = 10, tr_lag = 10, 
                                 M = 1000, ate_start = 20, tr_batch = 10, 
                                 weight = 2, train = FALSE, rwd_sig = 0.1, 
-                                design = "clip_varying", trt = NULL){
+                                design = "clip", trt = NULL){
   last_tr_ind <- log_dat$last_tr_ind
   trt_hist <- log_dat$trt
   rwd_safe_hist <- log_dat$reward_safe
@@ -260,8 +258,6 @@ one_step_rits_batch <- function(x, x_true, t, param, beta_true, K, d,
     prpns <- (1/K) * delt + (1 - delt) * prpns
   } else if(design == "clip"){
     prpns <- apply_floor(prpns, min_prpn)
-  } else if(design == "clip_varying"){
-    prpns <- apply_floor_varying(prpns, t, K)
   } else if(design == "mad_clip"){
     delt <- min_prpn * K
     prpns <- (1/K) * delt + (1 - delt) * prpns
@@ -429,7 +425,7 @@ do_ts_batch <- function(X, X_true, beta_true, weight = 1, seed = NULL,
                         rwd_sig = 0.1, tr_start = 20, tr_batch = 5, tr_lag = 10,
                         M = 1000, v = 10, min_prpn = 0.05, 
                         asympcs = FALSE, ate_start = 20, placebo_arm = 1, 
-                        alpha = 0.05, first_peek = NULL, design = "clip_varying"){
+                        alpha = 0.05, first_peek = NULL, design = "clip"){
   # browser()
   if(!is.null(seed)){
     set.seed(seed)
@@ -526,7 +522,7 @@ do_rits_batch <- function(X, X_true, beta_true, weight = 1, seed = NULL,
                           rwd_sig = 0.1, tr_start = 20, tr_batch = 5, tr_lag = 10,
                           M = 1000, v = 10, min_prpn = 0.05, 
                           asympcs = FALSE, ate_start = 20, placebo_arm = 1, 
-                          alpha = 0.05, first_peek = NULL, design = "clip_varying"){
+                          alpha = 0.05, first_peek = NULL, design = "clip"){
   # browser()
   if(!is.null(seed)){
     set.seed(seed)
