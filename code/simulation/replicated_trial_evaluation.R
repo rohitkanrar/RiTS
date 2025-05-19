@@ -5,17 +5,17 @@ source("code/function/asymp_cs.R")
 sim_choice <- readRDS("metadata/sim_choice.RData")
 dgps <- c("low", "high")
 tr_starts <- sim_choice$tr_start
-# min_prpns <- sim_choice$min_prpns
-# cases <- expand.grid(dgp = dgps, min_prpn = min_prpns, tr_start = tr_starts)
-cases <- expand.grid(dgp = dgps, tr_start = tr_starts)
+min_prpns <- sim_choice$min_prpns
+cases <- expand.grid(dgp = dgps, min_prpn = min_prpns, tr_start = tr_starts)
 batch <- 1
 
 library(parallel)
-num_cores <- 8
+num_cores <- 16
 results <- mclapply(1:nrow(cases), function(i, cases, sim_choice){
   # browser()
-  out_dir <- "output/varyingXandClip//"
-  dgp <- cases[i, "dgp"]; min_prpn <- 0.05; tr_start <- cases[i, "tr_start"]
+  out_dir <- "output/varyingX/"
+  dgp <- cases[i, "dgp"]; min_prpn <- cases[i, "min_prpn"]
+  tr_start <- cases[i, "tr_start"]
   case_str <- paste("dgp", dgp, "min_prpn", min_prpn, "tr_start", tr_start, 
                     sep = "_")
   mods <- c("rand_sim", "ts_sim", "rits_sim", "rand_mis_sim", "ts_mis_sim", 
