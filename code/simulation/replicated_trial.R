@@ -64,13 +64,11 @@ results <- mclapply(1:nrow(cases), function(i, cases, sim_choice, sim_dat, n_ite
                                           weight = weight, seed = seed_, rwd_sig = reward_sig,
                                           tr_start = tr_start, tr_batch = 5, tr_lag = 10,
                                           M = 1000, v = 10, min_prpn = min_prpn, asympcs = FALSE)
-    if(!file.exists(rand_file_name)){
+    if(min_prpn == 0.005){
       rand_sim[[iter]] <- do_rand_biv(X = X_true, X_true = X_true, beta_true = beta_true, 
                                       weight = weight, seed = seed_, 
                                       rwd_sig = reward_sig, tr_start = tr_start,
                                       asympcs = FALSE)
-    }
-    if(!file.exists(rand_mis_file_name)){
       rand_mis_sim[[iter]] <- do_rand_biv(X = X, X_true = X_true, beta_true = beta_true, 
                                           weight = weight, seed = seed_, 
                                           rwd_sig = reward_sig, tr_start = tr_start,
@@ -81,10 +79,8 @@ results <- mclapply(1:nrow(cases), function(i, cases, sim_choice, sim_dat, n_ite
   saveRDS(rits_sim, paste(out_dir, "rits_sim_", case_str, ".RData", sep = ""))
   saveRDS(ts_mis_sim, paste(out_dir, "ts_mis_sim_", case_str, ".RData", sep = ""))
   saveRDS(rits_mis_sim, paste(out_dir, "rits_mis_sim_", case_str, ".RData", sep = ""))
-  if(!file.exists(rand_file_name)){
+  if(min_prpn == 0.005){
     saveRDS(rand_sim, paste(out_dir, "rand_sim_", case_str0, ".RData", sep = ""))
-  }
-  if(!file.exists(rand_mis_file_name)){
     saveRDS(rand_mis_sim, paste(out_dir, "rand_mis_sim_", case_str0, ".RData", sep = ""))
   }
   return(NULL)
