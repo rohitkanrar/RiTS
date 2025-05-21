@@ -13,7 +13,7 @@ library(parallel)
 num_cores <- 16
 results <- mclapply(1:nrow(cases), function(i, cases, sim_choice){
   # browser()
-  out_dir <- "output/varyingX/"
+  out_dir <- "output/"
   dgp <- cases[i, "dgp"]; min_prpn <- cases[i, "min_prpn"]
   tr_start <- cases[i, "tr_start"]
   case_str <- paste("dgp", dgp, "min_prpn", min_prpn, "tr_start", tr_start, 
