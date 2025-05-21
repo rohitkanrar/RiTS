@@ -31,6 +31,7 @@ apply_floor <- function(a, amin) {
 }
 
 get_cum_mis_cov <- function(sim, mu_true, contr_true, delay = 0){
+  n_iter <- length(sim)
   total_peek <- dim(sim[[1]]$ate)[1]
   no_of_peek <- dim(sim[[1]]$ate)[1] - delay
   cum_mis_cov_ate <- matrix(0, no_of_peek, dim(sim[[1]]$ate)[2])

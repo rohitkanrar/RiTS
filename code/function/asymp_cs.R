@@ -41,7 +41,7 @@ get_aipw_static <- function(y, reg_est, propensity, treatment, K){
 
 get_aipw_seq <- function(treatment, y, propensity, X, 
                          train_idx = NULL, times = NULL, n_cores = 1,
-                         cross_fit = TRUE, verbose = FALSE, learner = "main_ridge"){
+                         cross_fit = TRUE, verbose = FALSE, learner = "full_ridge"){
   # browser()
   K <- length(unique(treatment))
   if (is.null(train_idx)){
@@ -116,7 +116,7 @@ get_aipw_seq <- function(treatment, y, propensity, X,
 get_asympcs <- function(trt_hist, rwd_hist, prpns_mat, context_hist,
                         placebo_arm, times, aipw_master = NULL,
                         alpha = 0.05, first_peek = 50, n_cores = 1, 
-                        learner = "main_ridge"){
+                        learner = "full_ridge"){
   # browser()
   if(times[1] > first_peek){
     times <- c(first_peek, times)
@@ -179,7 +179,7 @@ get_asympcs <- function(trt_hist, rwd_hist, prpns_mat, context_hist,
 }
 
 add_asympcs <- function(out, ate_start, batch = 5, placebo_arm = 1, 
-                        alpha = 0.05, first_peek = NULL, learner = "main_ridge"){
+                        alpha = 0.05, first_peek = NULL, learner = "full_ridge"){
   if(is.null(first_peek)) first_peek <- ate_start
   trt <- out$trt; N <- length(trt)
   if(!is.null(out$reward_benf)){
@@ -206,7 +206,7 @@ add_asympcs <- function(out, ate_start, batch = 5, placebo_arm = 1,
 
 add_asympcs_sim <- function(out_list, ate_start, batch = 5, placebo_arm = 1, 
                             alpha = 0.05, first_peek = NULL, n_cores = 1,
-                            force_compute = FALSE, learner = "main_ridge"){
+                            force_compute = FALSE, learner = "full_ridge"){
   n_iter <- length(out_list)
   out_list <- mclapply(out_list, function(out){
     if(is.null(out$ate) || is.null(out$contr) || force_compute){
