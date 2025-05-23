@@ -352,7 +352,7 @@ one_step_rits_batch <- function(x, x_true, t, param, beta_true, K, d,
 
 
 do_rand_biv <- function(X, X_true, beta_true, weight = 1, seed = NULL, 
-                        rwd_sig = 0.1, tr_start = 20, asympcs = FALSE, 
+                        rwd_sig = 0.1, tr_start = 24, asympcs = FALSE, 
                         placebo_arm = 1, alpha = 0.05, first_peek = NULL){
   # browser()
   if(!is.null(seed)){
@@ -366,7 +366,7 @@ do_rand_biv <- function(X, X_true, beta_true, weight = 1, seed = NULL,
                   context = numeric(0), prpns_mat = numeric(0))
   stopifnot("tr_start must be multiple of the number of Arms" = 
               (tr_start %% K == 0))
-  trt_init <- sample(rep(1:K, tr_start %/% K), tr_start)
+  trt_init <- rep(rep(1:4, each = 2), tr_start %/% (2*K))
   trt <- numeric(N)
   reward_benf <- numeric(N)
   reward_safe <- numeric(N)
@@ -422,7 +422,7 @@ do_rand_biv <- function(X, X_true, beta_true, weight = 1, seed = NULL,
 
 
 do_ts_batch <- function(X, X_true, beta_true, weight = 1, seed = NULL, 
-                        rwd_sig = 0.1, tr_start = 20, tr_batch = 5, tr_lag = 10,
+                        rwd_sig = 0.1, tr_start = 24, tr_batch = 5, tr_lag = 10,
                         M = 1000, v = 10, min_prpn = 0.05, 
                         asympcs = FALSE, ate_start = 20, placebo_arm = 1, 
                         alpha = 0.05, first_peek = NULL, design = "clip"){
@@ -435,7 +435,7 @@ do_ts_batch <- function(X, X_true, beta_true, weight = 1, seed = NULL,
   K <- dim(beta_true)[2]
   stopifnot("tr_start must be multiple of the number of Arms" = 
               (tr_start %% K == 0))
-  trt_init <- sample(rep(1:K, tr_start %/% K), tr_start)
+  trt_init <- rep(rep(1:4, each = 2), tr_start %/% (2*K))
   param <- list(beta_mean = array(0, c(d, K, N)), 
                 beta_cov = array(0, c(d, d, K, N)), 
                 beta_eff = array(0, c(d, d, K)))
@@ -519,7 +519,7 @@ do_ts_batch <- function(X, X_true, beta_true, weight = 1, seed = NULL,
 
 
 do_rits_batch <- function(X, X_true, beta_true, weight = 1, seed = NULL, 
-                          rwd_sig = 0.1, tr_start = 20, tr_batch = 5, tr_lag = 10,
+                          rwd_sig = 0.1, tr_start = 24, tr_batch = 5, tr_lag = 10,
                           M = 1000, v = 10, min_prpn = 0.05, 
                           asympcs = FALSE, ate_start = 20, placebo_arm = 1, 
                           alpha = 0.05, first_peek = NULL, design = "clip"){
@@ -533,7 +533,7 @@ do_rits_batch <- function(X, X_true, beta_true, weight = 1, seed = NULL,
   E <- dim(beta_true)[3]
   stopifnot("tr_start must be multiple of the number of Arms" = 
               (tr_start %% K == 0))
-  trt_init <- sample(rep(1:K, tr_start %/% K), tr_start)
+  trt_init <- rep(rep(1:4, each = 2), tr_start %/% (2*K))
   param <- list(beta_mean = array(0, c(d, K, N, E)), 
                 beta_cov = array(0, c(d, d, K, N, E)), 
                 beta_eff = array(0, c(d, d, K, E)))
