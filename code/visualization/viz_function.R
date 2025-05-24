@@ -160,7 +160,7 @@ gen_bias_bwplot <- function(out_rand, out_ts, out_rits, ate_ind, arm,
     Column = rep(rep(1:ncol(contr_rand_bias), each = nrow(contr_rand_bias), 
                      times = 4))
   )
-  
+  # browser()
   sim_bias_plot1 <- ggplot(df, aes(x = factor(Column), 
                                    y = Bias, fill = Method)) +
     geom_boxplot(position = position_dodge(width = 0.8), width = 0.7) +

@@ -1,4 +1,4 @@
-source("code/visualization/functions.R")
+source("code/visualization/viz_function.R")
 source("code/function/misc.R")
 library(reshape2); library(ggplot2); library(patchwork)
 sim_choice <- readRDS("metadata/sim_choice.RData")
@@ -7,7 +7,7 @@ dgps <- c("low", "high")
 tr_starts <- sim_choice$tr_start
 min_prpns <- sim_choice$min_prpns
 cases <- expand.grid(dgp = dgps, min_prpn = min_prpns, tr_start = tr_starts)
-out_dir <- "output/varyingX/"
+out_dir <- "output/"
 alpha <- 0.05; ate_start <- sim_choice$ate_start; K <- 4
 
 cum_miscov_plot <- vector("list", 2*nrow(cases))

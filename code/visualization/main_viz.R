@@ -1,18 +1,18 @@
-source("code/visualization/functions.R")
+source("code/visualization/viz_function.R")
 ### Section A.1 (Empirical Behavior of Cumulative Regret)
 ## Cumulative Regret Plot
 # High SNR
-ts_sim_high <- readRDS("output/ts_sim_dgp_high_min_prpn_0.05_tr_start_20.RData")
-rand_sim_high <- readRDS("output/rand_sim_dgp_high_min_prpn_0.005_tr_start_20.RData")
-rits_sim_high <- readRDS("output/rits_sim_dgp_high_min_prpn_0.05_tr_start_20.RData")
+ts_sim_high <- readRDS("output/ts_sim_dgp_high_min_prpn_0.05_tr_start_24.RData")
+rand_sim_high <- readRDS("output/rand_sim_dgp_high_min_prpn_0.005_tr_start_24.RData")
+rits_sim_high <- readRDS("output/rits_sim_dgp_high_min_prpn_0.05_tr_start_24.RData")
 # Low SNR
-ts_sim_low <- readRDS("output/ts_sim_dgp_low_min_prpn_0.05_tr_start_20.RData")
-rand_sim_low <- readRDS("output/rand_sim_dgp_low_min_prpn_0.005_tr_start_20.RData")
-rits_sim_low <- readRDS("output/rits_sim_dgp_low_min_prpn_0.05_tr_start_20.RData")
+ts_sim_low <- readRDS("output/ts_sim_dgp_low_min_prpn_0.05_tr_start_24.RData")
+rand_sim_low <- readRDS("output/rand_sim_dgp_low_min_prpn_0.005_tr_start_24.RData")
+rits_sim_low <- readRDS("output/rits_sim_dgp_low_min_prpn_0.05_tr_start_24.RData")
 
 n_iter <- length(ts_sim_high)
 N <- length(ts_sim_high[[1]]$trt)
-ind <- seq(ts_sim_high[[1]]$tr_first, N, 20)
+ind <- c(ts_sim_high[[1]]$tr_first, seq(30, N, 10))
 K <- length(unique(rand_sim_high[[1]]$trt))
 
 criteria <- c("Utility", "Efficacy", "Safety")
