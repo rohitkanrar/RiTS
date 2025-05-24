@@ -1,6 +1,6 @@
 library(ggplot2); library(tidyr); library(patchwork)
 # Function to generate cumulative regret plot as in Appendix A.1.
-gen_cum_reg_bwplot <- function(out_rand, out_ts, out_rits, ind, criteria){
+gen_cum_reg_df <- function(out_rand, out_ts, out_rits, ind, criteria){
   n_iter <- length(out_rand)
   if(criteria == "Utility"){
     rand_reg <- t(sapply(1:n_iter, function(i){
@@ -43,12 +43,19 @@ gen_cum_reg_bwplot <- function(out_rand, out_ts, out_rits, ind, criteria){
     Column = rep(rep(1:ncol(rand_reg), each = nrow(rand_reg), 
                      times = 3))
   )
+  df["criteria"] <- criteria
+  return(df)
+}
+gen_cum_reg_bwplot <- function(df_high, df_low, ind){
+  df <- rbind(df_high, df_low)
   sim_reg_plot <- ggplot(df, aes(x = factor(Column), 
                                   y = Value, fill = Method)) +
-    geom_boxplot(position = position_dodge(width = 0.8), width = 0.7) +
+    geom_boxplot(position = position_dodge(width = 0.8), width = 0.7, 
+                 outlier.size = 0.5) +
+    facet_grid(dgp ~ criteria, scales = "free_y") + 
     labs(x = "Number of Participants", y = "Cumulative Regret", 
          fill = "Method") +
-    scale_x_discrete(labels = ind) + ggtitle(criteria) +
+    scale_x_discrete(labels = ind) +
     scale_fill_manual(
       values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00"),
       labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS")
@@ -57,7 +64,7 @@ gen_cum_reg_bwplot <- function(out_rand, out_ts, out_rits, ind, criteria){
 }
 
 # Function to generate freq of arm alloc plot as in Appendix A.1.
-gen_freq_arm_alloc <- function(out_rand, out_ts, out_rits, ylims, titl){
+gen_freq_arm_alloc_df <- function(out_rand, out_ts, out_rits){
   n_iter <- length(out_rand)
   trt_rand <- t(sapply(1:n_iter, function(i) table(out_rand[[i]]$trt)))
   trt_ts <- t(sapply(1:n_iter, function(i) table(out_ts[[i]]$trt)))
@@ -67,21 +74,25 @@ gen_freq_arm_alloc <- function(out_rand, out_ts, out_rits, ylims, titl){
     Arm = rep(rep(1:4, each = nrow(trt_rand)), times = 3),
     Method = rep(c("rand", "ts", "rits"), each = nrow(trt_rand)*ncol(trt_rand))
   )
-  
+  return(df)
+}
+gen_freq_arm_alloc <- function(df_high, df_low, ylims){
+  df <- rbind(df_high, df_low)
   ggplot(df, aes(x = factor(Arm), 
                  y = Frequency, fill = Method)) +
-    geom_boxplot() +
+    geom_boxplot(outlier.size = 0.5) + facet_wrap(~dgp) +
     labs(x = "Arm", y = "Frequency of Allocation", 
          fill = "Method") + 
     scale_fill_manual(
       values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00"),
       labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS")
-    ) + ylim(ylims) + ggtitle(titl)
+    ) + ylim(ylims)
 }
 
 # Function to generate width box plot as in Appendix A.2.
 gen_width_bwplot <- function(out_rand, out_ts, out_rits, ate_ind, arm, ylims){
   n_iter <- length(out_rand)
+  ind <- dimnames(out_rand[[1]]$contr)[[1]][ate_ind]
   titl <- paste("Arm ",  arm, " - Arm 1", sep = "")
   contr_std_width <- t(sapply(1:n_iter, function(iter){
     out_rand[[iter]]$contr_standard[ate_ind, (arm - 1), 3] - 
@@ -110,7 +121,8 @@ gen_width_bwplot <- function(out_rand, out_ts, out_rits, ate_ind, arm, ylims){
   )
   wid_plot <- ggplot(df, aes(x = factor(Column), 
                                   y = Width, fill = Method)) +
-    geom_boxplot(position = position_dodge(width = 0.8), width = 0.7) +
+    geom_boxplot(position = position_dodge(width = 0.8), width = 0.7,
+                 outlier.size = 0.5) +
     labs(x = "Number of Participants", y = "Width", 
          fill = "Arm") + ylim(ylims) +
     scale_fill_manual(
@@ -126,6 +138,7 @@ gen_width_bwplot <- function(out_rand, out_ts, out_rits, ate_ind, arm, ylims){
 gen_bias_bwplot <- function(out_rand, out_ts, out_rits, ate_ind, arm, 
                             contr_true, ylims){
   n_iter <- length(out_rand)
+  ind <- dimnames(out_rand[[1]]$contr)[[1]][ate_ind]
   titl <- paste("Arm ",  arm, " - Arm 1", sep = "")
   contr_std_bias <- t(sapply(1:n_iter, function(iter){
     out_rand[[iter]]$contr_standard[ate_ind, arm-1, 1] - contr_true[arm-1]
@@ -188,11 +201,11 @@ gen_cum_miscov_plot <- function(out, ate_true, contr_true, alpha,
     )
 }
 
-gen_winner_curve <- function(rand_out, ts_out, rits_out, titl = "High SNR", 
+gen_winner_curve_df <- function(rand_out, ts_out, rits_out, 
                              true_best_arm = 4){
   n_iter <- length(rand_out)
   true_best_arm <- true_best_arm - 1
-  n_comp <- dim(rand_sim_high[[1]]$contr)[1]
+  n_comp <- dim(rand_out[[1]]$contr)[1]
   power_std <- numeric(n_comp)
   power_rand <- numeric(n_comp)
   power_ts <- numeric(n_comp)
@@ -220,20 +233,26 @@ gen_winner_curve <- function(rand_out, ts_out, rits_out, titl = "High SNR",
                    rits = power_rits, 
                    participant = as.numeric(dimnames(rand_out[[1]]$contr)[[1]]))
   df_long <- tidyr::gather(df, key = "Methods", value = "value", -participant)
-  out_plot <- ggplot(df_long, aes(x = participant, y = value, color = Methods)) +
-    geom_line() + labs(x = "Participant", y = "Proportion") +
+  df_long
+}
+gen_winner_curve <- function(df_high, df_low){
+  df <- rbind(df_high, df_low)
+  out_plot <- ggplot(df, aes(x = participant, y = value, color = Methods)) +
+    geom_line() + labs(x = "Participant", y = "Proportion of trials") + 
+    facet_wrap(~dgp) +
     scale_color_manual(
       values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00", 
                  "std" = "#009E73"),
       labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS", "std" = "Std")
-    ) + ggtitle(titl)
+    )
   return(out_plot)
 }
 
-gen_power_curve <- function(rand_out, ts_out, rits_out, titl = "High SNR", 
-                            min_thresh = 0.1){
+source("code/function/misc.R")
+gen_power_curve_df <- function(rand_out, ts_out, rits_out, min_thresh = 0.1){
+  # browser()
   n_iter <- length(rand_out)
-  n_comp <- dim(rand_sim_high[[1]]$contr)[1]
+  n_comp <- dim(rand_out[[1]]$contr)[1]
   
   power_std <- numeric(n_comp)
   power_rand <- numeric(n_comp)
@@ -276,12 +295,106 @@ gen_power_curve <- function(rand_out, ts_out, rits_out, titl = "High SNR",
                    rits = power_rits, 
                    participant = as.numeric(dimnames(rand_out[[1]]$contr)[[1]]))
   df_long <- tidyr::gather(df, key = "Methods", value = "value", -participant)
-  out_plot <- ggplot(df_long, aes(x = participant, y = value, color = Methods)) +
-    geom_line() + labs(x = "Participant", y = "Power") +
+  return(df_long)
+}
+
+gen_power_curve <- function(df_high, df_low){
+  df <- rbind(df_high, df_low)
+  out_plot <- ggplot(df, aes(x = participant, y = value, color = Methods)) +
+    geom_line() + labs(x = "Participant", y = "Power") + facet_wrap(~dgp) +
     scale_color_manual(
       values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00", 
                  "std" = "#009E73"),
       labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS", "std" = "Std")
-    ) + ggtitle(titl)
+    ) 
   return(out_plot)
+}
+
+gen_metrics_plot <- function(df_winner, df_power){
+  df <- rbind(df_winner, df_power)
+  out_plot <- ggplot(df, aes(x = participant, y = value, color = Methods)) +
+    geom_line() + labs(x = "Participant", y = "Proportion of Replication") + 
+    facet_grid(type~dgp) +
+    scale_color_manual(
+      values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00", 
+                 "std" = "#009E73"),
+      labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS", "std" = "Std")
+    ) 
+  return(out_plot)
+}
+
+gen_summary_for_table <- function(sim, K, ate_ind, contr_true, need_std = FALSE){
+  n_iter <- length(sim)
+  width_contr <- matrix(0, K-1, length(ate_ind))
+  bias_contr <- matrix(0, K-1, length(ate_ind))
+  rmse_contr <- matrix(0, K-1, length(ate_ind))
+  if(need_std){
+    width_contr_std <- matrix(0, K-1, length(ate_ind))
+    bias_contr_std <- matrix(0, K-1, length(ate_ind))
+    rmse_contr_std <- matrix(0, K-1, length(ate_ind))
+  }
+  for(k in 2:K){
+    for(i in 1:length(ate_ind)){
+      # no_miss <- which(sapply(1:n_iter,
+      #                     function(i) match(TRUE, sim[[i]]$ate[, k, 1] != 0)) <= ate_ind[i])
+      for(iter in 1:n_iter){
+        width_contr[k-1, i] <- width_contr[k-1, i] + 
+          abs(sim[[iter]]$contr[ate_ind[i], k-1, 3] - 
+                sim[[iter]]$contr[ate_ind[i], k-1, 2])
+        bias_contr[k-1, i] <- bias_contr[k-1, i] + 
+          sim[[iter]]$contr[ate_ind[i], k-1, 1] - contr_true[k-1]
+        rmse_contr[k-1, i] <- rmse_contr[k-1, i] + 
+          (sim[[iter]]$contr[ate_ind[i], k-1, 1] - contr_true[k-1])^2
+        if(need_std){
+          width_contr_std[k-1, i] <- width_contr_std[k-1, i] + 
+            abs(sim[[iter]]$contr_standard[ate_ind[i], k-1, 3] - 
+                  sim[[iter]]$contr_standard[ate_ind[i], k-1, 2])
+          bias_contr_std[k-1, i] <- bias_contr_std[k-1, i] + 
+            sim[[iter]]$contr_standard[ate_ind[i], k-1, 1] - contr_true[k-1]
+          rmse_contr_std[k-1, i] <- rmse_contr_std[k-1, i] + 
+            (sim[[iter]]$contr_standard[ate_ind[i], k-1, 1] - contr_true[k-1])^2
+        }
+      }
+      width_contr[k-1, i] <- width_contr[k-1, i] / n_iter
+      bias_contr[k-1, i] <- bias_contr[k-1, i] / n_iter
+      rmse_contr[k-1, i] <- sqrt(rmse_contr[k-1, i] / n_iter)
+      if(need_std){
+        width_contr_std[k-1, i] <- width_contr_std[k-1, i] / n_iter
+        bias_contr_std[k-1, i] <- bias_contr_std[k-1, i] / n_iter
+        rmse_contr_std[k-1, i] <- sqrt(rmse_contr_std[k-1, i] / n_iter)
+      }
+    }
+  }
+  out_list <- list(width = width_contr, bias = bias_contr, 
+       rmse = rmse_contr)
+  if(need_std){
+    out_list[["width_std"]] <- width_contr_std
+    out_list[["bias_std"]] <- bias_contr_std
+    out_list[["rmse_std"]] <- rmse_contr_std
+  }
+  out_list
+}
+
+gen_bias_rmse_tab <- function(summ_rand, summ_ts, summ_rits, ate_ind, ind){
+  bias_tab <- matrix(NA, 4*(K-1), length(ate_ind))
+  for(k in 1:(K-1)){
+    bias_tab[4*(k-1)+1, ] <- summ_rand$bias_std[k, ]
+    bias_tab[4*(k-1)+2, ] <- summ_rand$bias[k, ]
+    bias_tab[4*(k-1)+3, ] <- summ_ts$bias[k, ]
+    bias_tab[4*(k-1)+4, ] <- summ_rits$bias[k, ]
+  }
+  rmse_tab <- matrix(NA, 4*(K-1), length(ate_ind))
+  for(k in 1:(K-1)){
+    rmse_tab[4*(k-1)+1, ] <- summ_rand$rmse_std[k, ]
+    rmse_tab[4*(k-1)+2, ] <- summ_rand$rmse[k, ]
+    rmse_tab[4*(k-1)+3, ] <- summ_ts$rmse[k, ]
+    rmse_tab[4*(k-1)+4, ] <- summ_rits$rmse[k, ]
+  }
+  
+  est_err_tab <- matrix(paste(round(bias_tab, 2), "(", round(rmse_tab, 2), ")", sep = ""), 
+                        nrow = nrow(bias_tab))
+  colnames(est_err_tab) <- paste(ind)
+  rownames(est_err_tab) <- paste(c("Std", "Rand", "TS", "RiTS"), 
+                                 "(Arm", rep(2:4, each = 4), ")", sep = "")
+  est_err_tab
 }

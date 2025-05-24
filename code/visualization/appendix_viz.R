@@ -2,76 +2,27 @@ source("code/visualization/functions.R")
 ### Section A.1 (Empirical Behavior of Cumulative Regret)
 ## Cumulative Regret Plot
 # High SNR
-ts_sim_high <- readRDS("output/varyingX/ts_sim_dgp_high_min_prpn_0.05_tr_start_20.RData")
-rand_sim_high <- readRDS("output/varyingX/rand_sim_dgp_high_min_prpn_0.005_tr_start_20.RData")
-rits_sim_high <- readRDS("output/varyingX/rits_sim_dgp_high_min_prpn_0.05_tr_start_20.RData")
+ts_sim_high <- readRDS("output/ts_sim_dgp_high_min_prpn_0.05_tr_start_20.RData")
+rand_sim_high <- readRDS("output/rand_sim_dgp_high_min_prpn_0.005_tr_start_20.RData")
+rits_sim_high <- readRDS("output/rits_sim_dgp_high_min_prpn_0.05_tr_start_20.RData")
+# Low SNR
+ts_sim_low <- readRDS("output/ts_sim_dgp_low_min_prpn_0.05_tr_start_20.RData")
+rand_sim_low <- readRDS("output/rand_sim_dgp_low_min_prpn_0.005_tr_start_20.RData")
+rits_sim_low <- readRDS("output/rits_sim_dgp_low_min_prpn_0.05_tr_start_20.RData")
+
 n_iter <- length(ts_sim_high)
 N <- length(ts_sim_high[[1]]$trt)
-ind <- seq(20, 200, 20)
+ind <- seq(ts_sim_high[[1]]$tr_first, N, 20)
 K <- length(unique(rand_sim_high[[1]]$trt))
-
-sim_reg_plot1 <- gen_cum_reg_bwplot(out_rand = rand_sim_high,
-                                    out_ts = ts_sim_high,
-                                    out_rits = rits_sim_high,
-                                    ind = ind, criteria = "Utility")
-sim_reg_plot2 <- gen_cum_reg_bwplot(out_rand = rand_sim_high,
-                                    out_ts = ts_sim_high,
-                                    out_rits = rits_sim_high,
-                                    ind = ind, criteria = "Efficacy")
-sim_reg_plot3 <- gen_cum_reg_bwplot(out_rand = rand_sim_high,
-                                    out_ts = ts_sim_high,
-                                    out_rits = rits_sim_high,
-                                    ind = ind, criteria = "Safety")
-sim_regret_plot <- sim_reg_plot1 + sim_reg_plot2 + sim_reg_plot3 +
-  plot_layout(ncol = 3, guides = "collect")
-ggsave("plot/regret_sim_bwplot_high.jpg", height = 4, width = 12, units = "in")
-
-
-# Low SNR
-ts_sim_low <- readRDS("output/varyingX/ts_sim_dgp_low_min_prpn_0.05_tr_start_20.RData")
-rand_sim_low <- readRDS("output/varyingX/rand_sim_dgp_low_min_prpn_0.005_tr_start_20.RData")
-rits_sim_low <- readRDS("output/varyingX/rits_sim_dgp_low_min_prpn_0.05_tr_start_20.RData")
-
-sim_reg_plot1 <- gen_cum_reg_bwplot(out_rand = rand_sim_low,
-                                    out_ts = ts_sim_low,
-                                    out_rits = rits_sim_low,
-                                    ind = ind, criteria = "Utility")
-sim_reg_plot2 <- gen_cum_reg_bwplot(out_rand = rand_sim_low,
-                                    out_ts = ts_sim_low,
-                                    out_rits = rits_sim_low,
-                                    ind = ind, criteria = "Efficacy")
-sim_reg_plot3 <- gen_cum_reg_bwplot(out_rand = rand_sim_low,
-                                    out_ts = ts_sim_low,
-                                    out_rits = rits_sim_low,
-                                    ind = ind, criteria = "Safety")
-sim_regret_plot <- sim_reg_plot1 + sim_reg_plot2 + sim_reg_plot3 +
-  plot_layout(ncol = 3, guides = "collect")
-ggsave("plot/regret_sim_bwplot_low.jpg", height = 4, width = 12, units = "in")
-
-
-## Frequency of Arm Allocation Plot
-# High SNR
-alloc_plot1 <- gen_freq_arm_alloc(out_rand = rand_sim_high,
-                                  out_ts = ts_sim_high,
-                                  out_rits = rits_sim_high, 
-                                  ylims = c(0, 150), titl = "High SNR")
-
-# Low SNR
-alloc_plot2 <- gen_freq_arm_alloc(out_rand = rand_sim_low,
-                                  out_ts = ts_sim_low,
-                                  out_rits = rits_sim_low, 
-                                  ylims = c(0, 150), titl = "Low SNR")
-alloc_plot <- alloc_plot1 + alloc_plot2 + 
-  plot_layout(ncol = 2, guides = "collect")
-ggsave("plot/freq_arm_alloc.jpg", height = 4, width = 10, units = "in")
 
 
 ### Section A.2 (Quality of AsympCS)
 sim_choice <- readRDS("metadata/sim_choice.RData")
 ate_start <- rand_sim_high[[1]]$ate_start
-ate_ind <- c(seq(1, 7, 2), 11, 17, 27, 37)
-ind <- as.numeric(dimnames(rand_sim_high[[1]]$contr)[[1]][ate_ind])
-
+ate_ind <- seq(ate_start, N, 10)
+ate_ind <- sapply(ate_ind, function(i){
+  which(as.numeric(dimnames(rand_sim_high[[1]]$contr)[[1]]) == i)
+})
 
 ## Box plot of Width for CS
 # High SNR

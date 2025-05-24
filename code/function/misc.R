@@ -53,7 +53,9 @@ get_cum_mis_cov <- function(sim, mu_true, contr_true, delay = 0){
 
 zero_in_intv <- function(intv, zero = 0.1){
   a <- intv[1]; b <- intv[2]
-  if(a < zero && b > zero){
+  if(is.na(a) || is.na(b)){
+    return(FALSE)
+  } else if(a < zero && b > zero){
     return(TRUE)
   } else{
     return(FALSE)
