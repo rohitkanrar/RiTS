@@ -28,15 +28,15 @@ ate_ind <- sapply(ind, function(i){
 sim_wid_arm2 <- gen_width_bwplot(out_rand = rand_sim_high,
                                  out_ts = ts_sim_high,
                                  out_rits = rits_sim_high, 
-                                 ate_ind = ate_ind, arm = 2, ylims = c(0, 15))
+                                 ate_ind = ate_ind, arm = 2, ylims = c(0, 10))
 sim_wid_arm3 <- gen_width_bwplot(out_rand = rand_sim_high,
                                  out_ts = ts_sim_high,
                                  out_rits = rits_sim_high, 
-                                 ate_ind = ate_ind, arm = 3, ylims = c(0, 15))
+                                 ate_ind = ate_ind, arm = 3, ylims = c(0, 10))
 sim_wid_arm4 <- gen_width_bwplot(out_rand = rand_sim_high,
                                  out_ts = ts_sim_high,
                                  out_rits = rits_sim_high, 
-                                 ate_ind = ate_ind, arm = 4, ylims = c(0, 15))
+                                 ate_ind = ate_ind, arm = 4, ylims = c(0, 10))
 sim_wid_high <- sim_wid_arm2 + sim_wid_arm3 + sim_wid_arm4 +
   plot_layout(ncol = 3, guides = "collect")
 ggsave("plot/width_bwplot_high.jpg", height = 4, width = 12, units = "in")
@@ -45,15 +45,15 @@ ggsave("plot/width_bwplot_high.jpg", height = 4, width = 12, units = "in")
 sim_wid_arm2 <- gen_width_bwplot(out_rand = rand_sim_low,
                                  out_ts = ts_sim_low,
                                  out_rits = rits_sim_low, 
-                                 ate_ind = ate_ind, arm = 2, ylims = c(0, 15))
+                                 ate_ind = ate_ind, arm = 2, ylims = c(0, 10))
 sim_wid_arm3 <- gen_width_bwplot(out_rand = rand_sim_low,
                                  out_ts = ts_sim_low,
                                  out_rits = rits_sim_low, 
-                                 ate_ind = ate_ind, arm = 3, ylims = c(0, 15))
+                                 ate_ind = ate_ind, arm = 3, ylims = c(0, 10))
 sim_wid_arm4 <- gen_width_bwplot(out_rand = rand_sim_low,
                                  out_ts = ts_sim_low,
                                  out_rits = rits_sim_low, 
-                                 ate_ind = ate_ind, arm = 4, ylims = c(0, 15))
+                                 ate_ind = ate_ind, arm = 4, ylims = c(0, 10))
 sim_wid_low <- sim_wid_arm2 + sim_wid_arm3 + sim_wid_arm4 +
   plot_layout(ncol = 3, guides = "collect")
 ggsave("plot/width_bwplot_low.jpg", height = 4, width = 12, units = "in")
@@ -71,17 +71,17 @@ sim_bias_arm2 <- gen_bias_bwplot(out_rand = rand_sim_high,
                                  out_ts = ts_sim_high,
                                  out_rits = rits_sim_high, 
                                  ate_ind = ate_ind, arm = 2, 
-                                 contr_true = contr_true, ylims = c(-2, 2))
+                                 contr_true = contr_true, ylims = c(-1.2, 1.2))
 sim_bias_arm3 <- gen_bias_bwplot(out_rand = rand_sim_high,
                                  out_ts = ts_sim_high,
                                  out_rits = rits_sim_high, 
                                  ate_ind = ate_ind, arm = 3, 
-                                 contr_true = contr_true, ylims = c(-2, 2))
+                                 contr_true = contr_true, ylims = c(-1.2, 1.2))
 sim_bias_arm4 <- gen_bias_bwplot(out_rand = rand_sim_high,
                                  out_ts = ts_sim_high,
                                  out_rits = rits_sim_high, 
                                  ate_ind = ate_ind, arm = 4, 
-                                 contr_true = contr_true, ylims = c(-2, 2))
+                                 contr_true = contr_true, ylims = c(-1.2, 1.2))
 sim_bias_high <- sim_bias_arm2 + sim_bias_arm3 + sim_bias_arm4 +
   plot_layout(ncol = 3, guides = "collect")
 ggsave("plot/bias_bwplot_high.jpg", height = 4, width = 12, units = "in")
@@ -95,17 +95,17 @@ sim_bias_arm2 <- gen_bias_bwplot(out_rand = rand_sim_low,
                                  out_ts = ts_sim_low,
                                  out_rits = rits_sim_low, 
                                  ate_ind = ate_ind, arm = 2, 
-                                 contr_true = contr_true, ylims = c(-2, 2))
+                                 contr_true = contr_true, ylims = c(-1.2, 1.2))
 sim_bias_arm3 <- gen_bias_bwplot(out_rand = rand_sim_low,
                                  out_ts = ts_sim_low,
                                  out_rits = rits_sim_low, 
                                  ate_ind = ate_ind, arm = 3, 
-                                 contr_true = contr_true, ylims = c(-2, 2))
+                                 contr_true = contr_true, ylims = c(-1.2, 1.2))
 sim_bias_arm4 <- gen_bias_bwplot(out_rand = rand_sim_low,
                                  out_ts = ts_sim_low,
                                  out_rits = rits_sim_low, 
                                  ate_ind = ate_ind, arm = 4, 
-                                 contr_true = contr_true, ylims = c(-2, 2))
+                                 contr_true = contr_true, ylims = c(-1.2, 1.2))
 sim_bias_low <- sim_bias_arm2 + sim_bias_arm3 + sim_bias_arm4 +
   plot_layout(ncol = 3, guides = "collect")
 ggsave("plot/bias_bwplot_low.jpg", height = 4, width = 12, units = "in")

@@ -18,7 +18,9 @@ ate_ind <- sapply(ind, function(i){
 sim_dat <- readRDS("metadata/sim_dat.RData")
 
 # High SNR
-contr_true <- sim_dat$ite_true_contr * 2
+mu_true <- sim_dat$mu_true * 2
+contr_true <- mu_true - mu_true[1]
+contr_true <- contr_true[setdiff(1:K, sim_dat$placebo_arm)]
 
 summ_rand <- gen_summary_for_table(sim = rand_sim_high, K = K, 
                                    ate_ind = ate_ind, contr_true = contr_true, 
@@ -35,7 +37,9 @@ est_err_tab_high <- gen_bias_rmse_tab(summ_rand = summ_rand,
 xtable::xtable(est_err_tab_high)
 
 # Low SNR
-contr_true <- sim_dat$ite_true_contr
+mu_true <- sim_dat$mu_true
+contr_true <- mu_true - mu_true[1]
+contr_true <- contr_true[setdiff(1:K, sim_dat$placebo_arm)]
 
 summ_rand <- gen_summary_for_table(sim = rand_sim_low, K = K, 
                                    ate_ind = ate_ind, contr_true = contr_true, 
