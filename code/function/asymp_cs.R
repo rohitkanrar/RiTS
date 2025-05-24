@@ -4,7 +4,7 @@ basic_learner <- function(y, X, newX){
   # browser()
   # mod <- lm(y ~ ., data.frame(y = y, X = X))
   mod <- glmnet::glmnet(X, y, alpha = 0)
-  tmp <- predict(mod, newx = newX, s = 0.1)
+  tmp <- predict(mod, newx = newX, s = 10)
   as.numeric(tmp)
 }
 main_effect_ridge <- function(y, X, newX, trt_ind, K){
@@ -65,6 +65,7 @@ get_aipw_seq <- function(treatment, y, propensity, X,
   aipw_master <- vector(mode = "list", length = length(times))
   i <- 1
   for(time in times){
+    # browser()
     aipw_master[[i]] <- matrix(NA, N, K)
     if (verbose) {
       print(paste("Fitting nuisance functions at time", 
