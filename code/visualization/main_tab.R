@@ -34,6 +34,7 @@ est_err_tab_high <- gen_bias_rmse_tab(summ_rand = summ_rand,
                                       summ_ts = summ_ts,
                                       summ_rits = summ_rits, 
                                       ate_ind = ate_ind, ind = ind)
+saveRDS(est_err_tab_high, "tables/est_err_tab_high.RData")
 xtable::xtable(est_err_tab_high)
 
 # Low SNR
@@ -53,4 +54,5 @@ est_err_tab_low <- gen_bias_rmse_tab(summ_rand = summ_rand,
                                       summ_ts = summ_ts,
                                       summ_rits = summ_rits, 
                                       ate_ind = ate_ind, ind = ind)
+saveRDS(est_err_tab_high, "tables/est_err_tab_high.RData")
 xtable::xtable(est_err_tab_low)
