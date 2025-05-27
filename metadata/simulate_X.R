@@ -1,4 +1,4 @@
-set.seed(479612)
+set.seed(2024)
 sim_choice <- readRDS("metadata/sim_choice.RData")
 sim_dat <- readRDS("metadata/sim_dat.RData")
 N <- sim_choice$N;
