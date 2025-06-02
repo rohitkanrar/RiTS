@@ -14,7 +14,7 @@ n_iter <- 1000
 ts_real_sim <- vector(mode = "list", length = n_iter)
 rand_real_sim <- ts_real_sim; rits_real_sim <- ts_real_sim
 d <- ncol(X_real); N <- nrow(X_real); K <- ncol(countfact_eff)
-tr_start <- d*2*K; ate_start <- tr_start
+tr_start <- 10 * K; ate_start <- tr_start
 
 library(parallel); num_cores <- 20
 results <- mclapply(1:n_iter, function(i, X_real, counterfact){
