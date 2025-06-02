@@ -56,7 +56,8 @@ get_rwd_cont <- function(x, a, beta_true, sd = 0.1){
 }
 
 one_step_rand_biv <- function(x, K, beta_true, log_dat, weight, rwd_sig = 0.1, 
-                              trt = NULL){
+                              trt = NULL, setup = "simulation", 
+                              eff = NULL, safe = NULL){
   x <- matrix(as.numeric(x), ncol = 1)
   trt_hist <- log_dat$trt
   rwd_benf_hist <- log_dat$reward_benf
@@ -73,27 +74,37 @@ one_step_rand_biv <- function(x, K, beta_true, log_dat, weight, rwd_sig = 0.1,
   prpns_mat <- rbind(prpns_mat, prpns)
   
   true_mu <- matrix(0, 2, K)
-  tmp <- get_rwd_cont(x, trt_new, beta_true[, , 1])
-  true_mu[1, ] <- tmp$avg_rwd
-  rwd_benf_new <- tmp$rwd
+  if(setup == "simulation"){
+    tmp <- get_rwd_cont(x, trt_new, beta_true[, , 1])
+    true_mu[1, ] <- tmp$avg_rwd
+    rwd_benf_new <- tmp$rwd
+    
+    tmp <- get_rwd_cont(x, trt_new, beta_true[, , 2], rwd_sig)
+    true_mu[2, ] <- tmp$avg_rwd
+    rwd_safe_new <- tmp$rwd
+    
+    regret_benf <- max(true_mu[1, ]) - true_mu[1, trt_new]
+    regret_safe <- max(true_mu[2, ]) - true_mu[2, trt_new]
+    subopt_cnt_benf <- as.numeric(which.max(true_mu[1, ]) != trt_new)
+    subopt_cnt_safe <- as.numeric(which.max(true_mu[2, ]) != trt_new)
+    true_mu <- (true_mu[1, ] + weight * true_mu[2, ]) / (weight+1)
+    
+    regret <- max(true_mu) - true_mu[trt_new]
+    subopt_cnt <- as.numeric(which.max(true_mu) != trt_new)
+    
+    metrics <- list(regret = regret, regret_safe = regret_safe,
+                    regret_benf = regret_benf,
+                    subopt_cnt = subopt_cnt, subopt_cnt_benf = subopt_cnt_benf,
+                    subopt_cnt_safe = subopt_cnt_safe)
+  } else{
+    rwd_benf_new <- eff[trt_new]
+    rwd_safe_new <- safe[trt_new]
+    
+    metrics <- list(regret = NA, regret_safe = NA,
+                    regret_benf = NA, subopt_cnt = NA, 
+                    subopt_cnt_benf = NA, subopt_cnt_safe = NA)
+  }
   
-  tmp <- get_rwd_cont(x, trt_new, beta_true[, , 2], rwd_sig)
-  true_mu[2, ] <- tmp$avg_rwd
-  rwd_safe_new <- tmp$rwd
-  
-  regret_benf <- max(true_mu[1, ]) - true_mu[1, trt_new]
-  regret_safe <- max(true_mu[2, ]) - true_mu[2, trt_new]
-  subopt_cnt_benf <- as.numeric(which.max(true_mu[1, ]) != trt_new)
-  subopt_cnt_safe <- as.numeric(which.max(true_mu[2, ]) != trt_new)
-  true_mu <- (true_mu[1, ] + weight * true_mu[2, ]) / (weight+1)
-  
-  regret <- max(true_mu) - true_mu[trt_new]
-  subopt_cnt <- as.numeric(which.max(true_mu) != trt_new)
-  
-  metrics <- list(regret = regret, regret_safe = regret_safe,
-                  regret_benf = regret_benf,
-                  subopt_cnt = subopt_cnt, subopt_cnt_benf = subopt_cnt_benf,
-                  subopt_cnt_safe = subopt_cnt_safe)
   log_dat <- list(trt = c(trt_hist, trt_new), 
                   reward_benf = c(rwd_benf_hist, rwd_benf_new),
                   reward_safe = c(rwd_safe_hist, rwd_safe_new),
@@ -110,7 +121,8 @@ one_step_ts_batch <- function(x, x_true, t, param, beta_true, K, d, log_dat,
                               min_prpn = 0.05, M = 1000,
                               tr_start = 10, tr_lag = 10, ate_start = 20, 
                               weight = 2, train = FALSE, rwd_sig = 0.1,
-                              design = "no_clip", trt = NULL){
+                              design = "no_clip", trt = NULL,
+                              setup = "simulation", eff = NULL, safe = NULL){
   # browser()
   last_tr_ind <- log_dat$last_tr_ind
   trt_hist <- log_dat$trt
@@ -155,28 +167,44 @@ one_step_ts_batch <- function(x, x_true, t, param, beta_true, K, d, log_dat,
   }
   prpns_mat[t, ] <- prpns
   
-  # Generative Reward (Has to be modified)
-  true_mu <- matrix(0, 2, K)
-  tmp <- get_rwd_cont(x_true, trt_new, beta_true[, , 1], sd = rwd_sig)
-  true_mu[1, ] <- tmp$avg_rwd
-  rwd_benf_new <- tmp$rwd
+  if(setup == "simulation"){
+    # Generative Reward (Has to be modified)
+    true_mu <- matrix(0, 2, K)
+    tmp <- get_rwd_cont(x_true, trt_new, beta_true[, , 1], sd = rwd_sig)
+    true_mu[1, ] <- tmp$avg_rwd
+    rwd_benf_new <- tmp$rwd
+    
+    tmp <- get_rwd_cont(x_true, trt_new, beta_true[, , 2], sd = rwd_sig)
+    true_mu[2, ] <- tmp$avg_rwd
+    rwd_safe_new <- tmp$rwd
+    rwd_new <- rwd_benf_new
+    
+    # naive risk-adverse regret
+    true_mu_aug <- (true_mu[1, ] + weight * true_mu[2, ]) / (weight+1)
+    
+    # Metrics
+    regret_benf <- max(true_mu[1, ]) - true_mu[1, trt_new]
+    regret_safe <- max(true_mu[2, ]) - true_mu[2, trt_new]
+    regret <- max(true_mu_aug) - true_mu_aug[trt_new]
+    
+    subopt_cnt_benf <- as.numeric(which.max(true_mu[1, ]) != trt_new)
+    subopt_cnt_safe <- as.numeric(which.max(true_mu[2, ]) != trt_new)
+    subopt_cnt <- as.numeric(which.max(true_mu_aug) != trt_new)
+    
+    metrics <- list(regret = regret, regret_benf = regret_benf,
+                    regret_safe = regret_safe,
+                    subopt_cnt = subopt_cnt, subopt_cnt_benf = subopt_cnt_benf, 
+                    subopt_cnt_safe = subopt_cnt_safe)
+  } else{
+    rwd_benf_new <- eff[trt_new]
+    rwd_safe_new <- safe[trt_new]
+    rwd_new <- rwd_benf_new
+    
+    metrics <- list(regret = NA, regret_safe = NA,
+                    regret_benf = NA, subopt_cnt = NA, 
+                    subopt_cnt_benf = NA, subopt_cnt_safe = NA)
+  }
   
-  tmp <- get_rwd_cont(x_true, trt_new, beta_true[, , 2], sd = rwd_sig)
-  true_mu[2, ] <- tmp$avg_rwd
-  rwd_safe_new <- tmp$rwd
-  rwd_new <- rwd_benf_new
-  
-  # naive risk-adverse regret
-  true_mu_aug <- (true_mu[1, ] + weight * true_mu[2, ]) / (weight+1)
-  
-  # Metrics
-  regret_benf <- max(true_mu[1, ]) - true_mu[1, trt_new]
-  regret_safe <- max(true_mu[2, ]) - true_mu[2, trt_new]
-  regret <- max(true_mu_aug) - true_mu_aug[trt_new]
-  
-  subopt_cnt_benf <- as.numeric(which.max(true_mu[1, ]) != trt_new)
-  subopt_cnt_safe <- as.numeric(which.max(true_mu[2, ]) != trt_new)
-  subopt_cnt <- as.numeric(which.max(true_mu_aug) != trt_new)
   
   log_dat <- list(last_tr_ind = last_tr_ind,
                   trt = c(trt_hist, trt_new), 
@@ -212,11 +240,6 @@ one_step_ts_batch <- function(x, x_true, t, param, beta_true, K, d, log_dat,
   param <- list(beta_mean = beta_mean, beta_cov = beta_cov, 
                 beta_eff = beta_eff)
   
-  metrics <- list(regret = regret, regret_benf = regret_benf,
-                  regret_safe = regret_safe,
-                  subopt_cnt = subopt_cnt, subopt_cnt_benf = subopt_cnt_benf, 
-                  subopt_cnt_safe = subopt_cnt_safe)
-  
   list(trt_new = trt_new, rwd_new = rwd_new,
        param = param, metrics = metrics, log_dat = log_dat)
 }
@@ -227,7 +250,8 @@ one_step_rits_batch <- function(x, x_true, t, param, beta_true, K, d,
                                 min_prpn = 0.05, tr_start = 10, tr_lag = 10, 
                                 M = 1000, ate_start = 20, tr_batch = 10, 
                                 weight = 2, train = FALSE, rwd_sig = 0.1, 
-                                design = "clip", trt = NULL){
+                                design = "clip", trt = NULL,
+                                setup = "simulation", eff = NULL, safe = NULL){
   last_tr_ind <- log_dat$last_tr_ind
   trt_hist <- log_dat$trt
   rwd_safe_hist <- log_dat$reward_safe
@@ -273,29 +297,45 @@ one_step_rits_batch <- function(x, x_true, t, param, beta_true, K, d,
   }
   prpns_mat[t, ] <- prpns
   
-  # Generative Reward (Has to be modified)
-  true_mu <- matrix(0, 2, K)
-  for(e in 1:2){
-    tmp <- get_rwd_cont(x_true, trt_new, beta_true[, , e], sd = rwd_sig)
-    true_mu[e, ] <- tmp$avg_rwd
-    if(e == 1) 
-      rwd_benf_new <- tmp$rwd
-    else
-      rwd_safe_new <- tmp$rwd
+  if(setup == "simulation"){
+    # Generative Reward (Has to be modified)
+    true_mu <- matrix(0, 2, K)
+    for(e in 1:2){
+      tmp <- get_rwd_cont(x_true, trt_new, beta_true[, , e], sd = rwd_sig)
+      true_mu[e, ] <- tmp$avg_rwd
+      if(e == 1) 
+        rwd_benf_new <- tmp$rwd
+      else
+        rwd_safe_new <- tmp$rwd
+    }
+    
+    
+    # naive risk-adverse regret
+    true_mu_aug <- (true_mu[1, ] + weight * true_mu[2, ]) / (weight+1)
+    
+    # Metrics
+    regret_benf <- max(true_mu[1, ]) - true_mu[1, trt_new]
+    regret_safe <- max(true_mu[2, ]) - true_mu[2, trt_new]
+    regret <- max(true_mu_aug) - true_mu_aug[trt_new]
+    
+    subopt_cnt_benf <- as.numeric(which.max(true_mu[1, ]) != trt_new)
+    subopt_cnt_safe <- as.numeric(which.max(true_mu[2, ]) != trt_new)
+    subopt_cnt <- as.numeric(which.max(true_mu_aug) != trt_new)
+    
+    metrics <- list(regret = regret, regret_benf = regret_benf,
+                    regret_safe = regret_safe,
+                    subopt_cnt = subopt_cnt, subopt_cnt_benf = subopt_cnt_benf, 
+                    subopt_cnt_safe = subopt_cnt_safe)
+  } else{
+    rwd_benf_new <- eff[trt_new]
+    rwd_safe_new <- safe[trt_new]
+    rwd_new <- rwd_benf_new
+    
+    metrics <- list(regret = NA, regret_safe = NA,
+                    regret_benf = NA, subopt_cnt = NA, 
+                    subopt_cnt_benf = NA, subopt_cnt_safe = NA)
   }
   
-  
-  # naive risk-adverse regret
-  true_mu_aug <- (true_mu[1, ] + weight * true_mu[2, ]) / (weight+1)
-  
-  # Metrics
-  regret_benf <- max(true_mu[1, ]) - true_mu[1, trt_new]
-  regret_safe <- max(true_mu[2, ]) - true_mu[2, trt_new]
-  regret <- max(true_mu_aug) - true_mu_aug[trt_new]
-  
-  subopt_cnt_benf <- as.numeric(which.max(true_mu[1, ]) != trt_new)
-  subopt_cnt_safe <- as.numeric(which.max(true_mu[2, ]) != trt_new)
-  subopt_cnt <- as.numeric(which.max(true_mu_aug) != trt_new)
   
   log_dat <- list(last_tr_ind = last_tr_ind,
                   trt = c(trt_hist, trt_new), 
@@ -340,11 +380,6 @@ one_step_rits_batch <- function(x, x_true, t, param, beta_true, K, d,
   param <- list(beta_mean = beta_mean, beta_cov = beta_cov, 
                 beta_eff = beta_eff)
   
-  metrics <- list(regret = regret, regret_benf = regret_benf,
-                  regret_safe = regret_safe,
-                  subopt_cnt = subopt_cnt, subopt_cnt_benf = subopt_cnt_benf, 
-                  subopt_cnt_safe = subopt_cnt_safe)
-  
   list(trt_new = trt_new, rwd_safe_new = rwd_safe_new, 
        rwd_benf_new = rwd_benf_new, param = param, 
        metrics = metrics, log_dat = log_dat)
@@ -353,20 +388,31 @@ one_step_rits_batch <- function(x, x_true, t, param, beta_true, K, d,
 
 do_rand_biv <- function(X, X_true, beta_true, weight = 1, seed = NULL, 
                         rwd_sig = 0.1, tr_start = 24, asympcs = FALSE, 
-                        placebo_arm = 1, alpha = 0.05, first_peek = NULL){
+                        ate_start = 24, placebo_arm = 1, alpha = 0.05, 
+                        first_peek = NULL,
+                        setup = "simulation", counterfact = NULL){
   # browser()
   if(!is.null(seed)){
     set.seed(seed)
   }
-  N <- nrow(X_true)
-  K <- dim(beta_true)[2]
+  N <- nrow(X)
+  if(setup == "simulation"){
+    K <- dim(beta_true)[2]
+  } else if(setup == "real_data"){
+    eff <- counterfact$eff
+    safe <- counterfact$safe
+    K <- ncol(eff)
+  } else{
+    stop("'setup' can be either 'simulation' or 'real_data'.")
+  }
+  
   log_dat <- list(trt = numeric(0), 
                   reward_benf = numeric(0),
                   reward_safe = numeric(0),
                   context = numeric(0), prpns_mat = numeric(0))
   stopifnot("tr_start must be multiple of the number of Arms" = 
               (tr_start %% K == 0))
-  trt_init <- rep(rep(1:4, each = 2), tr_start %/% (2*K))
+  trt_init <- rep(rep(1:K, each = 2), tr_start %/% (2*K))
   trt <- numeric(N)
   reward_benf <- numeric(N)
   reward_safe <- numeric(N)
@@ -384,7 +430,9 @@ do_rand_biv <- function(X, X_true, beta_true, weight = 1, seed = NULL,
       trt_new <- NULL
     }
     step <- one_step_rand_biv(X_true[t, ], K, beta_true, log_dat = log_dat, 
-                              weight = weight, rwd_sig = rwd_sig, trt = trt_new)
+                              weight = weight, rwd_sig = rwd_sig, trt = trt_new,
+                              setup = setup, eff = as.numeric(eff[t, ]), 
+                              safe = as.numeric(safe[t, ]))
     
     log_dat <- step$log_dat
     trt[t] <- step$trt_new
@@ -425,17 +473,26 @@ do_ts_batch <- function(X, X_true, beta_true, weight = 1, seed = NULL,
                         rwd_sig = 0.1, tr_start = 24, tr_batch = 5, tr_lag = 10,
                         M = 1000, v = 10, min_prpn = 0.05, 
                         asympcs = FALSE, ate_start = 20, placebo_arm = 1, 
-                        alpha = 0.05, first_peek = NULL, design = "clip"){
+                        alpha = 0.05, first_peek = NULL, design = "clip",
+                        setup = "simulation", counterfact = NULL){
   # browser()
   if(!is.null(seed)){
     set.seed(seed)
   }
   N <- nrow(X)
   d <- ncol(X)
-  K <- dim(beta_true)[2]
+  if(setup == "simulation"){
+    K <- dim(beta_true)[2]
+  } else if(setup == "real_data"){
+    eff <- counterfact$eff
+    safe <- counterfact$safe
+    K <- ncol(eff)
+  } else{
+    stop("'setup' can be either 'simulation' or 'real_data'.")
+  }
   stopifnot("tr_start must be multiple of the number of Arms" = 
               (tr_start %% K == 0))
-  trt_init <- rep(rep(1:4, each = 2), tr_start %/% (2*K))
+  trt_init <- rep(rep(1:K, each = 2), tr_start %/% (2*K))
   param <- list(beta_mean = array(0, c(d, K, N)), 
                 beta_cov = array(0, c(d, d, K, N)), 
                 beta_eff = array(0, c(d, d, K)))
@@ -478,7 +535,8 @@ do_ts_batch <- function(X, X_true, beta_true, weight = 1, seed = NULL,
                               ate_start = ate_start, train = train, M = M, 
                               weight = weight, rwd_sig = rwd_sig,
                               design = design, min_prpn = min_prpn, 
-                              trt = trt_new)
+                              trt = trt_new, setup = setup, eff = as.numeric(eff[t, ]), 
+                              safe = as.numeric(safe[t, ]))
     
     param <- step$param
     log_dat <- step$log_dat
@@ -522,18 +580,28 @@ do_rits_batch <- function(X, X_true, beta_true, weight = 1, seed = NULL,
                           rwd_sig = 0.1, tr_start = 24, tr_batch = 5, tr_lag = 10,
                           M = 1000, v = 10, min_prpn = 0.05, 
                           asympcs = FALSE, ate_start = 20, placebo_arm = 1, 
-                          alpha = 0.05, first_peek = NULL, design = "clip"){
+                          alpha = 0.05, first_peek = NULL, design = "clip",
+                          setup = "simulation", counterfact = NULL){
   # browser()
   if(!is.null(seed)){
     set.seed(seed)
   }
   N <- nrow(X)
   d <- ncol(X)
-  K <- dim(beta_true)[2]
-  E <- dim(beta_true)[3]
+  if(setup == "simulation"){
+    K <- dim(beta_true)[2]
+    E <- dim(beta_true)[3]
+  } else if(setup == "real_data"){
+    eff <- counterfact$eff
+    safe <- counterfact$safe
+    K <- ncol(eff)
+    E <- length(counterfact)
+  } else{
+    stop("'setup' can be either 'simulation' or 'real_data'.")
+  }
   stopifnot("tr_start must be multiple of the number of Arms" = 
               (tr_start %% K == 0))
-  trt_init <- rep(rep(1:4, each = 2), tr_start %/% (2*K))
+  trt_init <- rep(rep(1:K, each = 2), tr_start %/% (2*K))
   param <- list(beta_mean = array(0, c(d, K, N, E)), 
                 beta_cov = array(0, c(d, d, K, N, E)), 
                 beta_eff = array(0, c(d, d, K, E)))
@@ -582,7 +650,9 @@ do_rits_batch <- function(X, X_true, beta_true, weight = 1, seed = NULL,
                                 ate_start = ate_start, 
                                 train = train, weight = weight, 
                                 rwd_sig = rwd_sig, design = design,
-                                min_prpn = min_prpn, trt = trt_new)
+                                min_prpn = min_prpn, trt = trt_new,
+                                setup = setup, eff = as.numeric(eff[t, ]), 
+                                safe = as.numeric(safe[t, ]))
     param <- step$param
     log_dat <- step$log_dat
     
