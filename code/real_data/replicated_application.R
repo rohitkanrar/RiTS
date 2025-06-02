@@ -1,3 +1,4 @@
+print(timestamp())
 source("code/function/main_function.R")
 source("code/function/misc.R")
 source("code/function/asymp_cs.R")
@@ -49,3 +50,4 @@ for(i in 1:n_iter){
 saveRDS(rand_real_sim, "output/real_dat/rand_real_sim.RData")
 saveRDS(ts_real_sim, "output/real_dat/ts_real_sim.RData")
 saveRDS(rits_real_sim, "output/real_dat/rits_real_sim.RData")
+print(timestamp())
