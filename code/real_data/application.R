@@ -1,6 +1,6 @@
 real_dat <- readRDS("data/clean_data.RData")
-countfact_eff <- readRDS("output/countfact_eff.RData")
-countfact_safe <- readRDS("output/countfact_safe.RData")
+countfact_eff <- readRDS("output/real_dat/countfact_eff.RData")
+countfact_safe <- readRDS("output/real_dat/countfact_safe.RData")
 sim_choice <- readRDS("metadata/sim_choice.RData")
 
 tr_start <- sim_choice$tr_start
@@ -19,7 +19,6 @@ source("code/function/main_function.R")
 source("code/real_data/application_function.R")
 source("code/function/misc.R")
 source("code/function/asymp_cs.R")
-# source("code/function/awaipw_functions.R")
 set.seed(2024)
 
 K <- length(unique(real_dat[["arm"]]))

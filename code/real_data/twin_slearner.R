@@ -42,7 +42,7 @@ for(k in 1:K){
   
 }
 
-saveRDS(countfact_eff, "output/countfact_eff.RData")
-saveRDS(countfact_safe, "output/countfact_safe.RData")
+saveRDS(countfact_eff, "output/real_dat/countfact_eff.RData")
+saveRDS(countfact_safe, "output/real_dat/countfact_safe.RData")
 
 rm(list = ls())
