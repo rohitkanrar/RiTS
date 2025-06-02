@@ -65,35 +65,44 @@ gen_cum_reg_bwplot <- function(df_high, df_low, ind){
 
 # Function to generate freq of arm alloc plot as in Appendix A.1.
 gen_freq_arm_alloc_df <- function(out_rand, out_ts, out_rits){
-  n_iter <- length(out_rand)
+  # browser()
+  n_iter <- length(out_rand); K <- length(unique(out_rand[[1]]$trt))
   trt_rand <- t(sapply(1:n_iter, function(i) table(out_rand[[i]]$trt)))
   trt_ts <- t(sapply(1:n_iter, function(i) table(out_ts[[i]]$trt)))
   trt_rits <- t(sapply(1:n_iter, function(i) table(out_rits[[i]]$trt)))
   df <- data.frame(
     Frequency = c(trt_rand, trt_ts, trt_rits),
-    Arm = rep(rep(1:4, each = nrow(trt_rand)), times = 3),
+    Arm = rep(rep(1:K, each = nrow(trt_rand)), times = 3),
     Method = rep(c("rand", "ts", "rits"), each = nrow(trt_rand)*ncol(trt_rand))
   )
   return(df)
 }
 gen_freq_arm_alloc <- function(df_high, df_low, ylims){
-  df <- rbind(df_high, df_low)
-  ggplot(df, aes(x = factor(Arm), 
+  if(!is.null(df_low)){
+    df <- rbind(df_high, df_low)
+  } else{
+    df <- df_high
+  }
+  out_plot <- ggplot(df, aes(x = factor(Arm), 
                  y = Frequency, fill = Method)) +
-    geom_boxplot(outlier.size = 0.5) + facet_wrap(~dgp) +
+    geom_boxplot(outlier.size = 0.5) +
     labs(x = "Arm", y = "Frequency of Allocation", 
          fill = "Method") + 
     scale_fill_manual(
       values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00"),
       labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS")
     ) + ylim(ylims)
+  if(!is.null(df_low)){
+    out_plot <- out_plot + facet_wrap(~dgp)
+  }
+  return(out_plot)
 }
 
 gen_width_df <- function(out_rand, out_ts, out_rits, ate_ind){
-  n_iter <- length(out_rand)
+  n_iter <- length(out_rand); K <- length(unique(out_rand[[1]]$trt))
   ind <- dimnames(out_rand[[1]]$contr)[[1]][ate_ind]
   df <- data.frame()
-  for(arm in 2:4){
+  for(arm in 2:K){
     contr_std_width <- t(sapply(1:n_iter, function(iter){
       out_rand[[iter]]$contr_standard[ate_ind, (arm - 1), 3] - 
         out_rand[[iter]]$contr_standard[ate_ind, (arm - 1), 2]
@@ -146,10 +155,10 @@ gen_width_bwplot <- function(df_high, df_low, ind, ylims){
 
 # Function to generate bias box plot as in Appendix A.2.
 gen_bias_df <- function(out_rand, out_ts, out_rits, ate_ind, contr_true){
-  n_iter <- length(out_rand)
+  n_iter <- length(out_rand); K <- length(unique(out_rand[[1]]$trt))
   ind <- dimnames(out_rand[[1]]$contr)[[1]][ate_ind]
   df <- data.frame()
-  for(arm in 2:4){
+  for(arm in 2:K){
     contr_std_bias <- t(sapply(1:n_iter, function(iter){
       out_rand[[iter]]$contr_standard[ate_ind, arm-1, 1] - contr_true[arm-1]
     }))
@@ -254,7 +263,7 @@ gen_cum_miscov_plot <- function(df_high, df_low, alpha, ate_start){
 }
 
 gen_winner_curve_df <- function(rand_out, ts_out, rits_out, 
-                             true_best_arm = 4){
+                             true_best_arm = 4, include_std = TRUE){
   n_iter <- length(rand_out)
   true_best_arm <- true_best_arm - 1
   n_comp <- dim(rand_out[[1]]$contr)[1]
@@ -263,9 +272,11 @@ gen_winner_curve_df <- function(rand_out, ts_out, rits_out,
   power_ts <- numeric(n_comp)
   power_rits <- numeric(n_comp)
   for(i in 1:n_iter){
-    power_std <- power_std + as.numeric(
-      sapply(1:n_comp, function(t) which.max(rand_out[[i]]$contr_standard[t, , 1]) == true_best_arm)
-    )
+    if(include_std){
+      power_std <- power_std + as.numeric(
+        sapply(1:n_comp, function(t) which.max(rand_out[[i]]$contr_standard[t, , 1]) == true_best_arm)
+      )
+    }
     power_rand <- power_rand + as.numeric(
       sapply(1:n_comp, function(t) which.max(rand_out[[i]]$contr[t, , 1]) == true_best_arm)
     )
@@ -281,29 +292,39 @@ gen_winner_curve_df <- function(rand_out, ts_out, rits_out,
   power_ts <- power_ts / n_iter
   power_rits <- power_rits / n_iter
   
-  df <- data.frame(std = power_std, rand = power_rand, ts = power_ts,
+  df <- data.frame(rand = power_rand, ts = power_ts,
                    rits = power_rits, 
                    participant = as.numeric(dimnames(rand_out[[1]]$contr)[[1]]))
+  if(include_std){
+    df[["std"]] <- power_std
+  }
   df_long <- tidyr::gather(df, key = "Methods", value = "value", -participant)
   df_long
 }
 gen_winner_curve <- function(df_high, df_low){
-  df <- rbind(df_high, df_low)
+  if(!is.null(df_low)){
+    df <- rbind(df_high, df_low)
+  } else{
+    df <- df_high
+  }
   out_plot <- ggplot(df, aes(x = participant, y = value, color = Methods)) +
     geom_line() + labs(x = "Participant", y = "Proportion of trials") + 
-    facet_wrap(~dgp) +
     scale_color_manual(
       values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00", 
                  "std" = "#009E73"),
       labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS", "std" = "Std")
     )
+  if(!is.null(df_low)){
+    out_plot <- out_plot + facet_wrap(~dgp)
+  }
   return(out_plot)
 }
 
 source("code/function/misc.R")
-gen_power_curve_df <- function(rand_out, ts_out, rits_out, min_thresh = 0.1){
+gen_power_curve_df <- function(rand_out, ts_out, rits_out, min_thresh = 0.1,
+                               include_std = TRUE){
   # browser()
-  n_iter <- length(rand_out)
+  n_iter <- length(rand_out); K <- length(unique(rand_out[[1]]$trt))
   n_comp <- dim(rand_out[[1]]$contr)[1]
   
   power_std <- numeric(n_comp)
@@ -312,26 +333,28 @@ gen_power_curve_df <- function(rand_out, ts_out, rits_out, min_thresh = 0.1){
   power_rits <- numeric(n_comp)
   
   for(i in 1:n_iter){
-    power_std <- power_std + sapply(1:n_comp, function(t){
-      rej <- sapply(1:3, function(k){
-        zero_in_intv(rand_out[[i]]$contr_standard[t, k, 2:3], zero = min_thresh)
+    if(include_std){
+      power_std <- power_std + sapply(1:n_comp, function(t){
+        rej <- sapply(1:(K-1), function(k){
+          zero_in_intv(rand_out[[i]]$contr_standard[t, k, 2:3], zero = min_thresh)
+        })
+        as.numeric(FALSE %in% rej)
       })
-      as.numeric(FALSE %in% rej)
-    })
+    }
     power_rand <- power_rand + sapply(1:n_comp, function(t){
-      rej <- sapply(1:3, function(k){
+      rej <- sapply(1:(K-1), function(k){
         zero_in_intv(rand_out[[i]]$contr[t, k, 2:3], zero = min_thresh)
       })
       as.numeric(FALSE %in% rej)
     })
     power_ts <- power_ts + sapply(1:n_comp, function(t){
-      rej <- sapply(1:3, function(k){
+      rej <- sapply(1:(K-1), function(k){
         zero_in_intv(ts_out[[i]]$contr[t, k, 2:3], zero = min_thresh)
       })
       as.numeric(FALSE %in% rej)
     })
     power_rits <- power_rits + sapply(1:n_comp, function(t){
-      rej <- sapply(1:3, function(k){
+      rej <- sapply(1:(K-1), function(k){
         zero_in_intv(rits_out[[i]]$contr[t, k, 2:3], zero = min_thresh)
       })
       as.numeric(FALSE %in% rej)
@@ -343,35 +366,49 @@ gen_power_curve_df <- function(rand_out, ts_out, rits_out, min_thresh = 0.1){
   power_ts <- power_ts / n_iter
   power_rits <- power_rits / n_iter
   
-  df <- data.frame(std = power_std, rand = power_rand, ts = power_ts,
+  df <- data.frame(rand = power_rand, ts = power_ts,
                    rits = power_rits, 
                    participant = as.numeric(dimnames(rand_out[[1]]$contr)[[1]]))
+  if(include_std){
+    df[["std"]] <- power_std
+  }
   df_long <- tidyr::gather(df, key = "Methods", value = "value", -participant)
   return(df_long)
 }
 
 gen_power_curve <- function(df_high, df_low){
-  df <- rbind(df_high, df_low)
+  if(!is.null(df_low)){
+    df <- rbind(df_high, df_low)
+  } else{
+    df <- df_high
+  }
   out_plot <- ggplot(df, aes(x = participant, y = value, color = Methods)) +
-    geom_line() + labs(x = "Participant", y = "Power") + facet_wrap(~dgp) +
+    geom_line() + labs(x = "Participant", y = "Power") +
     scale_color_manual(
       values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00", 
                  "std" = "#009E73"),
       labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS", "std" = "Std")
-    ) 
+    )
+  if(!is.null(df_low)){
+    out_plot <- out_plot + facet_wrap(~dgp)
+  }
   return(out_plot)
 }
 
-gen_metrics_plot <- function(df_winner, df_power){
+gen_metrics_plot <- function(df_winner, df_power, dgp_exists = TRUE){
   df <- rbind(df_winner, df_power)
   out_plot <- ggplot(df, aes(x = participant, y = value, color = Methods)) +
     geom_line() + labs(x = "Participant", y = "Proportion of Replication") + 
-    facet_grid(type~dgp) +
     scale_color_manual(
       values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00", 
                  "std" = "#009E73"),
       labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS", "std" = "Std")
     ) 
+  if(dgp_exists){
+    out_plot <- out_plot + facet_grid(type~dgp)
+  } else{
+    out_plot <- out_plot + facet_wrap(~type)
+  }
   return(out_plot)
 }
 
