@@ -12,7 +12,8 @@ rits_sim_low <- readRDS("output/rits_sim_dgp_low_min_prpn_0.05_tr_start_24.RData
 
 n_iter <- length(ts_sim_high)
 N <- length(ts_sim_high[[1]]$trt)
-ind <- c(ts_sim_high[[1]]$tr_first, seq(30, N, 10))
+ind <- c(ts_sim_high[[1]]$tr_first, seq(30, N/2, 15), 
+         seq(N/2+25, N, 25))
 K <- length(unique(rand_sim_high[[1]]$trt))
 
 

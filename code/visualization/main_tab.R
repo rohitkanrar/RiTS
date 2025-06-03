@@ -11,7 +11,8 @@ rits_sim_low <- readRDS("output/rits_sim_dgp_low_min_prpn_0.05_tr_start_24.RData
 K <- length(unique(rand_sim_high[[1]]$trt))
 sim_choice <- readRDS("metadata/sim_choice.RData")
 ate_start <- sim_choice$ate_start
-ind <- c(ate_start, seq(30, sim_choice$N, 10))
+ind <- c(ate_start, seq(30, sim_choice$N/2, 15), 
+         seq(sim_choice$N/2+25, sim_choice$N, 25))
 ate_ind <- sapply(ind, function(i){
   which(as.numeric(dimnames(ts_sim_high[[1]]$contr)[[1]]) == i)
 })

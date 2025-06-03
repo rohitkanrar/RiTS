@@ -12,7 +12,8 @@ rits_sim_low <- readRDS("output/rits_sim_dgp_low_min_prpn_0.05_tr_start_24.RData
 
 n_iter <- length(ts_sim_high)
 N <- length(ts_sim_high[[1]]$trt)
-ind <- c(ts_sim_high[[1]]$tr_first, seq(30, N, 10))
+ind <- c(ts_sim_high[[1]]$tr_first, seq(30, N/2, 15), 
+         seq(N/2+25, N, 25))
 K <- length(unique(rand_sim_high[[1]]$trt))
 
 criteria <- c("Utility", "Efficacy", "Safety")
@@ -45,7 +46,7 @@ df_low <- gen_freq_arm_alloc_df(out_rand = rand_sim_low,
                                 out_rits = rits_sim_low)
 df_high[["dgp"]] <- "High-SNR"; df_low[["dgp"]] <- "Low-SNR"
 alloc_plot <- gen_freq_arm_alloc(df_high = df_high, df_low = df_low, 
-                                 ylims = c(0, 70))
+                                 ylims = c(0, 150))
 # Proportion of trials where Arm 4 is the winner (without confidence)
 winner_high <- gen_winner_curve_df(rand_out = rand_sim_high, ts_out = ts_sim_high, 
                                rits_out = rits_sim_high, true_best_arm = 4)

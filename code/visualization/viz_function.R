@@ -487,3 +487,29 @@ gen_bias_rmse_tab <- function(summ_rand, summ_ts, summ_rits, ate_ind, ind){
                                  "(Arm", rep(2:4, each = 4), ")", sep = "")
   est_err_tab
 }
+
+gen_cum_miscov_for_tab <- function(out_rand, out_ts, out_rits, 
+                                   mu_true, contr_true){
+  n_iter <- length(out_rand); K <- length(mu_true); N <- length(out_rand[[1]]$trt)
+  end_cum_miscov <- numeric((K-1)*4)
+  names(end_cum_miscov) <- paste("Arm ", rep(2:K, each = 4), ":", 
+                                 c("Rand+Std", "Rand+AsympCS", 
+                                   "TS+AsympCS", "RiTS+AsympCS"))
+  cum_miscov_rand <- get_cum_mis_cov(out_rand, mu_true = mu_true, 
+                                contr_true = contr_true, delay = 0, 
+                                need_std = TRUE)
+  end_ind <- nrow(cum_miscov_rand[[2]])
+  cum_miscov_ts <- get_cum_mis_cov(out_ts, mu_true = mu_true, 
+                                     contr_true = contr_true, delay = 0, 
+                                     need_std = FALSE)
+  cum_miscov_rits <- get_cum_mis_cov(out_rits, mu_true = mu_true, 
+                                   contr_true = contr_true, delay = 0, 
+                                   need_std = FALSE)
+  for(k in 1:(K-1)){
+    end_cum_miscov[seq(1, (K-1)*4, 4)] <- cum_miscov_rand[[3]][end_ind, ]
+    end_cum_miscov[seq(2, (K-1)*4, 4)] <- cum_miscov_rand[[2]][end_ind, ]
+    end_cum_miscov[seq(3, (K-1)*4, 4)] <- cum_miscov_ts[[2]][end_ind, ]
+    end_cum_miscov[seq(4, (K-1)*4, 4)] <- cum_miscov_rits[[2]][end_ind, ]
+  }
+  end_cum_miscov/n_iter
+}
