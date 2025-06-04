@@ -5,7 +5,7 @@ dgps <- c("low", "high")
 tr_starts <- sim_choice$tr_start
 min_prpns <- sim_choice$min_prpns
 cases <- expand.grid(dgp = dgps, min_prpn = min_prpns, tr_start = tr_starts)
-n_iter <- 5; out_dir <- "output/"; K <- sim_choice$K; N <- sim_choice$N
+n_iter <- 5000; out_dir <- "output/"; K <- sim_choice$K; N <- sim_choice$N
 ind <- c(sim_choice$ate_start, seq(30, N/2, 15), 
          seq(N/2+25, N, 25))
 j <- 0
