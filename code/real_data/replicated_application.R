@@ -19,7 +19,7 @@ tr_start <- 10 * K; ate_start <- tr_start
 library(parallel); num_cores <- 20
 results <- mclapply(1:n_iter, function(i, X_real, counterfact){
   d <- ncol(X_real); N <- nrow(X_real); K <- ncol(countfact_eff)
-  tr_start <- d*2*K; ate_start <- tr_start; min_prpn <- 0.05
+  tr_start <- 10 * K; ate_start <- tr_start; min_prpn <- 0.05
   first_peek <- floor(ate_start * 1.5); reward_sig <- 1; alpha <- 0.05
   seed_ <- i
   set.seed(i)
