@@ -5,12 +5,10 @@ dgps <- c("low", "high")
 tr_starts <- sim_choice$tr_start
 min_prpns <- sim_choice$min_prpns
 cases <- expand.grid(dgp = dgps, min_prpn = min_prpns, tr_start = tr_starts)
-n_iter <- 5000; out_dir <- "output/"; K <- sim_choice$K
+n_iter <- 5; out_dir <- "output/"; K <- sim_choice$K; N <- sim_choice$N
 ind <- c(sim_choice$ate_start, seq(30, N/2, 15), 
          seq(N/2+25, N, 25))
-ate_ind <- sapply(ind, function(i){
-  which(as.numeric(dimnames(rand_sim_high[[1]]$contr)[[1]]) == i)
-})
+j <- 0
 
 # cumulative mis-coverage and estimation error tables
 cum_miscov_all_tab <- matrix(NA, nrow(cases), 4*(K-1))
@@ -42,8 +40,15 @@ for(i in 1:nrow(cases)){
   contr_true <- contr_true[setdiff(1:K, sim_dat$placebo_arm)]
   ## Correctly specified
   # cumulative mis-coverage
-  rand_sim <- readRDS(rand_file_name); ts_sim <- readRDS(ts_file_name); 
-  rits_sim <- readRDS(rits_file_name)
+  rand_sim <- readRDS(rand_file_name); rand_sim <- rand_sim[1:n_iter]
+  if(j == 0){
+    ate_ind <- sapply(ind, function(i){
+      which(as.numeric(dimnames(rand_sim[[1]]$contr)[[1]]) == i)
+    })
+    j <- j + 1
+  }
+  ts_sim <- readRDS(ts_file_name); ts_sim <- ts_sim[1:n_iter]
+  rits_sim <- readRDS(rits_file_name); rits_sim <- rits_sim[1:n_iter]
   cum_miscov_all_tab[i, ] <- gen_cum_miscov_for_tab(out_rand = rand_sim, 
                                                     out_ts = ts_sim, 
                                                     out_rits = rits_sim, 
