@@ -14,7 +14,7 @@ sim_choice <- readRDS("metadata/sim_choice.RData")
 n_iter <- length(ts_sim_high)
 N <- length(ts_sim_high[[1]]$trt)
 ind <- round(
-  c(seq(50, sim_choice$N*0.625, 10), sim_choice$N*(3/4), sim_choice$N/2)
+  c(seq(50, sim_choice$N*0.625, 10), sim_choice$N*(3/4), sim_choice$N)
 )
 K <- length(unique(rand_sim_high[[1]]$trt))
 

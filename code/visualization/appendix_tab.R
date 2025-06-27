@@ -7,7 +7,7 @@ min_prpns <- sim_choice$min_prpns
 cases <- expand.grid(dgp = dgps, min_prpn = min_prpns, tr_start = tr_starts)
 n_iter <- 5000; out_dir <- "output/"; K <- sim_choice$K; N <- sim_choice$N
 ind <- round(
-  c(seq(50, sim_choice$N*0.625, 10), sim_choice$N*(3/4), sim_choice$N/2)
+  c(seq(50, sim_choice$N*0.625, 10), sim_choice$N*(3/4), sim_choice$N)
 )
 j <- 0
 
@@ -98,3 +98,5 @@ saveRDS(cum_miscov_all_tab, "tables/cum_miscov_all_tab.RData")
 saveRDS(cum_miscov_all_mis_tab, "tables/cum_miscov_all_mis_tab.RData")
 saveRDS(est_err_all_tab, "tables/est_err_all_tab.RData")
 saveRDS(est_err_all_mis_tab, "tables/est_err_all_mis_tab.RData")
+
+# xtable::xtable(rbind(est_err_all_mis_tab[[6]]$tab, est_err_all_mis_tab[[5]]$tab))

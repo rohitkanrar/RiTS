@@ -12,7 +12,7 @@ K <- length(unique(rand_sim_high[[1]]$trt))
 sim_choice <- readRDS("metadata/sim_choice.RData")
 ate_start <- sim_choice$ate_start
 ind <- round(
-  c(seq(50, sim_choice$N*0.625, 10), sim_choice$N*(3/4), sim_choice$N/2)
+  c(seq(50, sim_choice$N*0.625, 10), sim_choice$N*(3/4), sim_choice$N)
 )
 
 ate_ind <- sapply(ind, function(i){
