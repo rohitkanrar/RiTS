@@ -122,7 +122,7 @@ gen_width_df <- function(out_rand, out_ts, out_rits, ate_ind){
     df_tmp <- data.frame(
       Width = c(contr_std_width, contr_rand_width, contr_ts_width, 
                 contr_rits_width),
-      Method = rep(c("std", "rand", "ts", "rits"), 
+      Method = rep(c("ttest", "rand", "ts", "rits"), 
                    each = nrow(contr_rand_width)*ncol(contr_rand_width)),
       Column = rep(rep(1:ncol(contr_rand_width), each = nrow(contr_rand_width), 
                        times = 4)),
@@ -195,7 +195,7 @@ gen_bias_bwplot <- function(df_high, df_low, ind){
     labs(x = "Number of Participants", y = "Bias", 
          fill = "Arm") +
     scale_fill_manual(
-      values = c("std" = "#009E73", "rand" = "#CC79A7", "ts" = "#0072B2", 
+      values = c("ttest" = "#009E73", "rand" = "#CC79A7", "ts" = "#0072B2", 
                  "rits" = "#D55E00"),
       labels = c("ttest" = "T-test", "ts" = "TS", "rand" = "Rand", "rits" = "RiTS")
     ) +
@@ -221,7 +221,7 @@ gen_cum_miscov_df <- function(out_rand, out_ts, out_rits, mu_true, contr_true){
   df_std$obs <- as.numeric(dimnames(out_rand[[1]]$contr)[[1]])
   df_std <- melt(df_std, id.vars = "obs", variable.name = "Arm", 
                   value.name = "Miscov")
-  df_std["Method"] <- "Std"
+  df_std["Method"] <- "T-test"
   
   cum_miscov <- get_cum_mis_cov(out_ts, mu_true = mu_true, 
                                 contr_true = contr_true, delay = 0)
@@ -296,7 +296,7 @@ gen_winner_curve_df <- function(rand_out, ts_out, rits_out,
                    rits = power_rits, 
                    participant = as.numeric(dimnames(rand_out[[1]]$contr)[[1]]))
   if(include_std){
-    df[["std"]] <- power_std
+    df[["ttest"]] <- power_std
   }
   df_long <- tidyr::gather(df, key = "Methods", value = "value", -participant)
   df_long
@@ -311,8 +311,8 @@ gen_winner_curve <- function(df_high, df_low){
     geom_line() + labs(x = "Participant", y = "Proportion of trials") + 
     scale_color_manual(
       values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00", 
-                 "std" = "#009E73"),
-      labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS", "std" = "Std")
+                 "ttest" = "#009E73"),
+      labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS", "ttest" = "T-test")
     )
   if(!is.null(df_low)){
     out_plot <- out_plot + facet_wrap(~dgp)
