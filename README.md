@@ -43,7 +43,6 @@ The method is named **R**isk-**i**nclusive **T**hompson **S**ampling (RiTS).
 
 - Clone Github Repository:
 
-
 ```
 git clone git@github.com:rohitkanrar/RiTS.git
 cd RiTS
@@ -52,6 +51,7 @@ cd RiTS
 
 ```
 mkdir output
+mkdir plot
 ```
 
 - Install all required R packages:
@@ -60,17 +60,18 @@ mkdir output
 source("code/r/requirements.R")
 ```
 
-## A Test Case:
+## To Replicate Results:
 
-Here, we include steps to replicate the simulation experiment conducted in Section 3.
+Please follow `simulation_example.Rmd` to reproduce all experiments, figures and tables.
 
-- Run trials:
-```
-source("code/simulation/replicated_trial.R")
+## References
 
-```
-- Visualize results by running the script `code/visualization/replicated_trial_figures.R`.
-- Generate tables by running the script `-code/visualize/replicated_trial_tables.R`.
+[1] Waudby-Smith, I., Arbour, D., Sinha, R., Kennedy, E. H., and Ramdas, A. (2024). Time-
+uniform central limit theory and asymptotic confidence sequences. The Annals of Statistics,
+52(6):2613–2640.
+Open-sourced software: drconfseq is implemented in [https://github.com/WannabeSmith/drconfseq](https://github.com/WannabeSmith/drconfseq).
 
+**I would like to thank the authors of the above open-sourced software.**
 
-Please feel free to email at rohitk@iastate.edu with questions or to report any bugs. 
+## Additional Acknowledgement
+I would like to thank [https://faculty.sites.iastate.edu/somakd/](Professor Somak Dutta) for providing access to his personal High-performance Computing cluster, which greatly helped an efficient execution of this project.
