@@ -69,9 +69,10 @@ Please follow `simulation_example.Rmd` to reproduce all experiments, figures and
 [1] Waudby-Smith, I., Arbour, D., Sinha, R., Kennedy, E. H., and Ramdas, A. (2024). Time-
 uniform central limit theory and asymptotic confidence sequences. The Annals of Statistics,
 52(6):2613–2640.
+
 Open-sourced software: drconfseq is implemented in [https://github.com/WannabeSmith/drconfseq](https://github.com/WannabeSmith/drconfseq).
 
 **I would like to thank the authors of the above open-sourced software.**
 
 ## Additional Acknowledgement
-I would like to thank [https://faculty.sites.iastate.edu/somakd/](Professor Somak Dutta) for providing access to his personal High-performance Computing cluster, which greatly helped an efficient execution of this project.
+I would like to thank [Professor Somak Dutta](https://faculty.sites.iastate.edu/somakd/) for providing access to his personal High-performance Computing cluster, which greatly helped an efficient execution of this project.
