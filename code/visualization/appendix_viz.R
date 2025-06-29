@@ -8,6 +8,7 @@ ts_sim_low <- readRDS("output/ts_sim_dgp_low_min_prpn_0.05_tr_start_24.RData")
 rand_sim_low <- readRDS("output/rand_sim_dgp_low_min_prpn_0.005_tr_start_24.RData")
 rits_sim_low <- readRDS("output/rits_sim_dgp_low_min_prpn_0.05_tr_start_24.RData")
 
+sim_choice <- readRDS("metadata/sim_choice.RData")
 n_iter <- length(ts_sim_high)
 N <- length(ts_sim_high[[1]]$trt)
 ind <- round(
