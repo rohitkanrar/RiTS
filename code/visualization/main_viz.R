@@ -106,5 +106,5 @@ power_df[["type"]] <- "Stopping Criteria"
 
 metric_plots <- gen_metrics_plot(df_winner = winner, df_power = power_df, 
                                  dgp_exists = FALSE)
-metric_alloc_plot <- alloc_plot + metric_plots + plot_layout(ncol = 2)
+metric_alloc_plot_real <- alloc_plot + metric_plots + plot_layout(ncol = 2)
 ggsave("plot/metric_alloc_plot_real.jpg", height = 4, width = 12, units = "in")
