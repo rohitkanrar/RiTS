@@ -62,3 +62,4 @@ xtable::xtable(est_err_tab_low)
 
 # est_err_tab_high <- readRDS("tables/est_err_tab_high.RData")
 # est_err_tab_low <- readRDS("tables/est_err_tab_low.RData")
+# est_err_tab <- rbind(est_err_tab_high, est_err_tab_low)

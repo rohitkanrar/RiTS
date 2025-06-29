@@ -145,9 +145,9 @@ gen_width_bwplot <- function(df_high, df_low, ind, ylims){
     labs(x = "Number of Participants", y = "Width", 
          fill = "Arm") +
     scale_fill_manual(
-      values = c("std" = "#009E73", "rand" = "#CC79A7", "ts" = "#0072B2", 
+      values = c("ttest" = "#009E73", "rand" = "#CC79A7", "ts" = "#0072B2", 
                  "rits" = "#D55E00"),
-      labels = c("std" = "Std", "ts" = "TS", "rand" = "Rand", "rits" = "RiTS")
+      labels = c("ttest" = "T-test", "ts" = "TS", "rand" = "Rand", "rits" = "RiTS")
     ) +
     scale_x_discrete(labels = ind)
   return(wid_plot)
@@ -174,7 +174,7 @@ gen_bias_df <- function(out_rand, out_ts, out_rits, ate_ind, contr_true){
     
     df_tmp <- data.frame(
       Bias = c(contr_std_bias, contr_rand_bias, contr_ts_bias, contr_rits_bias),
-      Method = rep(c("std", "rand", "ts", "rits"), 
+      Method = rep(c("ttest", "rand", "ts", "rits"), 
                    each = nrow(contr_rand_bias)*ncol(contr_rand_bias)),
       Column = rep(rep(1:ncol(contr_rand_bias), each = nrow(contr_rand_bias), 
                        times = 4)),
@@ -197,7 +197,7 @@ gen_bias_bwplot <- function(df_high, df_low, ind){
     scale_fill_manual(
       values = c("std" = "#009E73", "rand" = "#CC79A7", "ts" = "#0072B2", 
                  "rits" = "#D55E00"),
-      labels = c("std" = "Std", "ts" = "TS", "rand" = "Rand", "rits" = "RiTS")
+      labels = c("ttest" = "T-test", "ts" = "TS", "rand" = "Rand", "rits" = "RiTS")
     ) +
     scale_x_discrete(labels = ind)
 }
@@ -370,7 +370,7 @@ gen_power_curve_df <- function(rand_out, ts_out, rits_out, min_thresh = 0.1,
                    rits = power_rits, 
                    participant = as.numeric(dimnames(rand_out[[1]]$contr)[[1]]))
   if(include_std){
-    df[["std"]] <- power_std
+    df[["ttest"]] <- power_std
   }
   df_long <- tidyr::gather(df, key = "Methods", value = "value", -participant)
   return(df_long)
@@ -386,8 +386,8 @@ gen_power_curve <- function(df_high, df_low){
     geom_line() + labs(x = "Participant", y = "Power") +
     scale_color_manual(
       values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00", 
-                 "std" = "#009E73"),
-      labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS", "std" = "Std")
+                 "ttest" = "#009E73"),
+      labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS", "ttest" = "T-test")
     )
   if(!is.null(df_low)){
     out_plot <- out_plot + facet_wrap(~dgp)
@@ -401,8 +401,8 @@ gen_metrics_plot <- function(df_winner, df_power, dgp_exists = TRUE){
     geom_line() + labs(x = "Participant", y = "Proportion of Replication") + 
     scale_color_manual(
       values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00", 
-                 "std" = "#009E73"),
-      labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS", "std" = "Std")
+                 "ttest" = "#009E73"),
+      labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS", "ttest" = "T-test")
     ) 
   if(dgp_exists){
     out_plot <- out_plot + facet_grid(type~dgp)
@@ -483,7 +483,7 @@ gen_bias_rmse_tab <- function(summ_rand, summ_ts, summ_rits, ate_ind, ind){
   est_err_tab <- matrix(paste(round(bias_tab, 2), "(", round(rmse_tab, 2), ")", sep = ""), 
                         nrow = nrow(bias_tab))
   colnames(est_err_tab) <- paste(ind)
-  rownames(est_err_tab) <- paste(c("Std", "Rand", "TS", "RiTS"), 
+  rownames(est_err_tab) <- paste(c("T-test", "Rand", "TS", "RiTS"), 
                                  "(Arm", rep(2:4, each = 4), ")", sep = "")
   est_err_tab
 }
@@ -493,7 +493,7 @@ gen_cum_miscov_for_tab <- function(out_rand, out_ts, out_rits,
   n_iter <- length(out_rand); K <- length(mu_true); N <- length(out_rand[[1]]$trt)
   end_cum_miscov <- numeric((K-1)*4)
   names(end_cum_miscov) <- paste("Arm ", rep(2:K, each = 4), ":", 
-                                 c("Rand+Std", "Rand+AsympCS", 
+                                 c("Rand+T-test", "Rand+AsympCS", 
                                    "TS+AsympCS", "RiTS+AsympCS"))
   cum_miscov_rand <- get_cum_mis_cov(out_rand, mu_true = mu_true, 
                                 contr_true = contr_true, delay = 0, 
