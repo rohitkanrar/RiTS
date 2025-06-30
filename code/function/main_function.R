@@ -223,13 +223,15 @@ one_step_ts_batch <- function(x, x_true, t, param, beta_true, K, d, log_dat,
     for(i in (last_tr_ind+1):(t-tr_lag)){
       x <- as.numeric(cntx_hist[i, ])
       trt_batch <- trt_hist[i]
+      prpn_batch <- prpns_mat[i, trt_batch]
+      if(is.na(prpn_batch)) browser()
       rwd_batch <- rwd_hist[i]
       eff <- beta_eff[, , trt_batch]
       beta_eff[, , trt_batch] <- beta_eff[, , trt_batch] + 
-        matrix(x, ncol = 1) %*% matrix(x, ncol = d) / rwd_sig^2
+        (1 / prpn_batch) * matrix(x, ncol = 1) %*% matrix(x, ncol = d) / rwd_sig^2
       beta_cov[, , trt_batch, t] <- solve(beta_eff[, , trt_batch])
       beta_mean[, trt_batch, t] <- beta_cov[, , trt_batch, t] %*% 
-        (matrix(x, ncol = 1) * rwd_batch / rwd_sig^2 + 
+        ((1 / prpn_batch) * matrix(x, ncol = 1) * rwd_batch / rwd_sig^2 + 
            eff %*% beta_mean[, trt_batch, t])
     }
     last_tr_ind <- t-tr_lag

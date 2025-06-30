@@ -1,9 +1,9 @@
 require(drconfseq)
 library(parallel)
-basic_learner <- function(y, X, newX){
+basic_learner <- function(y, X, newX, ipw){
   # browser()
   # mod <- lm(y ~ ., data.frame(y = y, X = X))
-  mod <- glmnet::glmnet(X, y, alpha = 0)
+  mod <- glmnet::glmnet(X, y, alpha = 0, weights = ipw)
   tmp <- predict(mod, newx = newX, s = 10)
   as.numeric(tmp)
 }
@@ -83,6 +83,7 @@ get_aipw_seq <- function(treatment, y, propensity, X,
       treatment_train <- treatment[train_idx_t]
       treatment_eval <- treatment[eval_idx_t]
       reg_est <- vector(mode = "list", length = K)
+      prpn_train <- propensity[train_idx_t, ]
       prpn_eval <- propensity[eval_idx_t, ]
       if(learner == "main_ridge"){
         reg_est <- main_effect_ridge(y = y_train, X = X_train, newX = X_eval, 
@@ -93,7 +94,8 @@ get_aipw_seq <- function(treatment, y, propensity, X,
           reg_est[[k]] <- tryCatch({
             basic_learner(y = y_train[treatment_train == k], 
                           X = X_train[treatment_train == k, ], 
-                          newX = X_eval)
+                          newX = X_eval, 
+                          ipw = 1 / prpn_train[treatment_train == k, k])
           }, error = function(e){
             numeric(nrow(X_eval))
           })
