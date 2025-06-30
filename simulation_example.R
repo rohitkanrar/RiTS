@@ -14,7 +14,7 @@ if(!dir.exists("output_git/")){
 }
 
 cases <- cases[5:6, ]
-n_iter <- 10 # only 10 instead of 5000 for illustration
+n_iter <- 500 # only 10 instead of 5000 for illustration
 
 library(parallel)
 num_cores <- 2
@@ -54,41 +54,37 @@ results <- mclapply(1:nrow(cases), function(i, cases, sim_choice, sim_dat, n_ite
     # if(iter %% 100 == 0) print(iter)
     seed_ <- iter
     set.seed(seed_)
-    ts_sim[[iter]] <- do_ts_batch(X = X_true, X_true = X_true, beta_true = beta_true, 
-                                  weight = weight, seed = seed_, rwd_sig = reward_sig,
-                                  tr_start = tr_start, tr_batch = 5, tr_lag = 10,
-                                  M = 1000, v = 10, min_prpn = min_prpn, asympcs = FALSE)
-    rits_sim[[iter]] <- do_rits_batch(X = X_true, X_true = X_true, beta_true = beta_true, 
-                                      weight = weight, seed = seed_, rwd_sig = reward_sig,
-                                      tr_start = tr_start, tr_batch = 5, tr_lag = 10,
-                                      M = 1000, v = 10, min_prpn = min_prpn, asympcs = FALSE)
-    ts_mis_sim[[iter]] <- do_ts_batch(X = X, X_true = X_true, beta_true = beta_true, 
-                                      weight = weight, seed = seed_, rwd_sig = reward_sig,
-                                      tr_start = tr_start, tr_batch = 5, tr_lag = 10,
-                                      M = 1000, v = 10, min_prpn = min_prpn, asympcs = FALSE)
-    rits_mis_sim[[iter]] <- do_rits_batch(X = X, X_true = X_true, beta_true = beta_true, 
-                                          weight = weight, seed = seed_, rwd_sig = reward_sig,
-                                          tr_start = tr_start, tr_batch = 5, tr_lag = 10,
-                                          M = 1000, v = 10, min_prpn = min_prpn, asympcs = FALSE)
-    if(min_prpn == 0.005){
-      rand_sim[[iter]] <- do_rand_biv(X = X_true, X_true = X_true, beta_true = beta_true, 
-                                      weight = weight, seed = seed_, 
-                                      rwd_sig = reward_sig, tr_start = tr_start,
-                                      asympcs = FALSE)
-      rand_mis_sim[[iter]] <- do_rand_biv(X = X, X_true = X_true, beta_true = beta_true, 
-                                          weight = weight, seed = seed_, 
-                                          rwd_sig = reward_sig, tr_start = tr_start,
-                                          asympcs = FALSE)
-    }
+    # ts_sim[[iter]] <- do_ts_batch(X = X_true, X_true = X_true, beta_true = beta_true, 
+    #                               weight = weight, seed = seed_, rwd_sig = reward_sig,
+    #                               tr_start = tr_start, tr_batch = 5, tr_lag = 10,
+    #                               M = 1000, v = 10, min_prpn = min_prpn, asympcs = FALSE)
+    # rits_sim[[iter]] <- do_rits_batch(X = X_true, X_true = X_true, beta_true = beta_true, 
+    #                                   weight = weight, seed = seed_, rwd_sig = reward_sig,
+    #                                   tr_start = tr_start, tr_batch = 5, tr_lag = 10,
+    #                                   M = 1000, v = 10, min_prpn = min_prpn, asympcs = FALSE)
+    # ts_mis_sim[[iter]] <- do_ts_batch(X = X, X_true = X_true, beta_true = beta_true, 
+    #                                   weight = weight, seed = seed_, rwd_sig = reward_sig,
+    #                                   tr_start = tr_start, tr_batch = 5, tr_lag = 10,
+    #                                   M = 1000, v = 10, min_prpn = min_prpn, asympcs = FALSE)
+    # rits_mis_sim[[iter]] <- do_rits_batch(X = X, X_true = X_true, beta_true = beta_true, 
+    #                                       weight = weight, seed = seed_, rwd_sig = reward_sig,
+    #                                       tr_start = tr_start, tr_batch = 5, tr_lag = 10,
+    #                                       M = 1000, v = 10, min_prpn = min_prpn, asympcs = FALSE)
+    rand_sim[[iter]] <- do_rand_biv(X = X_true, X_true = X_true, beta_true = beta_true, 
+                                    weight = weight, seed = seed_, 
+                                    rwd_sig = reward_sig, tr_start = tr_start,
+                                    asympcs = FALSE)
+    rand_mis_sim[[iter]] <- do_rand_biv(X = X, X_true = X_true, beta_true = beta_true, 
+                                        weight = weight, seed = seed_, 
+                                        rwd_sig = reward_sig, tr_start = tr_start,
+                                        asympcs = FALSE)
   }
-  saveRDS(ts_sim, paste(out_dir, "ts_sim_", case_str, ".RData", sep = ""))
-  saveRDS(rits_sim, paste(out_dir, "rits_sim_", case_str, ".RData", sep = ""))
-  saveRDS(ts_mis_sim, paste(out_dir, "ts_mis_sim_", case_str, ".RData", sep = ""))
-  saveRDS(rits_mis_sim, paste(out_dir, "rits_mis_sim_", case_str, ".RData", sep = ""))
-  if(min_prpn == 0.005){
-    saveRDS(rand_sim, paste(out_dir, "rand_sim_", case_str0, ".RData", sep = ""))
-    saveRDS(rand_mis_sim, paste(out_dir, "rand_mis_sim_", case_str0, ".RData", sep = ""))
-  }
+  # saveRDS(ts_sim, paste(out_dir, "ts_sim_", case_str, ".RData", sep = ""))
+  # saveRDS(rits_sim, paste(out_dir, "rits_sim_", case_str, ".RData", sep = ""))
+  # saveRDS(ts_mis_sim, paste(out_dir, "ts_mis_sim_", case_str, ".RData", sep = ""))
+  # saveRDS(rits_mis_sim, paste(out_dir, "rits_mis_sim_", case_str, ".RData", sep = ""))
+  saveRDS(rand_sim, paste(out_dir, "rand_sim_", case_str0, ".RData", sep = ""))
+  saveRDS(rand_mis_sim, paste(out_dir, "rand_mis_sim_", case_str0, ".RData", sep = ""))
   return(NULL)
 }, mc.cores = num_cores, cases = cases, sim_dat = sim_dat, sim_choice = sim_choice, n_iter = n_iter)
 
@@ -108,10 +104,17 @@ results <- mclapply(1:nrow(cases), function(i, cases, sim_choice){
   tr_start <- cases[i, "tr_start"]
   case_str <- paste("dgp", dgp, "min_prpn", min_prpn, "tr_start", tr_start, 
                     sep = "_")
-  mods <- c("rand_sim", "ts_sim", "rits_sim", "rand_mis_sim", "ts_mis_sim", 
-            "rits_mis_sim")
+  case_str0 <- paste("dgp", dgp, "min_prpn", 0.005, "tr_start", tr_start, 
+                    sep = "_")
+  # mods <- c("rand_sim", "ts_sim", "rits_sim", "rand_mis_sim", "ts_mis_sim", 
+  #           "rits_mis_sim")
+  mods <- c("rand_sim", "rand_mis_sim")
   for(mod in mods){
-    file_name <- paste(out_dir, mod, "_", case_str, ".RData", sep = "")
+    if(mod == "rand_sim" || mod == "rand_mis_sim"){
+      file_name <- paste(out_dir, mod, "_", case_str0, ".RData", sep = "")
+    } else{
+      file_name <- paste(out_dir, mod, "_", case_str, ".RData", sep = "")
+    }
     if(file.exists(file_name)){
       out_sim <- readRDS(file_name)
       out_sim <- add_asympcs_sim(out_list = out_sim, ate_start = 24, batch = batch, 
@@ -126,3 +129,6 @@ results <- mclapply(1:nrow(cases), function(i, cases, sim_choice){
   }
   return(NULL)
 }, mc.cores = num_cores, cases = cases, sim_choice = sim_choice)
+
+
+
