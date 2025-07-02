@@ -247,7 +247,7 @@ gen_cum_miscov_df <- function(out_rand, out_ts, out_rits, mu_true, contr_true){
 gen_cum_miscov_plot <- function(df_high, df_low, alpha, ate_start){
   df_high["dgp"] <- "High-SNR"; df_low["dgp"] <- "Low-SNR"
   df <- rbind(df_high, df_low)
-  df$Method <- factor(df$Method, levels = c("Std", "Rand", "TS", "RiTS"))
+  df$Method <- factor(df$Method, levels = c("T-test", "Rand", "TS", "RiTS"))
   
   ggplot(df, aes(x = obs, y = Miscov, color = Arm)) +
     geom_line(linewidth = 0.5) + ylim(c(0, 0.1)) + 
