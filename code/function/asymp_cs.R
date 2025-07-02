@@ -7,13 +7,13 @@ basic_learner <- function(y, X, newX, ipw){
   tmp <- predict(mod, newx = newX, s = 10)
   as.numeric(tmp)
 }
-main_effect_ridge <- function(y, X, newX, trt_ind, K){
+main_effect_ridge <- function(y, X, newX, trt_ind, K, ipw){
   # browser()
   nte <- nrow(newX)
   trt_ind <- factor(trt_ind, levels = 1:K)
   X <- model.matrix(~0+trt_ind+X)
   X <- X[, -1]
-  mod <- glmnet::glmnet(X, y, alpha = 0)
+  mod <- glmnet::glmnet(X, y, alpha = 0, weights = ipw)
   reg_est <- vector(mode = "list", length = K)
   tmp <- matrix(0, nte, K-1)
   newX <- cbind(tmp, newX)
@@ -86,8 +86,12 @@ get_aipw_seq <- function(treatment, y, propensity, X,
       prpn_train <- propensity[train_idx_t, ]
       prpn_eval <- propensity[eval_idx_t, ]
       if(learner == "main_ridge"){
+        ipw <- length(prpn_train)
+        for(k in 1:K){
+          ipw[treatment_train == k] <- 1 / prpn_train[treatment_train == k, k]
+        }
         reg_est <- main_effect_ridge(y = y_train, X = X_train, newX = X_eval, 
-                                   trt_ind = treatment_train, K = K)
+                                   trt_ind = treatment_train, K = K, ipw = ipw)
       } else{
         for(k in 1:K){
           # browser()
