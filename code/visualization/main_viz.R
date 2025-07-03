@@ -1,14 +1,21 @@
 source("code/visualization/viz_function.R")
 ### Section A.1 (Empirical Behavior of Cumulative Regret)
 ## Cumulative Regret Plot
+out_dir <- "output/small_rep/"
 # High SNR
-ts_sim_high <- readRDS("output/ts_sim_dgp_high_min_prpn_0.05_tr_start_24.RData")
-rand_sim_high <- readRDS("output/rand_sim_dgp_high_min_prpn_0.005_tr_start_24.RData")
-rits_sim_high <- readRDS("output/rits_sim_dgp_high_min_prpn_0.05_tr_start_24.RData")
+ts_sim_high <- readRDS(paste(out_dir, "ts_sim_dgp_high_min_prpn_0.05_tr_start_24.RData", 
+                             sep = ""))
+rand_sim_high <- readRDS(paste(out_dir, "rand_sim_dgp_high_min_prpn_0.005_tr_start_24.RData", 
+                               sep = ""))
+rits_sim_high <- readRDS(paste(out_dir, "rits_sim_dgp_high_min_prpn_0.05_tr_start_24.RData", 
+                               sep = ""))
 # Low SNR
-ts_sim_low <- readRDS("output/ts_sim_dgp_low_min_prpn_0.05_tr_start_24.RData")
-rand_sim_low <- readRDS("output/rand_sim_dgp_low_min_prpn_0.005_tr_start_24.RData")
-rits_sim_low <- readRDS("output/rits_sim_dgp_low_min_prpn_0.05_tr_start_24.RData")
+ts_sim_low <- readRDS(paste(out_dir, "ts_sim_dgp_low_min_prpn_0.05_tr_start_24.RData", 
+                            sep = ""))
+rand_sim_low <- readRDS(paste(out_dir, "rand_sim_dgp_low_min_prpn_0.005_tr_start_24.RData", 
+                              sep = ""))
+rits_sim_low <- readRDS(paste(out_dir, "rits_sim_dgp_low_min_prpn_0.05_tr_start_24.RData", 
+                              sep = ""))
 
 sim_choice <- readRDS("metadata/sim_choice.RData")
 n_iter <- length(ts_sim_high)

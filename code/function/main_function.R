@@ -476,7 +476,8 @@ do_ts_batch <- function(X, X_true, beta_true, weight = 1, seed = NULL,
                         M = 1000, v = 10, min_prpn = 0.05, 
                         asympcs = FALSE, ate_start = 20, placebo_arm = 1, 
                         alpha = 0.05, first_peek = NULL, design = "clip",
-                        setup = "simulation", counterfact = NULL){
+                        setup = "simulation", counterfact = NULL,
+                        learner = "main_ridge"){
   # browser()
   if(!is.null(seed)){
     set.seed(seed)
@@ -564,7 +565,8 @@ do_ts_batch <- function(X, X_true, beta_true, weight = 1, seed = NULL,
     asympcs <- get_asympcs(trt_hist = trt, rwd_hist = reward, 
                            prpns_mat = log_dat$prpns_mat, 
                            context_hist = X, placebo_arm = placebo_arm,
-                           times = times_, alpha = alpha, first_peek = first_peek)
+                           times = times_, alpha = alpha, first_peek = first_peek,
+                           learner = learner)
     ate <- asympcs[[1]]
     contr <- asympcs[[2]]
     out_list[["alpha"]] <- alpha
@@ -583,7 +585,8 @@ do_rits_batch <- function(X, X_true, beta_true, weight = 1, seed = NULL,
                           M = 1000, v = 10, min_prpn = 0.05, 
                           asympcs = FALSE, ate_start = 20, placebo_arm = 1, 
                           alpha = 0.05, first_peek = NULL, design = "clip",
-                          setup = "simulation", counterfact = NULL){
+                          setup = "simulation", counterfact = NULL,
+                          learner = "main_ridge"){
   # browser()
   if(!is.null(seed)){
     set.seed(seed)
@@ -681,7 +684,8 @@ do_rits_batch <- function(X, X_true, beta_true, weight = 1, seed = NULL,
     asympcs <- get_asympcs(trt_hist = trt, rwd_hist = reward_benf, 
                            prpns_mat = log_dat$prpns_mat, 
                            context_hist = X, placebo_arm = placebo_arm,
-                           times = times_, alpha = alpha, first_peek = first_peek)
+                           times = times_, alpha = alpha, first_peek = first_peek,
+                           learner = learner)
     ate <- asympcs[[1]]
     contr <- asympcs[[2]]
     

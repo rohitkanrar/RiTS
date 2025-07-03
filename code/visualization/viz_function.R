@@ -1,4 +1,9 @@
 library(ggplot2); library(tidyr); library(patchwork)
+update_geom_defaults("boxplot", list(
+  outlier.size = 0.25,
+  color = "black",
+  linewidth = 0.25
+))
 # Function to generate cumulative regret plot as in Appendix A.1.
 gen_cum_reg_df <- function(out_rand, out_ts, out_rits, ind, criteria){
   n_iter <- length(out_rand)
@@ -132,11 +137,15 @@ gen_width_df <- function(out_rand, out_ts, out_rits, ate_ind){
   }
   df
 }
-
+require(ggh4x)
 # Function to generate width box plot as in Appendix A.2.
 gen_width_bwplot <- function(df_high, df_low, ind, ylims){
   df_high["dgp"] <- "High-SNR"; df_low["dgp"] <- "Low-SNR"
   df <- rbind(df_high, df_low)
+  y_limits <- list(
+    scale_y_continuous(limits = ylims[[1]]),
+    scale_y_continuous(limits = ylims[[2]])
+  )
   wid_plot <- ggplot(df, aes(x = factor(Column), 
                                   y = Width, fill = Method)) + 
     facet_grid(dgp ~ Arm, scales = "free_y") +
@@ -147,9 +156,13 @@ gen_width_bwplot <- function(df_high, df_low, ind, ylims){
     scale_fill_manual(
       values = c("ttest" = "#009E73", "rand" = "#CC79A7", "ts" = "#0072B2", 
                  "rits" = "#D55E00"),
-      labels = c("ttest" = "T-test", "ts" = "TS", "rand" = "Rand", "rits" = "RiTS")
+      labels = c("ttest" = "T-test", "ts" = "TS-AIPW", 
+                 "rand" = "Rand-AIPW", "rits" = "RiTS-AIPW")
     ) +
-    scale_x_discrete(labels = ind)
+    scale_x_discrete(labels = ind) 
+  if(!is.null(ylims)){
+    wid_plot <- wid_plot + facetted_pos_scales(y = y_limits)
+  }
   return(wid_plot)
 }
 
@@ -184,62 +197,79 @@ gen_bias_df <- function(out_rand, out_ts, out_rits, ate_ind, contr_true){
   }
   df
 }
-gen_bias_bwplot <- function(df_high, df_low, ind){
+gen_bias_bwplot <- function(df_high, df_low, ind, ylims){
   df_high["dgp"] <- "High-SNR"; df_low["dgp"] <- "Low-SNR"
   df <- rbind(df_high, df_low)
-  
+  y_limits <- list(
+    scale_y_continuous(limits = ylims[[1]]),
+    scale_y_continuous(limits = ylims[[2]])
+  )
   bias_plot <- ggplot(df, aes(x = factor(Column), 
                                    y = Bias, fill = Method)) +
-    geom_boxplot(position = position_dodge(width = 0.8), width = 0.7) +
+    geom_boxplot(position = position_dodge(width = 0.8), width = 0.7,
+                 outlier.size = 0.5) +
     facet_grid(dgp ~ Arm, scales = "free_y") +
     labs(x = "Number of Participants", y = "Bias", 
          fill = "Arm") +
     scale_fill_manual(
       values = c("ttest" = "#009E73", "rand" = "#CC79A7", "ts" = "#0072B2", 
                  "rits" = "#D55E00"),
-      labels = c("ttest" = "T-test", "ts" = "TS", "rand" = "Rand", "rits" = "RiTS")
+      labels = c("ttest" = "T-test", "ts" = "TS-AIPW", 
+                 "rand" = "Rand-AIPW", "rits" = "RiTS-AIPW")
     ) +
     scale_x_discrete(labels = ind)
+  if(!is.null(ylims)){
+    bias_plot <- bias_plot + facetted_pos_scales(y = y_limits)
+  }
+  bias_plot
 }
 
 # Function to generate cumulative miscoverage plot as in Appendix A.3.
 library(reshape2)
-gen_cum_miscov_df <- function(out_rand, out_ts, out_rits, mu_true, contr_true){
+gen_cum_miscov_df <- function(out_rand, out_ts, out_rits, mu_true, contr_true,
+                              delay_aipw = 77){
   n_iter <- length(out_rand); K <- length(mu_true); N <- length(out_rand[[1]]$trt)
   cum_miscov <- get_cum_mis_cov(out_rand, mu_true = mu_true, 
-                                contr_true = contr_true, delay = 0, 
-                                need_std = TRUE)
-  df_rand <- as.data.frame(cum_miscov[[2]] / n_iter)
+                                contr_true = contr_true, delay_ipw = 0,
+                                delay_aipw = delay_aipw, 
+                                need_ipw = FALSE, need_std = TRUE)
+  df_rand <- as.data.frame(cum_miscov[["contr"]] / n_iter)
   colnames(df_rand) <- paste("Arm", 2:K, "- Arm 1")
-  df_rand$obs <- as.numeric(dimnames(out_rand[[1]]$contr)[[1]])
+  obs <- dimnames(out_rand[[1]]$contr)[[1]] 
+  obs <- obs[(delay_aipw+1):length(obs)]
+  df_rand$obs <- as.numeric(obs)
   df_rand <- melt(df_rand, id.vars = "obs", variable.name = "Arm", 
                   value.name = "Miscov")
-  df_rand["Method"] <- "Rand"
+  df_rand["Method"] <- "Rand-AIPW"
   
-  df_std <- as.data.frame(cum_miscov[[3]] / n_iter)
+  df_std <- as.data.frame(cum_miscov[["contr_std"]] / n_iter)
   colnames(df_std) <- paste("Arm", 2:K, "- Arm 1")
-  df_std$obs <- as.numeric(dimnames(out_rand[[1]]$contr)[[1]])
+  df_std$obs <- as.numeric(obs)
   df_std <- melt(df_std, id.vars = "obs", variable.name = "Arm", 
                   value.name = "Miscov")
   df_std["Method"] <- "T-test"
   
   cum_miscov <- get_cum_mis_cov(out_ts, mu_true = mu_true, 
-                                contr_true = contr_true, delay = 0)
-  df_ts <- as.data.frame(cum_miscov[[2]] / n_iter)
+                                contr_true = contr_true, delay_ipw = 0,
+                                delay_aipw = delay_aipw, need_ipw = FALSE, 
+                                need_std = FALSE)
+  df_ts <- as.data.frame(cum_miscov[["contr"]] / n_iter)
   colnames(df_ts) <- paste("Arm", 2:K, "- Arm 1")
-  df_ts$obs <- as.numeric(dimnames(out_ts[[1]]$contr)[[1]])
+  df_ts$obs <- as.numeric(obs)
   df_ts <- melt(df_ts, id.vars = "obs", variable.name = "Arm", 
                   value.name = "Miscov")
-  df_ts["Method"] <- "TS"
+  df_ts["Method"] <- "TS-AIPW"
   
   cum_miscov <- get_cum_mis_cov(out_rits, mu_true = mu_true, 
-                                contr_true = contr_true, delay = 0)
-  df_rits <- as.data.frame(cum_miscov[[2]] / n_iter)
+                                contr_true = contr_true, delay_ipw = 0,
+                                delay_aipw = delay_aipw, need_ipw = FALSE, 
+                                need_std = FALSE)
+  df_rits <- as.data.frame(cum_miscov[["contr"]] / n_iter)
   colnames(df_rits) <- paste("Arm", 2:K, "- Arm 1")
-  df_rits$obs <- as.numeric(dimnames(out_rits[[1]]$contr)[[1]])
+  df_rits$obs <- as.numeric(obs)
   df_rits <- melt(df_rits, id.vars = "obs", variable.name = "Arm", 
                   value.name = "Miscov")
-  df_rits["Method"] <- "RiTS"
+  df_rits["Method"] <- "RiTS-AIPW"
   
   rbind(df_std, df_rand, df_ts, df_rits)
 }
@@ -247,7 +277,8 @@ gen_cum_miscov_df <- function(out_rand, out_ts, out_rits, mu_true, contr_true){
 gen_cum_miscov_plot <- function(df_high, df_low, alpha, ate_start){
   df_high["dgp"] <- "High-SNR"; df_low["dgp"] <- "Low-SNR"
   df <- rbind(df_high, df_low)
-  df$Method <- factor(df$Method, levels = c("T-test", "Rand", "TS", "RiTS"))
+  df$Method <- factor(df$Method, levels = c("T-test", "Rand-AIPW", 
+                                            "TS-AIPW", "RiTS-AIPW"))
   
   ggplot(df, aes(x = obs, y = Miscov, color = Arm)) +
     geom_line(linewidth = 0.5) + ylim(c(0, 0.1)) + 
@@ -271,6 +302,9 @@ gen_winner_curve_df <- function(rand_out, ts_out, rits_out,
   power_rand <- numeric(n_comp)
   power_ts <- numeric(n_comp)
   power_rits <- numeric(n_comp)
+  power_rand_ipw <- numeric(n_comp)
+  power_ts_ipw <- numeric(n_comp)
+  power_rits_ipw <- numeric(n_comp)
   for(i in 1:n_iter){
     if(include_std){
       power_std <- power_std + as.numeric(
@@ -286,14 +320,27 @@ gen_winner_curve_df <- function(rand_out, ts_out, rits_out,
     power_rits <- power_rits + as.numeric(
       sapply(1:n_comp, function(t) which.max(rits_out[[i]]$contr[t, , 1]) == true_best_arm)
     )
+    power_rand_ipw <- power_rand_ipw + as.numeric(
+      sapply(1:n_comp, function(t) which.max(rand_out[[i]]$contr_ipw[t, , 1]) == true_best_arm)
+    )
+    power_ts_ipw <- power_ts_ipw + as.numeric(
+      sapply(1:n_comp, function(t) which.max(ts_out[[i]]$contr_ipw[t, , 1]) == true_best_arm)
+    )
+    power_rits_ipw <- power_rits_ipw + as.numeric(
+      sapply(1:n_comp, function(t) which.max(rits_out[[i]]$contr_ipw[t, , 1]) == true_best_arm)
+    )
   }
   power_std <- power_std / n_iter
   power_rand <- power_rand / n_iter
   power_ts <- power_ts / n_iter
   power_rits <- power_rits / n_iter
+  power_rand_ipw <- power_rand_ipw / n_iter
+  power_ts_ipw <- power_ts_ipw / n_iter
+  power_rits_ipw <- power_rits_ipw / n_iter
   
   df <- data.frame(rand = power_rand, ts = power_ts,
-                   rits = power_rits, 
+                   rits = power_rits, rand_ipw = power_rand_ipw, 
+                   ts_ipw = power_ts_ipw, rits_ipw = power_rits_ipw, 
                    participant = as.numeric(dimnames(rand_out[[1]]$contr)[[1]]))
   if(include_std){
     df[["ttest"]] <- power_std
@@ -301,6 +348,7 @@ gen_winner_curve_df <- function(rand_out, ts_out, rits_out,
   df_long <- tidyr::gather(df, key = "Methods", value = "value", -participant)
   df_long
 }
+require(colorspace)
 gen_winner_curve <- function(df_high, df_low){
   if(!is.null(df_low)){
     df <- rbind(df_high, df_low)
@@ -311,8 +359,11 @@ gen_winner_curve <- function(df_high, df_low){
     geom_line() + labs(x = "Participant", y = "Proportion of trials") + 
     scale_color_manual(
       values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00", 
-                 "ttest" = "#009E73"),
-      labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS", "ttest" = "T-test")
+                 "ttest" = "#009E73", "rand_ipw" = "#000000",
+                 "ts_ipw" = "#56B4E9", "rits_ipw" = "#E69F00"),
+      labels = c("ts" = "TS-AIPW", "rand" = "Rand-AIPW", "rits" = "RiTS-AIPW",
+                 "ts_ipw" = "TS-IPW", "rand_ipw" = "Rand-IPW", 
+                 "rits_ipw" = "RiTS-IPW", "ttest" = "T-test")
     )
   if(!is.null(df_low)){
     out_plot <- out_plot + facet_wrap(~dgp)
@@ -322,7 +373,7 @@ gen_winner_curve <- function(df_high, df_low){
 
 source("code/function/misc.R")
 gen_power_curve_df <- function(rand_out, ts_out, rits_out, min_thresh = 0.1,
-                               include_std = TRUE){
+                               include_std = TRUE, include_ipw = TRUE){
   # browser()
   n_iter <- length(rand_out); K <- length(unique(rand_out[[1]]$trt))
   n_comp <- dim(rand_out[[1]]$contr)[1]
@@ -331,6 +382,11 @@ gen_power_curve_df <- function(rand_out, ts_out, rits_out, min_thresh = 0.1,
   power_rand <- numeric(n_comp)
   power_ts <- numeric(n_comp)
   power_rits <- numeric(n_comp)
+  if(include_ipw){
+    power_rand_ipw <- numeric(n_comp)
+    power_ts_ipw <- numeric(n_comp)
+    power_rits_ipw <- numeric(n_comp)
+  }
   
   for(i in 1:n_iter){
     if(include_std){
@@ -359,15 +415,39 @@ gen_power_curve_df <- function(rand_out, ts_out, rits_out, min_thresh = 0.1,
       })
       as.numeric(FALSE %in% rej)
     })
+    if(include_ipw){
+      power_rand_ipw <- power_rand_ipw + sapply(1:n_comp, function(t){
+        rej <- sapply(1:(K-1), function(k){
+          zero_in_intv(rand_out[[i]]$contr_ipw[t, k, 2:3], zero = min_thresh)
+        })
+        as.numeric(FALSE %in% rej)
+      })
+      power_ts_ipw <- power_ts_ipw + sapply(1:n_comp, function(t){
+        rej <- sapply(1:(K-1), function(k){
+          zero_in_intv(ts_out[[i]]$contr_ipw[t, k, 2:3], zero = min_thresh)
+        })
+        as.numeric(FALSE %in% rej)
+      })
+      power_rits_ipw <- power_rits_ipw + sapply(1:n_comp, function(t){
+        rej <- sapply(1:(K-1), function(k){
+          zero_in_intv(rits_out[[i]]$contr_ipw[t, k, 2:3], zero = min_thresh)
+        })
+        as.numeric(FALSE %in% rej)
+      })
+    }
   }
   
   power_std <- power_std / n_iter
   power_rand <- power_rand / n_iter
   power_ts <- power_ts / n_iter
   power_rits <- power_rits / n_iter
+  power_rand_ipw <- power_rand_ipw / n_iter
+  power_ts_ipw <- power_ts_ipw / n_iter
+  power_rits_ipw <- power_rits_ipw / n_iter
   
   df <- data.frame(rand = power_rand, ts = power_ts,
-                   rits = power_rits, 
+                   rits = power_rits, rand_ipw = power_rand_ipw, 
+                   ts_ipw = power_ts_ipw, rits_ipw = power_rits_ipw, 
                    participant = as.numeric(dimnames(rand_out[[1]]$contr)[[1]]))
   if(include_std){
     df[["ttest"]] <- power_std
@@ -386,8 +466,11 @@ gen_power_curve <- function(df_high, df_low){
     geom_line() + labs(x = "Participant", y = "Power") +
     scale_color_manual(
       values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00", 
-                 "ttest" = "#009E73"),
-      labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS", "ttest" = "T-test")
+                 "ttest" = "#009E73", "rand_ipw" = "#000000",
+                 "ts_ipw" = "#56B4E9", "rits_ipw" = "#E69F00"),
+      labels = c("ts" = "TS-AIPW", "rand" = "Rand-AIPW", "rits" = "RiTS-AIPW",
+                 "ts_ipw" = "TS-IPW", "rand_ipw" = "Rand-IPW", 
+                 "rits_ipw" = "RiTS-IPW", "ttest" = "T-test")
     )
   if(!is.null(df_low)){
     out_plot <- out_plot + facet_wrap(~dgp)
@@ -401,8 +484,11 @@ gen_metrics_plot <- function(df_winner, df_power, dgp_exists = TRUE){
     geom_line() + labs(x = "Participant", y = "Proportion of Replication") + 
     scale_color_manual(
       values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00", 
-                 "ttest" = "#009E73"),
-      labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS", "ttest" = "T-test")
+                 "ttest" = "#009E73", "rand_ipw" = "#000000",
+                 "ts_ipw" = "#56B4E9", "rits_ipw" = "#E69F00"),
+      labels = c("ts" = "TS-AIPW", "rand" = "Rand-AIPW", "rits" = "RiTS-AIPW",
+                 "ts_ipw" = "TS-IPW", "rand_ipw" = "Rand-IPW", 
+                 "rits_ipw" = "RiTS-IPW", "ttest" = "T-test")
     ) 
   if(dgp_exists){
     out_plot <- out_plot + facet_grid(type~dgp)

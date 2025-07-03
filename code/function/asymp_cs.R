@@ -50,7 +50,7 @@ get_aipw_seq <- function(treatment, y, propensity, X,
     times = length(y)
   }
   K <- length(unique(treatment)); N <- length(y)
-  if(is.null(learner)){
+  if(!is.null(learner)){
     if (is.null(train_idx)){
       # train_idx <- rbinom(length(y), 1, 0.5)
       train_idx <- rep(c(0, 1), length.out = length(y))
