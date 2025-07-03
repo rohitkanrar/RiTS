@@ -39,82 +39,95 @@ get_aipw_static <- function(y, reg_est, propensity, treatment, K){
   return(aipw)
 }
 
+# learner = c("full_ridge", "main_ridge", NULL)
+# NULL correspond to IPW estimator.
 get_aipw_seq <- function(treatment, y, propensity, X, 
                          train_idx = NULL, times = NULL, n_cores = 1,
                          cross_fit = TRUE, verbose = FALSE, learner = "full_ridge"){
   # browser()
-  K <- length(unique(treatment))
-  if (is.null(train_idx)){
-    # train_idx <- rbinom(length(y), 1, 0.5)
-    train_idx <- rep(c(0, 1), length.out = length(y))
-  }
-  train_idx <- train_idx == TRUE
-  eval_idx <- 1 - train_idx == TRUE
   if (any(is.null(times))) {
     warning("\"times\" was left as null. Computing only at time n.")
     times = length(y)
   }
-  if (cross_fit) {
-    train_indices <- list(train_idx, eval_idx)
-  }
-  else {
-    train_indices <- list(train_idx)
-  }
   K <- length(unique(treatment)); N <- length(y)
-  
+  if(is.null(learner)){
+    if (is.null(train_idx)){
+      # train_idx <- rbinom(length(y), 1, 0.5)
+      train_idx <- rep(c(0, 1), length.out = length(y))
+    }
+    train_idx <- train_idx == TRUE
+    eval_idx <- 1 - train_idx == TRUE
+    if (cross_fit) {
+      train_indices <- list(train_idx, eval_idx)
+    }
+    else {
+      train_indices <- list(train_idx)
+    }
+  }
   aipw_master <- vector(mode = "list", length = length(times))
   i <- 1
   for(time in times){
     # browser()
     aipw_master[[i]] <- matrix(NA, N, K)
-    if (verbose) {
-      print(paste("Fitting nuisance functions at time", 
-                  time))
-    }
-    for(train_idx in train_indices){
-      train_idx_t <- train_idx == TRUE
-      train_idx_t[1:length(train_idx) > time] = FALSE
-      eval_idx_t <- 1 - train_idx == TRUE
-      eval_idx_t[1:length(train_idx) > time] = FALSE
-      y_train <- y[train_idx_t]
-      y_eval <- y[eval_idx_t]
-      X_train <- X[train_idx_t, ]
-      X_eval <- X[eval_idx_t, ]
-      treatment_train <- treatment[train_idx_t]
-      treatment_eval <- treatment[eval_idx_t]
+    if(is.null(learner)){
       reg_est <- vector(mode = "list", length = K)
-      prpn_train <- propensity[train_idx_t, ]
-      prpn_eval <- propensity[eval_idx_t, ]
-      if(learner == "main_ridge"){
-        ipw <- length(prpn_train)
-        for(k in 1:K){
-          ipw[treatment_train == k] <- 1 / prpn_train[treatment_train == k, k]
-        }
-        reg_est <- main_effect_ridge(y = y_train, X = X_train, newX = X_eval, 
-                                   trt_ind = treatment_train, K = K, ipw = ipw)
-      } else{
-        for(k in 1:K){
-          # browser()
-          reg_est[[k]] <- tryCatch({
-            basic_learner(y = y_train[treatment_train == k], 
-                          X = X_train[treatment_train == k, ], 
-                          newX = X_eval, 
-                          ipw = 1 / prpn_train[treatment_train == k, k])
-          }, error = function(e){
-            numeric(nrow(X_eval))
-          })
-          
-        }
+      for(k in 1:K){
+        reg_est[[k]] <- numeric(length(y))
       }
-      # browser()
-      aipw_master[[i]][eval_idx_t, ] <- get_aipw_static(y = y_eval, 
-                                                        reg_est = reg_est, 
-                                                        propensity = prpn_eval, 
-                                                        treatment = treatment_eval, K = K)
+      aipw_master[[i]] <- get_aipw_static(y = y, 
+                                          reg_est = reg_est, 
+                                          propensity = propensity, 
+                                          treatment = treatment, K = K)
+    } else{
+      if (verbose) {
+        print(paste("Fitting nuisance functions at time", 
+                    time))
+      }
+      for(train_idx in train_indices){
+        train_idx_t <- train_idx == TRUE
+        train_idx_t[1:length(train_idx) > time] = FALSE
+        eval_idx_t <- 1 - train_idx == TRUE
+        eval_idx_t[1:length(train_idx) > time] = FALSE
+        y_train <- y[train_idx_t]
+        y_eval <- y[eval_idx_t]
+        X_train <- X[train_idx_t, ]
+        X_eval <- X[eval_idx_t, ]
+        treatment_train <- treatment[train_idx_t]
+        treatment_eval <- treatment[eval_idx_t]
+        reg_est <- vector(mode = "list", length = K)
+        prpn_train <- propensity[train_idx_t, ]
+        prpn_eval <- propensity[eval_idx_t, ]
+        if(learner == "main_ridge"){
+          ipw <- length(prpn_train)
+          for(k in 1:K){
+            ipw[treatment_train == k] <- 1 / prpn_train[treatment_train == k, k]
+          }
+          reg_est <- main_effect_ridge(y = y_train, X = X_train, newX = X_eval, 
+                                       trt_ind = treatment_train, K = K, ipw = ipw)
+        } else if (learner == "full_ridge"){
+          for(k in 1:K){
+            # browser()
+            reg_est[[k]] <- tryCatch({
+              basic_learner(y = y_train[treatment_train == k], 
+                            X = X_train[treatment_train == k, ], 
+                            newX = X_eval, 
+                            ipw = 1 / prpn_train[treatment_train == k, k])
+            }, error = function(e){
+              numeric(nrow(X_eval))
+            })
+          }
+        } else{
+          stop("learner should be one of c('main_ridge', 'full_ridge')")
+        }
+        # browser()
+        aipw_master[[i]][eval_idx_t, ] <- get_aipw_static(y = y_eval, 
+                                                          reg_est = reg_est, 
+                                                          propensity = prpn_eval, 
+                                                          treatment = treatment_eval, K = K)
+      }
     }
     i <- i+1
   }
-  
   names(aipw_master) <- times
   return(aipw_master)
 }
@@ -204,8 +217,18 @@ add_asympcs <- function(out, ate_start, batch = 5, placebo_arm = 1,
   ate <- asympcs[[1]]
   contr <- asympcs[[2]]
   out[["alpha"]] <- alpha
-  out[["ate"]] <- ate
-  out[["contr"]] <- contr
+  if(is.null(learner)){
+    out[["ate_ipw"]] <- ate
+    out[["contr_ipw"]] <- contr
+  } else{
+    out[["ate"]] <- ate
+    out[["contr"]] <- contr
+  }
+  if(is.null(out[["learner"]])){
+    out[["learner"]] <- learner
+  } else{
+    out[["learner"]] <- c(out[["learner"]], learner)
+  }
   out[["first_peek"]] <- first_peek
   out[["ate_start"]] <- ate_start
   return(out)
@@ -216,10 +239,18 @@ add_asympcs_sim <- function(out_list, ate_start, batch = 5, placebo_arm = 1,
                             force_compute = FALSE, learner = "full_ridge"){
   n_iter <- length(out_list)
   out_list <- mclapply(out_list, function(out){
-    if(is.null(out$ate) || is.null(out$contr) || force_compute){
-      out <- add_asympcs(out = out, ate_start = ate_start, batch = batch, 
-                         placebo_arm = placebo_arm, alpha = alpha, 
-                         first_peek = first_peek, learner = learner)
+    if(is.null(learner)){
+      if(is.null(out$ate_ipw) || is.null(out$contr_ipw) || force_compute){
+        out <- add_asympcs(out = out, ate_start = ate_start, batch = batch, 
+                           placebo_arm = placebo_arm, alpha = alpha, 
+                           first_peek = first_peek, learner = learner) 
+      }
+    } else{
+      if(is.null(out$ate) || is.null(out$contr) || force_compute){
+        out <- add_asympcs(out = out, ate_start = ate_start, batch = batch, 
+                           placebo_arm = placebo_arm, alpha = alpha, 
+                           first_peek = first_peek, learner = learner)
+      }
     }
     return(out)
   }, mc.cores = n_cores)

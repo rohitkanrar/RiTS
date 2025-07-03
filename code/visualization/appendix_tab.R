@@ -4,16 +4,17 @@ sim_dat <- readRDS("metadata/sim_dat.RData")
 dgps <- c("low", "high")
 tr_starts <- sim_choice$tr_start
 min_prpns <- sim_choice$min_prpns
-cases <- expand.grid(dgp = dgps, min_prpn = min_prpns, tr_start = tr_starts)
-n_iter <- 5000; out_dir <- "output/"; K <- sim_choice$K; N <- sim_choice$N
+cases <- expand.grid(tr_start = tr_starts, min_prpn = min_prpns, dgp = dgps)
+n_iter <- 1000; out_dir <- "output/small_rep/"; K <- sim_choice$K; N <- sim_choice$N
 ind <- round(
   c(seq(50, sim_choice$N*0.625, 10), sim_choice$N*(3/4), sim_choice$N)
 )
+delay_aipw <- 77; delay_ipw = 0
 j <- 0
 
 # cumulative mis-coverage and estimation error tables
-cum_miscov_all_tab <- matrix(NA, nrow(cases), 4*(K-1))
-cum_miscov_all_mis_tab <- matrix(NA, nrow(cases), 4*(K-1))
+cum_miscov_all_tab <- matrix(NA, nrow(cases), 7*(K-1))
+cum_miscov_all_mis_tab <- matrix(NA, nrow(cases), 7*(K-1))
 est_err_all_tab <- vector(mode = "list", length = nrow(cases))
 est_err_all_mis_tab <- vector(mode = "list", length = nrow(cases))
 
@@ -54,15 +55,19 @@ for(i in 1:nrow(cases)){
                                                     out_ts = ts_sim, 
                                                     out_rits = rits_sim, 
                                                     mu_true = mu_true, 
-                                                    contr_true = contr_true)
+                                                    contr_true = contr_true, 
+                                                    delay_aipw = delay_aipw, 
+                                                    delay_ipw = delay_ipw)
   # estimation error (bias and rmse)
   summ_rand <- gen_summary_for_table(sim = rand_sim, K = K, 
                                      ate_ind = ate_ind, contr_true = contr_true, 
-                                     need_std = TRUE)
+                                     need_std = TRUE, need_ipw = TRUE)
   summ_ts <- gen_summary_for_table(sim = ts_sim, K = K, 
-                                   ate_ind = ate_ind, contr_true = contr_true)
+                                   ate_ind = ate_ind, contr_true = contr_true,
+                                   need_ipw = TRUE)
   summ_rits <- gen_summary_for_table(sim = rits_sim, K = K, 
-                                     ate_ind = ate_ind, contr_true = contr_true)
+                                     ate_ind = ate_ind, contr_true = contr_true,
+                                     need_ipw = TRUE)
   
   est_err_tab <- gen_bias_rmse_tab(summ_rand = summ_rand, 
                                        summ_ts = summ_ts,
@@ -77,15 +82,19 @@ for(i in 1:nrow(cases)){
                                                     out_ts = ts_sim, 
                                                     out_rits = rits_sim, 
                                                     mu_true = mu_true, 
-                                                    contr_true = contr_true)
+                                                    contr_true = contr_true, 
+                                                    delay_aipw = delay_aipw, 
+                                                    delay_ipw = delay_ipw)
   # estimation error (bias and rmse)
   summ_rand <- gen_summary_for_table(sim = rand_sim, K = K, 
                                      ate_ind = ate_ind, contr_true = contr_true, 
-                                     need_std = TRUE)
+                                     need_std = TRUE, need_ipw = TRUE)
   summ_ts <- gen_summary_for_table(sim = ts_sim, K = K, 
-                                   ate_ind = ate_ind, contr_true = contr_true)
+                                   ate_ind = ate_ind, contr_true = contr_true,
+                                   need_ipw = TRUE)
   summ_rits <- gen_summary_for_table(sim = rits_sim, K = K, 
-                                     ate_ind = ate_ind, contr_true = contr_true)
+                                     ate_ind = ate_ind, contr_true = contr_true,
+                                     need_ipw = TRUE)
   
   est_err_tab <- gen_bias_rmse_tab(summ_rand = summ_rand, 
                                    summ_ts = summ_ts,
@@ -99,4 +108,8 @@ saveRDS(cum_miscov_all_mis_tab, "tables/cum_miscov_all_mis_tab.RData")
 saveRDS(est_err_all_tab, "tables/est_err_all_tab.RData")
 saveRDS(est_err_all_mis_tab, "tables/est_err_all_mis_tab.RData")
 
-# xtable::xtable(rbind(est_err_all_mis_tab[[6]]$tab, est_err_all_mis_tab[[5]]$tab))
+# cum_miscov_all_tab <- readRDS("tables/cum_miscov_all_tab.RData")
+# cum_miscov_all_mis_tab <- readRDS("tables/cum_miscov_all_mis_tab.RData")
+# est_err_all_tab <- readRDS("tables/est_err_all_tab.RData")
+# est_err_all_mis_tab <- readRDS("tables/est_err_all_mis_tab.RData")
+# xtable::xtable(rbind(est_err_all_mis_tab[[19]]$tab, est_err_all_mis_tab[[7]]$tab))

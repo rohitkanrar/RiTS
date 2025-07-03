@@ -30,37 +30,50 @@ apply_floor <- function(a, amin) {
   return(new - c * individual_slack)
 }
 
-get_cum_mis_cov <- function(sim, mu_true, contr_true, delay = 0, need_std = FALSE){
+get_cum_mis_cov <- function(sim, mu_true, contr_true, delay_aipw = 0, 
+                            delay_ipw = 0, need_std = FALSE, need_ipw = FALSE){
   n_iter <- length(sim)
   total_peek <- dim(sim[[1]]$ate)[1]
-  no_of_peek <- dim(sim[[1]]$ate)[1] - delay
+  no_of_peek <- dim(sim[[1]]$ate)[1] - delay_aipw
   cum_mis_cov_ate <- matrix(0, no_of_peek, dim(sim[[1]]$ate)[2])
   cum_mis_cov_contr <- matrix(0, no_of_peek, dim(sim[[1]]$contr)[2])
   if(need_std){
     cum_mis_cov_contr_std <- matrix(0, no_of_peek, dim(sim[[1]]$contr)[2])
   }
+  if(need_ipw){
+    no_of_peek_ipw <- dim(sim[[1]]$ate)[1] - delay_ipw
+    cum_mis_cov_contr_ipw <- matrix(0, no_of_peek_ipw, dim(sim[[1]]$contr)[2])
+  }
   for(iter in 1:n_iter){
     for(k in 1:K){
       cum_mis_cov_ate[, k] <- cum_mis_cov_ate[, k] + 
-        cummax(sim[[iter]]$ate[(delay+1):total_peek, k,  2] > mu_true[k] | 
-                 sim[[iter]]$ate[(delay+1):total_peek, k, 3] < mu_true[k])
+        cummax(sim[[iter]]$ate[(delay_aipw+1):total_peek, k,  2] > mu_true[k] | 
+                 sim[[iter]]$ate[(delay_aipw+1):total_peek, k, 3] < mu_true[k])
       if(k > 1){
         cum_mis_cov_contr[, k-1] <-   cum_mis_cov_contr[, k-1] + 
-          cummax(sim[[iter]]$contr[(delay+1):total_peek, k-1,  2] > contr_true[k-1] | 
-                   sim[[iter]]$contr[(delay+1):total_peek, k-1, 3] < contr_true[k-1])
+          cummax(sim[[iter]]$contr[(delay_aipw+1):total_peek, k-1,  2] > contr_true[k-1] | 
+                   sim[[iter]]$contr[(delay_aipw+1):total_peek, k-1, 3] < contr_true[k-1])
         if(need_std){
           cum_mis_cov_contr_std[, k-1] <-   cum_mis_cov_contr_std[, k-1] + 
-            cummax(sim[[iter]]$contr_standard[(delay+1):total_peek, k-1,  2] > contr_true[k-1] | 
-                     sim[[iter]]$contr_standard[(delay+1):total_peek, k-1, 3] < contr_true[k-1])
+            cummax(sim[[iter]]$contr_standard[(delay_aipw+1):total_peek, k-1,  2] > contr_true[k-1] | 
+                     sim[[iter]]$contr_standard[(delay_aipw+1):total_peek, k-1, 3] < contr_true[k-1])
+        }
+        if(need_ipw){
+          cum_mis_cov_contr_ipw[, k-1] <-   cum_mis_cov_contr_ipw[, k-1] + 
+            cummax(sim[[iter]]$contr_ipw[(delay_ipw+1):total_peek, k-1,  2] > contr_true[k-1] | 
+                     sim[[iter]]$contr_ipw[(delay_ipw+1):total_peek, k-1, 3] < contr_true[k-1])
         }
       } 
     }
   }
+  out_list <- list(ate = cum_mis_cov_ate, contr = cum_mis_cov_contr)
   if(need_std){
-    list(cum_mis_cov_ate, cum_mis_cov_contr, cum_mis_cov_contr_std)
-  } else{
-    list(cum_mis_cov_ate, cum_mis_cov_contr)
+    out_list[["contr_std"]] <- cum_mis_cov_contr_std
+  } 
+  if(need_ipw){
+    out_list[["contr_ipw"]] <- cum_mis_cov_contr_ipw
   }
+  return(out_list)
 }
 
 zero_in_intv <- function(intv, zero = 0.1){

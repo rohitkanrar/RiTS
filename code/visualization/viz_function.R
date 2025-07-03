@@ -412,7 +412,8 @@ gen_metrics_plot <- function(df_winner, df_power, dgp_exists = TRUE){
   return(out_plot)
 }
 
-gen_summary_for_table <- function(sim, K, ate_ind, contr_true, need_std = FALSE){
+gen_summary_for_table <- function(sim, K, ate_ind, contr_true, need_std = FALSE,
+                                  need_ipw = FALSE){
   n_iter <- length(sim)
   width_contr <- matrix(0, K-1, length(ate_ind))
   bias_contr <- matrix(0, K-1, length(ate_ind))
@@ -422,10 +423,13 @@ gen_summary_for_table <- function(sim, K, ate_ind, contr_true, need_std = FALSE)
     bias_contr_std <- matrix(0, K-1, length(ate_ind))
     rmse_contr_std <- matrix(0, K-1, length(ate_ind))
   }
+  if(need_ipw){
+    width_contr_ipw <- matrix(0, K-1, length(ate_ind))
+    bias_contr_ipw <- matrix(0, K-1, length(ate_ind))
+    rmse_contr_ipw <- matrix(0, K-1, length(ate_ind))
+  }
   for(k in 2:K){
     for(i in 1:length(ate_ind)){
-      # no_miss <- which(sapply(1:n_iter,
-      #                     function(i) match(TRUE, sim[[i]]$ate[, k, 1] != 0)) <= ate_ind[i])
       for(iter in 1:n_iter){
         width_contr[k-1, i] <- width_contr[k-1, i] + 
           abs(sim[[iter]]$contr[ate_ind[i], k-1, 3] - 
@@ -443,6 +447,15 @@ gen_summary_for_table <- function(sim, K, ate_ind, contr_true, need_std = FALSE)
           rmse_contr_std[k-1, i] <- rmse_contr_std[k-1, i] + 
             (sim[[iter]]$contr_standard[ate_ind[i], k-1, 1] - contr_true[k-1])^2
         }
+        if(need_ipw){
+          width_contr_ipw[k-1, i] <- width_contr_ipw[k-1, i] + 
+            abs(sim[[iter]]$contr_ipw[ate_ind[i], k-1, 3] - 
+                  sim[[iter]]$contr_ipw[ate_ind[i], k-1, 2])
+          bias_contr_ipw[k-1, i] <- bias_contr_ipw[k-1, i] + 
+            sim[[iter]]$contr_ipw[ate_ind[i], k-1, 1] - contr_true[k-1]
+          rmse_contr_ipw[k-1, i] <- rmse_contr_ipw[k-1, i] + 
+            (sim[[iter]]$contr_ipw[ate_ind[i], k-1, 1] - contr_true[k-1])^2
+        }
       }
       width_contr[k-1, i] <- width_contr[k-1, i] / n_iter
       bias_contr[k-1, i] <- bias_contr[k-1, i] / n_iter
@@ -451,6 +464,11 @@ gen_summary_for_table <- function(sim, K, ate_ind, contr_true, need_std = FALSE)
         width_contr_std[k-1, i] <- width_contr_std[k-1, i] / n_iter
         bias_contr_std[k-1, i] <- bias_contr_std[k-1, i] / n_iter
         rmse_contr_std[k-1, i] <- sqrt(rmse_contr_std[k-1, i] / n_iter)
+      }
+      if(need_ipw){
+        width_contr_ipw[k-1, i] <- width_contr_ipw[k-1, i] / n_iter
+        bias_contr_ipw[k-1, i] <- bias_contr_ipw[k-1, i] / n_iter
+        rmse_contr_ipw[k-1, i] <- sqrt(rmse_contr_ipw[k-1, i] / n_iter)
       }
     }
   }
@@ -461,55 +479,74 @@ gen_summary_for_table <- function(sim, K, ate_ind, contr_true, need_std = FALSE)
     out_list[["bias_std"]] <- bias_contr_std
     out_list[["rmse_std"]] <- rmse_contr_std
   }
+  if(need_ipw){
+    out_list[["width_ipw"]] <- width_contr_ipw
+    out_list[["bias_ipw"]] <- bias_contr_ipw
+    out_list[["rmse_ipw"]] <- rmse_contr_ipw
+  }
   out_list
 }
 
 gen_bias_rmse_tab <- function(summ_rand, summ_ts, summ_rits, ate_ind, ind){
-  bias_tab <- matrix(NA, 4*(K-1), length(ate_ind))
+  bias_tab <- matrix(NA, 7*(K-1), length(ate_ind))
   for(k in 1:(K-1)){
-    bias_tab[4*(k-1)+1, ] <- summ_rand$bias_std[k, ]
-    bias_tab[4*(k-1)+2, ] <- summ_rand$bias[k, ]
-    bias_tab[4*(k-1)+3, ] <- summ_ts$bias[k, ]
-    bias_tab[4*(k-1)+4, ] <- summ_rits$bias[k, ]
+    bias_tab[7*(k-1)+1, ] <- summ_rand$bias_std[k, ]
+    bias_tab[7*(k-1)+2, ] <- summ_rand$bias[k, ]
+    bias_tab[7*(k-1)+3, ] <- summ_ts$bias[k, ]
+    bias_tab[7*(k-1)+4, ] <- summ_rits$bias[k, ]
+    bias_tab[7*(k-1)+5, ] <- summ_rand$bias_ipw[k, ]
+    bias_tab[7*(k-1)+6, ] <- summ_ts$bias_ipw[k, ]
+    bias_tab[7*(k-1)+7, ] <- summ_rits$bias_ipw[k, ]
   }
-  rmse_tab <- matrix(NA, 4*(K-1), length(ate_ind))
+  rmse_tab <- matrix(NA, 7*(K-1), length(ate_ind))
   for(k in 1:(K-1)){
-    rmse_tab[4*(k-1)+1, ] <- summ_rand$rmse_std[k, ]
-    rmse_tab[4*(k-1)+2, ] <- summ_rand$rmse[k, ]
-    rmse_tab[4*(k-1)+3, ] <- summ_ts$rmse[k, ]
-    rmse_tab[4*(k-1)+4, ] <- summ_rits$rmse[k, ]
+    rmse_tab[7*(k-1)+1, ] <- summ_rand$rmse_std[k, ]
+    rmse_tab[7*(k-1)+2, ] <- summ_rand$rmse[k, ]
+    rmse_tab[7*(k-1)+3, ] <- summ_ts$rmse[k, ]
+    rmse_tab[7*(k-1)+4, ] <- summ_rits$rmse[k, ]
+    rmse_tab[7*(k-1)+5, ] <- summ_rand$rmse_ipw[k, ]
+    rmse_tab[7*(k-1)+6, ] <- summ_ts$rmse_ipw[k, ]
+    rmse_tab[7*(k-1)+7, ] <- summ_rits$rmse_ipw[k, ]
   }
-  
   est_err_tab <- matrix(paste(round(bias_tab, 2), "(", round(rmse_tab, 2), ")", sep = ""), 
                         nrow = nrow(bias_tab))
   colnames(est_err_tab) <- paste(ind)
-  rownames(est_err_tab) <- paste(c("T-test", "Rand", "TS", "RiTS"), 
-                                 "(Arm", rep(2:4, each = 4), ")", sep = "")
+  rownames(est_err_tab) <- paste(c("T-test", "Rand-AIPW", "TS-AIPW", "RiTS-AIPW",
+                                   "Rand-IPW", "TS-IPW", "RiTS-IPW"), 
+                                 "(Arm", rep(2:4, each = 7), ")", sep = "")
   est_err_tab
 }
 
 gen_cum_miscov_for_tab <- function(out_rand, out_ts, out_rits, 
-                                   mu_true, contr_true){
+                                   mu_true, contr_true, delay_aipw = 77,
+                                   delay_ipw = 0){
   n_iter <- length(out_rand); K <- length(mu_true); N <- length(out_rand[[1]]$trt)
-  end_cum_miscov <- numeric((K-1)*4)
-  names(end_cum_miscov) <- paste("Arm ", rep(2:K, each = 4), ":", 
-                                 c("Rand+T-test", "Rand+AsympCS", 
-                                   "TS+AsympCS", "RiTS+AsympCS"))
+  end_cum_miscov <- numeric((K-1)*7)
+  names(end_cum_miscov) <- paste("Arm ", rep(2:K, each = 7), ":", 
+                                 c("Rand+T-test", "Rand+AIPW", 
+                                   "TS+AIPW", "RiTS+AIPW", "Rand+IPW", 
+                                   "TS+IPW", "RiTS+IPW"))
   cum_miscov_rand <- get_cum_mis_cov(out_rand, mu_true = mu_true, 
-                                contr_true = contr_true, delay = 0, 
+                                contr_true = contr_true, delay_aipw = delay_aipw,
+                                delay_ipw = delay_ipw, need_ipw = TRUE,
                                 need_std = TRUE)
   end_ind <- nrow(cum_miscov_rand[[2]])
-  cum_miscov_ts <- get_cum_mis_cov(out_ts, mu_true = mu_true, 
-                                     contr_true = contr_true, delay = 0, 
-                                     need_std = FALSE)
-  cum_miscov_rits <- get_cum_mis_cov(out_rits, mu_true = mu_true, 
-                                   contr_true = contr_true, delay = 0, 
+  cum_miscov_ts <- get_cum_mis_cov(out_ts, mu_true = mu_true,
+                                   contr_true = contr_true, delay_aipw = delay_aipw,
+                                   delay_ipw = delay_ipw, need_ipw = TRUE,
                                    need_std = FALSE)
+  cum_miscov_rits <- get_cum_mis_cov(out_rits, mu_true = mu_true,
+                                     contr_true = contr_true, delay_aipw = delay_aipw,
+                                     delay_ipw = delay_ipw, need_ipw = TRUE,
+                                     need_std = FALSE)
   for(k in 1:(K-1)){
-    end_cum_miscov[seq(1, (K-1)*4, 4)] <- cum_miscov_rand[[3]][end_ind, ]
-    end_cum_miscov[seq(2, (K-1)*4, 4)] <- cum_miscov_rand[[2]][end_ind, ]
-    end_cum_miscov[seq(3, (K-1)*4, 4)] <- cum_miscov_ts[[2]][end_ind, ]
-    end_cum_miscov[seq(4, (K-1)*4, 4)] <- cum_miscov_rits[[2]][end_ind, ]
+    end_cum_miscov[seq(1, (K-1)*7, 7)] <- cum_miscov_rand[["contr_std"]][end_ind, ]
+    end_cum_miscov[seq(2, (K-1)*7, 7)] <- cum_miscov_rand[["contr"]][end_ind, ]
+    end_cum_miscov[seq(3, (K-1)*7, 7)] <- cum_miscov_ts[["contr"]][end_ind, ]
+    end_cum_miscov[seq(4, (K-1)*7, 7)] <- cum_miscov_rits[["contr"]][end_ind, ]
+    end_cum_miscov[seq(5, (K-1)*7, 7)] <- cum_miscov_rand[["contr_ipw"]][end_ind, ]
+    end_cum_miscov[seq(6, (K-1)*7, 7)] <- cum_miscov_ts[["contr_ipw"]][end_ind, ]
+    end_cum_miscov[seq(7, (K-1)*7, 7)] <- cum_miscov_rits[["contr_ipw"]][end_ind, ]
   }
   end_cum_miscov/n_iter
 }
