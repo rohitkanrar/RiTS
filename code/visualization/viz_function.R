@@ -288,13 +288,19 @@ gen_cum_miscov_plot <- function(df_high, df_low, alpha, ate_start){
     labs(x = "Number of participants", y = "Cumulative miscoverage") +
     theme(text = element_text(size = 10)) +
     scale_color_manual(
+      name = "Estimand",
       values = c("Arm 1" = "#E69F00", "Arm 2 - Arm 1" = "#56B4E9", 
-                 "Arm 3 - Arm 1" = "#009E73", "Arm 4 - Arm 1" = "#CC79A7")
+                 "Arm 3 - Arm 1" = "#009E73", "Arm 4 - Arm 1" = "#CC79A7"),
+      labels = c("Arm 2 - Arm 1" = expression(paste(Delta, " (2)")),
+                 "Arm 3 - Arm 1" = expression(paste(Delta, " (3)")),
+                 "Arm 4 - Arm 1" = expression(paste(Delta, " (4)"))
+                 )
     ) + theme(legend.position = "top")
 }
 
 gen_winner_curve_df <- function(rand_out, ts_out, rits_out, 
-                             true_best_arm = 4, include_std = TRUE){
+                             true_best_arm = 4, include_std = TRUE, 
+                             include_ipw = TRUE){
   n_iter <- length(rand_out)
   true_best_arm <- true_best_arm - 1
   n_comp <- dim(rand_out[[1]]$contr)[1]
@@ -302,9 +308,11 @@ gen_winner_curve_df <- function(rand_out, ts_out, rits_out,
   power_rand <- numeric(n_comp)
   power_ts <- numeric(n_comp)
   power_rits <- numeric(n_comp)
-  power_rand_ipw <- numeric(n_comp)
-  power_ts_ipw <- numeric(n_comp)
-  power_rits_ipw <- numeric(n_comp)
+  if(include_ipw){
+    power_rand_ipw <- numeric(n_comp)
+    power_ts_ipw <- numeric(n_comp)
+    power_rits_ipw <- numeric(n_comp)
+  }
   for(i in 1:n_iter){
     if(include_std){
       power_std <- power_std + as.numeric(
@@ -320,30 +328,38 @@ gen_winner_curve_df <- function(rand_out, ts_out, rits_out,
     power_rits <- power_rits + as.numeric(
       sapply(1:n_comp, function(t) which.max(rits_out[[i]]$contr[t, , 1]) == true_best_arm)
     )
-    power_rand_ipw <- power_rand_ipw + as.numeric(
-      sapply(1:n_comp, function(t) which.max(rand_out[[i]]$contr_ipw[t, , 1]) == true_best_arm)
-    )
-    power_ts_ipw <- power_ts_ipw + as.numeric(
-      sapply(1:n_comp, function(t) which.max(ts_out[[i]]$contr_ipw[t, , 1]) == true_best_arm)
-    )
-    power_rits_ipw <- power_rits_ipw + as.numeric(
-      sapply(1:n_comp, function(t) which.max(rits_out[[i]]$contr_ipw[t, , 1]) == true_best_arm)
-    )
+    if(include_ipw){
+      power_rand_ipw <- power_rand_ipw + as.numeric(
+        sapply(1:n_comp, function(t) which.max(rand_out[[i]]$contr_ipw[t, , 1]) == true_best_arm)
+      )
+      power_ts_ipw <- power_ts_ipw + as.numeric(
+        sapply(1:n_comp, function(t) which.max(ts_out[[i]]$contr_ipw[t, , 1]) == true_best_arm)
+      )
+      power_rits_ipw <- power_rits_ipw + as.numeric(
+        sapply(1:n_comp, function(t) which.max(rits_out[[i]]$contr_ipw[t, , 1]) == true_best_arm)
+      )
+    }
   }
   power_std <- power_std / n_iter
   power_rand <- power_rand / n_iter
   power_ts <- power_ts / n_iter
   power_rits <- power_rits / n_iter
-  power_rand_ipw <- power_rand_ipw / n_iter
-  power_ts_ipw <- power_ts_ipw / n_iter
-  power_rits_ipw <- power_rits_ipw / n_iter
+  if(include_ipw){
+    power_rand_ipw <- power_rand_ipw / n_iter
+    power_ts_ipw <- power_ts_ipw / n_iter
+    power_rits_ipw <- power_rits_ipw / n_iter
+  }
   
   df <- data.frame(rand = power_rand, ts = power_ts,
-                   rits = power_rits, rand_ipw = power_rand_ipw, 
-                   ts_ipw = power_ts_ipw, rits_ipw = power_rits_ipw, 
+                   rits = power_rits, 
                    participant = as.numeric(dimnames(rand_out[[1]]$contr)[[1]]))
   if(include_std){
     df[["ttest"]] <- power_std
+  }
+  if(include_ipw){
+    df[["rand_ipw"]] <- power_rand_ipw
+    df[["ts_ipw"]] <- power_ts_ipw
+    df[["rits_ipw"]] <- power_rits_ipw
   }
   df_long <- tidyr::gather(df, key = "Methods", value = "value", -participant)
   df_long
@@ -358,6 +374,7 @@ gen_winner_curve <- function(df_high, df_low){
   out_plot <- ggplot(df, aes(x = participant, y = value, color = Methods)) +
     geom_line() + labs(x = "Number of participants", y = "Proportion of trials") + 
     scale_color_manual(
+      name = "Method",
       values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00", 
                  "ttest" = "#009E73", "rand_ipw" = "#000000",
                  "ts_ipw" = "#56B4E9", "rits_ipw" = "#E69F00"),
@@ -441,16 +458,22 @@ gen_power_curve_df <- function(rand_out, ts_out, rits_out, min_thresh = 0.1,
   power_rand <- power_rand / n_iter
   power_ts <- power_ts / n_iter
   power_rits <- power_rits / n_iter
-  power_rand_ipw <- power_rand_ipw / n_iter
-  power_ts_ipw <- power_ts_ipw / n_iter
-  power_rits_ipw <- power_rits_ipw / n_iter
+  if(include_ipw){
+    power_rand_ipw <- power_rand_ipw / n_iter
+    power_ts_ipw <- power_ts_ipw / n_iter
+    power_rits_ipw <- power_rits_ipw / n_iter
+  }
   
   df <- data.frame(rand = power_rand, ts = power_ts,
-                   rits = power_rits, rand_ipw = power_rand_ipw, 
-                   ts_ipw = power_ts_ipw, rits_ipw = power_rits_ipw, 
+                   rits = power_rits,  
                    participant = as.numeric(dimnames(rand_out[[1]]$contr)[[1]]))
   if(include_std){
     df[["ttest"]] <- power_std
+  }
+  if(include_ipw){
+    df[["rand_ipw"]] <- power_rand_ipw
+    df[["ts_ipw"]] <- power_ts_ipw
+    df[["rits_ipw"]] <- power_rits_ipw
   }
   df_long <- tidyr::gather(df, key = "Methods", value = "value", -participant)
   return(df_long)
@@ -465,6 +488,7 @@ gen_power_curve <- function(df_high, df_low){
   out_plot <- ggplot(df, aes(x = participant, y = value, color = Methods)) +
     geom_line() + labs(x = "Number of participants", y = "Power") +
     scale_color_manual(
+      name = "Method",
       values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00", 
                  "ttest" = "#009E73", "rand_ipw" = "#000000",
                  "ts_ipw" = "#56B4E9", "rits_ipw" = "#E69F00"),
@@ -483,6 +507,7 @@ gen_metrics_plot <- function(df_winner, df_power, dgp_exists = TRUE){
   out_plot <- ggplot(df, aes(x = participant, y = value, color = Methods)) +
     geom_line() + labs(x = "Number of participants", y = "Proportion of trials") + 
     scale_color_manual(
+      name = "Method",
       values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00", 
                  "ttest" = "#009E73", "rand_ipw" = "#000000",
                  "ts_ipw" = "#56B4E9", "rits_ipw" = "#E69F00"),

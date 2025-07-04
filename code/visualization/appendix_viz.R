@@ -1,18 +1,18 @@
 source("code/visualization/viz_function.R")
 out_dir <- "output/"
 # High SNR
-ts_sim_high <- readRDS(paste(out_dir, "ts_sim_dgp_high_min_prpn_0.05_tr_start_24.RData", 
+ts_sim_high <- readRDS(paste(out_dir, "ts_sim_dgp_high_min_prpn_0.1_tr_start_24.RData", 
                              sep = ""))
 rand_sim_high <- readRDS(paste(out_dir, "rand_sim_dgp_high_min_prpn_0.005_tr_start_24.RData", 
                                sep = ""))
-rits_sim_high <- readRDS(paste(out_dir, "rits_sim_dgp_high_min_prpn_0.05_tr_start_24.RData", 
+rits_sim_high <- readRDS(paste(out_dir, "rits_sim_dgp_high_min_prpn_0.1_tr_start_24.RData", 
                                sep = ""))
 # Low SNR
-ts_sim_low <- readRDS(paste(out_dir, "ts_sim_dgp_low_min_prpn_0.05_tr_start_24.RData", 
+ts_sim_low <- readRDS(paste(out_dir, "ts_sim_dgp_low_min_prpn_0.1_tr_start_24.RData", 
                             sep = ""))
 rand_sim_low <- readRDS(paste(out_dir, "rand_sim_dgp_low_min_prpn_0.005_tr_start_24.RData", 
                               sep = ""))
-rits_sim_low <- readRDS(paste(out_dir, "rits_sim_dgp_low_min_prpn_0.05_tr_start_24.RData", 
+rits_sim_low <- readRDS(paste(out_dir, "rits_sim_dgp_low_min_prpn_0.1_tr_start_24.RData", 
                               sep = ""))
 
 sim_choice <- readRDS("metadata/sim_choice.RData")
@@ -39,7 +39,7 @@ df_low <- gen_width_df(out_rand = rand_sim_low,
                         out_ts = ts_sim_low, out_rits = rits_sim_low, 
                         ate_ind = ate_ind)
 sim_wid <- gen_width_bwplot(df_high = df_high, df_low = df_low, 
-                                 ind = ind, ylims = list(c(0, 3), c(0, 1.5)))
+                                 ind = ind, ylims = list(c(0, 2), c(0, 1)))
 ggsave("plot/width_bwplot.jpg", plot = sim_wid, height = 4, width = 10, 
        units = "in")
 
@@ -103,18 +103,18 @@ source("code/visualization/viz_function.R")
 out_dir <- "output/"
 ### Section A.13 (Misspecified model)
 # High SNR
-ts_sim_high <- readRDS(paste(out_dir, "ts_mis_sim_dgp_high_min_prpn_0.05_tr_start_24.RData", 
+ts_sim_high <- readRDS(paste(out_dir, "ts_mis_sim_dgp_high_min_prpn_0.1_tr_start_24.RData", 
                              sep = ""))
 rand_sim_high <- readRDS(paste(out_dir, "rand_mis_sim_dgp_high_min_prpn_0.005_tr_start_24.RData", 
                                sep = ""))
-rits_sim_high <- readRDS(paste(out_dir, "rits_mis_sim_dgp_high_min_prpn_0.05_tr_start_24.RData", 
+rits_sim_high <- readRDS(paste(out_dir, "rits_mis_sim_dgp_high_min_prpn_0.1_tr_start_24.RData", 
                                sep = ""))
 # Low SNR
-ts_sim_low <- readRDS(paste(out_dir, "ts_mis_sim_dgp_low_min_prpn_0.05_tr_start_24.RData", 
+ts_sim_low <- readRDS(paste(out_dir, "ts_mis_sim_dgp_low_min_prpn_0.1_tr_start_24.RData", 
                             sep = ""))
 rand_sim_low <- readRDS(paste(out_dir, "rand_mis_sim_dgp_low_min_prpn_0.005_tr_start_24.RData", 
                               sep = ""))
-rits_sim_low <- readRDS(paste(out_dir, "rits_mis_sim_dgp_low_min_prpn_0.05_tr_start_24.RData", 
+rits_sim_low <- readRDS(paste(out_dir, "rits_mis_sim_dgp_low_min_prpn_0.1_tr_start_24.RData", 
                               sep = ""))
 
 n_iter <- length(ts_sim_high)
@@ -194,7 +194,7 @@ df_low <- gen_width_df(out_rand = rand_sim_low,
                        out_ts = ts_sim_low, out_rits = rits_sim_low, 
                        ate_ind = ate_ind)
 sim_wid <- gen_width_bwplot(df_high = df_high, df_low = df_low, 
-                            ind = ind, ylims = list(c(0, 10), c(0, 5)))
+                            ind = ind, ylims = list(c(0, 3.5), c(0, 1.75)))
 ggsave("plot/width_mis_bwplot.jpg", plot = sim_wid, height = 4, width = 10, 
        units = "in")
 

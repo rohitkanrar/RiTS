@@ -3,18 +3,18 @@ source("code/visualization/viz_function.R")
 ## Cumulative Regret Plot
 out_dir <- "output/"
 # High SNR
-ts_sim_high <- readRDS(paste(out_dir, "ts_sim_dgp_high_min_prpn_0.05_tr_start_24.RData", 
+ts_sim_high <- readRDS(paste(out_dir, "ts_sim_dgp_high_min_prpn_0.1_tr_start_24.RData", 
                              sep = ""))
 rand_sim_high <- readRDS(paste(out_dir, "rand_sim_dgp_high_min_prpn_0.005_tr_start_24.RData", 
                                sep = ""))
-rits_sim_high <- readRDS(paste(out_dir, "rits_sim_dgp_high_min_prpn_0.05_tr_start_24.RData", 
+rits_sim_high <- readRDS(paste(out_dir, "rits_sim_dgp_high_min_prpn_0.1_tr_start_24.RData", 
                                sep = ""))
 # Low SNR
-ts_sim_low <- readRDS(paste(out_dir, "ts_sim_dgp_low_min_prpn_0.05_tr_start_24.RData", 
+ts_sim_low <- readRDS(paste(out_dir, "ts_sim_dgp_low_min_prpn_0.1_tr_start_24.RData", 
                             sep = ""))
 rand_sim_low <- readRDS(paste(out_dir, "rand_sim_dgp_low_min_prpn_0.005_tr_start_24.RData", 
                               sep = ""))
-rits_sim_low <- readRDS(paste(out_dir, "rits_sim_dgp_low_min_prpn_0.05_tr_start_24.RData", 
+rits_sim_low <- readRDS(paste(out_dir, "rits_sim_dgp_low_min_prpn_0.1_tr_start_24.RData", 
                               sep = ""))
 
 sim_choice <- readRDS("metadata/sim_choice.RData")
@@ -83,9 +83,9 @@ ggsave("plot/metric_alloc_plot.jpg", height = 4, width = 10, units = "in")
 
 
 ### Real Data Application
-rand_real_sim <- readRDS("output/real_dat/rand_real_sim.RData")
-ts_real_sim <- readRDS("output/real_dat/ts_real_sim.RData")
-rits_real_sim <- readRDS("output/real_dat/rits_real_sim.RData")
+rand_real_sim <- readRDS("output/real_dat/rand_real_sim.RData")[1:10]
+ts_real_sim <- readRDS("output/real_dat/ts_real_sim.RData")[1:10]
+rits_real_sim <- readRDS("output/real_dat/rits_real_sim.RData")[1:10]
 
 n_iter <- length(rand_real_sim)
 N <- length(rand_real_sim[[1]]$trt)
@@ -102,13 +102,13 @@ alloc_plot <- gen_freq_arm_alloc(df_high = df_real, df_low = NULL,
 # Proportion of trials where Arm 4 is the winner (without confidence)
 winner <- gen_winner_curve_df(rand_out = rand_real_sim, ts_out = ts_real_sim, 
                               rits_out = rits_real_sim, true_best_arm = 6, 
-                              include_std = TRUE)
+                              include_std = TRUE, include_ipw = FALSE)
 winner[["type"]] <- "Winner (Arm 6)"
 
 # Proportion of trials where stopping criteria is met
 power_df <- gen_power_curve_df(rand_out = rand_real_sim, ts_out = ts_real_sim, 
                                rits_out = rits_real_sim, min_thresh = 0.1, 
-                               include_std = TRUE)
+                               include_std = TRUE, include_ipw = FALSE)
 power_df[["type"]] <- "Stopping Criteria"
 
 metric_plots <- gen_metrics_plot(df_winner = winner, df_power = power_df, 
