@@ -228,10 +228,10 @@ one_step_ts_batch <- function(x, x_true, t, param, beta_true, K, d, log_dat,
       rwd_batch <- rwd_hist[i]
       eff <- beta_eff[, , trt_batch]
       beta_eff[, , trt_batch] <- beta_eff[, , trt_batch] + 
-        (1 / prpn_batch) * matrix(x, ncol = 1) %*% matrix(x, ncol = d) / rwd_sig^2
+        matrix(x, ncol = 1) %*% matrix(x, ncol = d) / rwd_sig^2
       beta_cov[, , trt_batch, t] <- solve(beta_eff[, , trt_batch])
       beta_mean[, trt_batch, t] <- beta_cov[, , trt_batch, t] %*% 
-        ((1 / prpn_batch) * matrix(x, ncol = 1) * rwd_batch / rwd_sig^2 + 
+        (matrix(x, ncol = 1) * rwd_batch / rwd_sig^2 + 
            eff %*% beta_mean[, trt_batch, t])
     }
     last_tr_ind <- t-tr_lag
