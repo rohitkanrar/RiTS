@@ -1,5 +1,5 @@
 source("code/visualization/viz_function.R")
-out_dir <- "output/small_rep/"
+out_dir <- "output/"
 # High SNR
 ts_sim_high <- readRDS(paste(out_dir, "ts_sim_dgp_high_min_prpn_0.05_tr_start_24.RData", 
                              sep = ""))
@@ -39,7 +39,7 @@ df_low <- gen_width_df(out_rand = rand_sim_low,
                         out_ts = ts_sim_low, out_rits = rits_sim_low, 
                         ate_ind = ate_ind)
 sim_wid <- gen_width_bwplot(df_high = df_high, df_low = df_low, 
-                                 ind = ind, ylims = list(c(0, 10), c(0, 3)))
+                                 ind = ind, ylims = list(c(0, 5), c(0, 2)))
 ggsave("plot/width_bwplot.jpg", plot = sim_wid, height = 4, width = 12, 
        units = "in")
 
@@ -100,7 +100,7 @@ ggsave("plot/cum_miscov_contr.jpg", cum_miscov, height = 6, width = 12,
 
 rm(list = ls())
 source("code/visualization/viz_function.R")
-out_dir <- "output/small_rep/"
+out_dir <- "output/"
 ### Section A.13 (Misspecified model)
 # High SNR
 ts_sim_high <- readRDS(paste(out_dir, "ts_mis_sim_dgp_high_min_prpn_0.05_tr_start_24.RData", 

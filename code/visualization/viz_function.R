@@ -56,7 +56,7 @@ gen_cum_reg_bwplot <- function(df_high, df_low, ind){
   sim_reg_plot <- ggplot(df, aes(x = factor(Column), 
                                   y = Value, fill = Method)) +
     geom_boxplot(position = position_dodge(width = 0.8), width = 0.7, 
-                 outlier.size = 0.5) +
+                 outlier.size = 0.5, outlier.shape = NA) +
     facet_grid(dgp ~ criteria, scales = "free_y") + 
     labs(x = "Number of Participants", y = "Cumulative Regret", 
          fill = "Method") +
@@ -64,7 +64,7 @@ gen_cum_reg_bwplot <- function(df_high, df_low, ind){
     scale_fill_manual(
       values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00"),
       labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS")
-    )
+    ) + theme(legend.position = "top")
   return(sim_reg_plot)
 }
 
@@ -90,13 +90,13 @@ gen_freq_arm_alloc <- function(df_high, df_low, ylims){
   }
   out_plot <- ggplot(df, aes(x = factor(Arm), 
                  y = Frequency, fill = Method)) +
-    geom_boxplot(outlier.size = 0.5) +
+    geom_boxplot(outlier.size = 0.5, outlier.shape = NA) +
     labs(x = "Arm", y = "Frequency of Allocation", 
          fill = "Method") + 
     scale_fill_manual(
       values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00"),
       labels = c("ts" = "TS", "rand" = "Rand", "rits" = "RiTS")
-    ) + ylim(ylims)
+    ) + ylim(ylims) + theme(legend.position = "top")
   if(!is.null(df_low)){
     out_plot <- out_plot + facet_wrap(~dgp)
   }
@@ -150,7 +150,7 @@ gen_width_bwplot <- function(df_high, df_low, ind, ylims){
                                   y = Width, fill = Method)) + 
     facet_grid(dgp ~ Arm, scales = "free_y") +
     geom_boxplot(position = position_dodge(width = 0.8), width = 0.7,
-                 outlier.size = 0.5) +
+                 outlier.size = 0.5, outlier.shape = NA) +
     labs(x = "Number of Participants", y = "Width", 
          fill = "Arm") +
     scale_fill_manual(
@@ -159,7 +159,7 @@ gen_width_bwplot <- function(df_high, df_low, ind, ylims){
       labels = c("ttest" = "T-test", "ts" = "TS-AIPW", 
                  "rand" = "Rand-AIPW", "rits" = "RiTS-AIPW")
     ) +
-    scale_x_discrete(labels = ind) 
+    scale_x_discrete(labels = ind) + theme(legend.position = "top")
   if(!is.null(ylims)){
     wid_plot <- wid_plot + facetted_pos_scales(y = y_limits)
   }
@@ -207,7 +207,7 @@ gen_bias_bwplot <- function(df_high, df_low, ind, ylims){
   bias_plot <- ggplot(df, aes(x = factor(Column), 
                                    y = Bias, fill = Method)) +
     geom_boxplot(position = position_dodge(width = 0.8), width = 0.7,
-                 outlier.size = 0.5) +
+                 outlier.size = 0.5, outlier.shape = NA) +
     facet_grid(dgp ~ Arm, scales = "free_y") +
     labs(x = "Number of Participants", y = "Bias", 
          fill = "Arm") +
@@ -217,7 +217,7 @@ gen_bias_bwplot <- function(df_high, df_low, ind, ylims){
       labels = c("ttest" = "T-test", "ts" = "TS-AIPW", 
                  "rand" = "Rand-AIPW", "rits" = "RiTS-AIPW")
     ) +
-    scale_x_discrete(labels = ind)
+    scale_x_discrete(labels = ind) + theme(legend.position = "top")
   if(!is.null(ylims)){
     bias_plot <- bias_plot + facetted_pos_scales(y = y_limits)
   }
@@ -290,7 +290,7 @@ gen_cum_miscov_plot <- function(df_high, df_low, alpha, ate_start){
     scale_color_manual(
       values = c("Arm 1" = "#E69F00", "Arm 2 - Arm 1" = "#56B4E9", 
                  "Arm 3 - Arm 1" = "#009E73", "Arm 4 - Arm 1" = "#CC79A7")
-    )
+    ) + theme(legend.position = "top")
 }
 
 gen_winner_curve_df <- function(rand_out, ts_out, rits_out, 
@@ -364,7 +364,7 @@ gen_winner_curve <- function(df_high, df_low){
       labels = c("ts" = "TS-AIPW", "rand" = "Rand-AIPW", "rits" = "RiTS-AIPW",
                  "ts_ipw" = "TS-IPW", "rand_ipw" = "Rand-IPW", 
                  "rits_ipw" = "RiTS-IPW", "ttest" = "T-test")
-    )
+    ) + theme(legend.position = "top")
   if(!is.null(df_low)){
     out_plot <- out_plot + facet_wrap(~dgp)
   }
@@ -471,7 +471,7 @@ gen_power_curve <- function(df_high, df_low){
       labels = c("ts" = "TS-AIPW", "rand" = "Rand-AIPW", "rits" = "RiTS-AIPW",
                  "ts_ipw" = "TS-IPW", "rand_ipw" = "Rand-IPW", 
                  "rits_ipw" = "RiTS-IPW", "ttest" = "T-test")
-    )
+    ) + theme(legend.position = "top")
   if(!is.null(df_low)){
     out_plot <- out_plot + facet_wrap(~dgp)
   }
@@ -489,7 +489,7 @@ gen_metrics_plot <- function(df_winner, df_power, dgp_exists = TRUE){
       labels = c("ts" = "TS-AIPW", "rand" = "Rand-AIPW", "rits" = "RiTS-AIPW",
                  "ts_ipw" = "TS-IPW", "rand_ipw" = "Rand-IPW", 
                  "rits_ipw" = "RiTS-IPW", "ttest" = "T-test")
-    ) 
+    ) + theme(legend.position = "top")
   if(dgp_exists){
     out_plot <- out_plot + facet_grid(type~dgp)
   } else{

@@ -1,7 +1,7 @@
 source("code/visualization/viz_function.R")
 ### Section A.1 (Empirical Behavior of Cumulative Regret)
 ## Cumulative Regret Plot
-out_dir <- "output/small_rep/"
+out_dir <- "output/"
 # High SNR
 ts_sim_high <- readRDS(paste(out_dir, "ts_sim_dgp_high_min_prpn_0.05_tr_start_24.RData", 
                              sep = ""))

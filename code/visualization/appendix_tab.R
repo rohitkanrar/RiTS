@@ -5,11 +5,11 @@ dgps <- c("low", "high")
 tr_starts <- sim_choice$tr_start
 min_prpns <- sim_choice$min_prpns
 cases <- expand.grid(tr_start = tr_starts, min_prpn = min_prpns, dgp = dgps)
-n_iter <- 1000; out_dir <- "output/small_rep/"; K <- sim_choice$K; N <- sim_choice$N
+n_iter <- 1000; out_dir <- "output/"; K <- sim_choice$K; N <- sim_choice$N
 ind <- round(
   c(seq(50, sim_choice$N*0.625, 10), sim_choice$N*(3/4), sim_choice$N)
 )
-delay_aipw <- 77; delay_ipw = 0
+delay_aipw <- 57; delay_ipw = 0
 j <- 0
 
 # cumulative mis-coverage and estimation error tables
