@@ -58,7 +58,7 @@ gen_cum_reg_bwplot <- function(df_high, df_low, ind){
     geom_boxplot(position = position_dodge(width = 0.8), width = 0.7, 
                  outlier.size = 0.5, outlier.shape = NA) +
     facet_grid(dgp ~ criteria, scales = "free_y") + 
-    labs(x = "Number of Participants", y = "Cumulative Regret", 
+    labs(x = "Number of participants", y = "Cumulative regret", 
          fill = "Method") +
     scale_x_discrete(labels = ind) +
     scale_fill_manual(
@@ -91,7 +91,7 @@ gen_freq_arm_alloc <- function(df_high, df_low, ylims){
   out_plot <- ggplot(df, aes(x = factor(Arm), 
                  y = Frequency, fill = Method)) +
     geom_boxplot(outlier.size = 0.5, outlier.shape = NA) +
-    labs(x = "Arm", y = "Frequency of Allocation", 
+    labs(x = "Arm", y = "Number of participants", 
          fill = "Method") + 
     scale_fill_manual(
       values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00"),
@@ -151,12 +151,12 @@ gen_width_bwplot <- function(df_high, df_low, ind, ylims){
     facet_grid(dgp ~ Arm, scales = "free_y") +
     geom_boxplot(position = position_dodge(width = 0.8), width = 0.7,
                  outlier.size = 0.5, outlier.shape = NA) +
-    labs(x = "Number of Participants", y = "Width", 
-         fill = "Arm") +
+    labs(x = "Number of participants", y = "Width", 
+         fill = "Method") +
     scale_fill_manual(
       values = c("ttest" = "#009E73", "rand" = "#CC79A7", "ts" = "#0072B2", 
                  "rits" = "#D55E00"),
-      labels = c("ttest" = "T-test", "ts" = "TS-AIPW", 
+      labels = c("ttest" = "Rand-T-test", "ts" = "TS-AIPW", 
                  "rand" = "Rand-AIPW", "rits" = "RiTS-AIPW")
     ) +
     scale_x_discrete(labels = ind) + theme(legend.position = "top")
@@ -209,12 +209,12 @@ gen_bias_bwplot <- function(df_high, df_low, ind, ylims){
     geom_boxplot(position = position_dodge(width = 0.8), width = 0.7,
                  outlier.size = 0.5, outlier.shape = NA) +
     facet_grid(dgp ~ Arm, scales = "free_y") +
-    labs(x = "Number of Participants", y = "Bias", 
+    labs(x = "Number of participants", y = "Bias", 
          fill = "Arm") +
     scale_fill_manual(
       values = c("ttest" = "#009E73", "rand" = "#CC79A7", "ts" = "#0072B2", 
                  "rits" = "#D55E00"),
-      labels = c("ttest" = "T-test", "ts" = "TS-AIPW", 
+      labels = c("ttest" = "Rand-T-Test", "ts" = "TS-AIPW", 
                  "rand" = "Rand-AIPW", "rits" = "RiTS-AIPW")
     ) +
     scale_x_discrete(labels = ind) + theme(legend.position = "top")
@@ -247,7 +247,7 @@ gen_cum_miscov_df <- function(out_rand, out_ts, out_rits, mu_true, contr_true,
   df_std$obs <- as.numeric(obs)
   df_std <- melt(df_std, id.vars = "obs", variable.name = "Arm", 
                   value.name = "Miscov")
-  df_std["Method"] <- "T-test"
+  df_std["Method"] <- "Rand-T-Test"
   
   cum_miscov <- get_cum_mis_cov(out_ts, mu_true = mu_true, 
                                 contr_true = contr_true, delay_ipw = 0,
@@ -277,7 +277,7 @@ gen_cum_miscov_df <- function(out_rand, out_ts, out_rits, mu_true, contr_true,
 gen_cum_miscov_plot <- function(df_high, df_low, alpha, ate_start){
   df_high["dgp"] <- "High-SNR"; df_low["dgp"] <- "Low-SNR"
   df <- rbind(df_high, df_low)
-  df$Method <- factor(df$Method, levels = c("T-test", "Rand-AIPW", 
+  df$Method <- factor(df$Method, levels = c("Rand-T-Test", "Rand-AIPW", 
                                             "TS-AIPW", "RiTS-AIPW"))
   
   ggplot(df, aes(x = obs, y = Miscov, color = Arm)) +
@@ -285,7 +285,7 @@ gen_cum_miscov_plot <- function(df_high, df_low, alpha, ate_start){
     geom_hline(yintercept = sim_choice$alpha/(K-1), linetype = "dashed", 
                color = "blue") +
     facet_grid(dgp ~ Method) +
-    labs(x = "Number of Participant", y = "Cumulative Miscoverage") +
+    labs(x = "Number of participants", y = "Cumulative miscoverage") +
     theme(text = element_text(size = 10)) +
     scale_color_manual(
       values = c("Arm 1" = "#E69F00", "Arm 2 - Arm 1" = "#56B4E9", 
@@ -356,14 +356,14 @@ gen_winner_curve <- function(df_high, df_low){
     df <- df_high
   }
   out_plot <- ggplot(df, aes(x = participant, y = value, color = Methods)) +
-    geom_line() + labs(x = "Participant", y = "Proportion of trials") + 
+    geom_line() + labs(x = "Number of participants", y = "Proportion of trials") + 
     scale_color_manual(
       values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00", 
                  "ttest" = "#009E73", "rand_ipw" = "#000000",
                  "ts_ipw" = "#56B4E9", "rits_ipw" = "#E69F00"),
       labels = c("ts" = "TS-AIPW", "rand" = "Rand-AIPW", "rits" = "RiTS-AIPW",
                  "ts_ipw" = "TS-IPW", "rand_ipw" = "Rand-IPW", 
-                 "rits_ipw" = "RiTS-IPW", "ttest" = "T-test")
+                 "rits_ipw" = "RiTS-IPW", "ttest" = "Rand-T-Test")
     ) + theme(legend.position = "top")
   if(!is.null(df_low)){
     out_plot <- out_plot + facet_wrap(~dgp)
@@ -463,14 +463,14 @@ gen_power_curve <- function(df_high, df_low){
     df <- df_high
   }
   out_plot <- ggplot(df, aes(x = participant, y = value, color = Methods)) +
-    geom_line() + labs(x = "Participant", y = "Power") +
+    geom_line() + labs(x = "Number of participants", y = "Power") +
     scale_color_manual(
       values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00", 
                  "ttest" = "#009E73", "rand_ipw" = "#000000",
                  "ts_ipw" = "#56B4E9", "rits_ipw" = "#E69F00"),
       labels = c("ts" = "TS-AIPW", "rand" = "Rand-AIPW", "rits" = "RiTS-AIPW",
                  "ts_ipw" = "TS-IPW", "rand_ipw" = "Rand-IPW", 
-                 "rits_ipw" = "RiTS-IPW", "ttest" = "T-test")
+                 "rits_ipw" = "RiTS-IPW", "ttest" = "Rand-T-Test")
     ) + theme(legend.position = "top")
   if(!is.null(df_low)){
     out_plot <- out_plot + facet_wrap(~dgp)
@@ -481,14 +481,14 @@ gen_power_curve <- function(df_high, df_low){
 gen_metrics_plot <- function(df_winner, df_power, dgp_exists = TRUE){
   df <- rbind(df_winner, df_power)
   out_plot <- ggplot(df, aes(x = participant, y = value, color = Methods)) +
-    geom_line() + labs(x = "Participant", y = "Proportion of Replication") + 
+    geom_line() + labs(x = "Number of participants", y = "Proportion of trials") + 
     scale_color_manual(
       values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00", 
                  "ttest" = "#009E73", "rand_ipw" = "#000000",
                  "ts_ipw" = "#56B4E9", "rits_ipw" = "#E69F00"),
       labels = c("ts" = "TS-AIPW", "rand" = "Rand-AIPW", "rits" = "RiTS-AIPW",
                  "ts_ipw" = "TS-IPW", "rand_ipw" = "Rand-IPW", 
-                 "rits_ipw" = "RiTS-IPW", "ttest" = "T-test")
+                 "rits_ipw" = "RiTS-IPW", "ttest" = "Rand-T-Test")
     ) + theme(legend.position = "top")
   if(dgp_exists){
     out_plot <- out_plot + facet_grid(type~dgp)
@@ -597,7 +597,7 @@ gen_bias_rmse_tab <- function(summ_rand, summ_ts, summ_rits, ate_ind, ind){
   est_err_tab <- matrix(paste(round(bias_tab, 2), "(", round(rmse_tab, 2), ")", sep = ""), 
                         nrow = nrow(bias_tab))
   colnames(est_err_tab) <- paste(ind)
-  rownames(est_err_tab) <- paste(c("T-test", "Rand-AIPW", "TS-AIPW", "RiTS-AIPW",
+  rownames(est_err_tab) <- paste(c("Rand-T-Test", "Rand-AIPW", "TS-AIPW", "RiTS-AIPW",
                                    "Rand-IPW", "TS-IPW", "RiTS-IPW"), 
                                  "(Arm", rep(2:4, each = 7), ")", sep = "")
   est_err_tab

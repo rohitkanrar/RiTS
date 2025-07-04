@@ -43,7 +43,7 @@ for(cr in criteria){
 }
 df_low["dgp"] <- "Low-SNR"
 sim_regret_plot <- gen_cum_reg_bwplot(df_high, df_low, ind)
-ggsave("plot/regret_sim_bwplot.jpg", height = 4, width = 12, units = "in")
+ggsave("plot/regret_sim_bwplot.jpg", height = 4, width = 10, units = "in")
 
 
 ## Frequency of Arm Allocation Plot
@@ -78,7 +78,7 @@ metric_plots <- gen_metrics_plot(df_winner = winner, df_power = power_df)
 # ggsave("plot/metrics.jpg", height = 4, width = 6, units = "in")
 
 metric_alloc_plot <- alloc_plot + metric_plots + plot_layout(ncol = 2)
-ggsave("plot/metric_alloc_plot.jpg", height = 4, width = 12, units = "in")
+ggsave("plot/metric_alloc_plot.jpg", height = 4, width = 10, units = "in")
 
 
 
@@ -114,4 +114,4 @@ power_df[["type"]] <- "Stopping Criteria"
 metric_plots <- gen_metrics_plot(df_winner = winner, df_power = power_df, 
                                  dgp_exists = FALSE)
 metric_alloc_plot_real <- alloc_plot + metric_plots + plot_layout(ncol = 2)
-ggsave("plot/metric_alloc_plot_real.jpg", height = 4, width = 12, units = "in")
+ggsave("plot/metric_alloc_plot_real.jpg", height = 4, width = 10, units = "in")

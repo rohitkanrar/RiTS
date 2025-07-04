@@ -39,8 +39,8 @@ df_low <- gen_width_df(out_rand = rand_sim_low,
                         out_ts = ts_sim_low, out_rits = rits_sim_low, 
                         ate_ind = ate_ind)
 sim_wid <- gen_width_bwplot(df_high = df_high, df_low = df_low, 
-                                 ind = ind, ylims = list(c(0, 5), c(0, 2)))
-ggsave("plot/width_bwplot.jpg", plot = sim_wid, height = 4, width = 12, 
+                                 ind = ind, ylims = list(c(0, 3), c(0, 1.5)))
+ggsave("plot/width_bwplot.jpg", plot = sim_wid, height = 4, width = 10, 
        units = "in")
 
 
@@ -65,8 +65,8 @@ df_low <- gen_bias_df(out_rand = rand_sim_low,
                        ate_ind = ate_ind, contr_true = contr_true)
 
 sim_bias <- gen_bias_bwplot(df_high = df_high, df_low = df_low, ind = ind,
-                            ylims = list(c(-1, 1), c(-0.5, 0.5)))
-ggsave("plot/bias_bwplot.jpg", plot = sim_bias, height = 4, width = 12, 
+                            ylims = list(c(-0.5, 0.5), c(-0.25, 0.25)))
+ggsave("plot/bias_bwplot.jpg", plot = sim_bias, height = 4, width = 10, 
        units = "in")
 
 
@@ -91,7 +91,7 @@ df_low <- gen_cum_miscov_df(out_rand = rand_sim_low, out_ts = ts_sim_low,
 cum_miscov <- gen_cum_miscov_plot(df_high = df_high, df_low = df_low, 
                                   alpha = sim_choice$alpha, 
                                   ate_start = sim_choice$ate_start)
-ggsave("plot/cum_miscov_contr.jpg", cum_miscov, height = 6, width = 12, 
+ggsave("plot/cum_miscov_contr.jpg", cum_miscov, height = 6, width = 10, 
        units = "in")
 
 
@@ -142,7 +142,7 @@ for(cr in criteria){
 }
 df_low["dgp"] <- "Low-SNR"
 sim_regret_plot <- gen_cum_reg_bwplot(df_high, df_low, ind)
-ggsave("plot/regret_mis_sim_bwplot.jpg", height = 4, width = 12, units = "in")
+ggsave("plot/regret_mis_sim_bwplot.jpg", height = 4, width = 10, units = "in")
 
 ## Frequency of Arm Allocation Plot
 df_high <- gen_freq_arm_alloc_df(out_rand = rand_sim_high,
@@ -176,7 +176,7 @@ metric_plots <- gen_metrics_plot(df_winner = winner, df_power = power_df)
 # ggsave("plot/metrics.jpg", height = 4, width = 6, units = "in")
 
 metric_alloc_plot <- alloc_plot + metric_plots + plot_layout(ncol = 2)
-ggsave("plot/metric_alloc_mis_plot.jpg", height = 4, width = 12, units = "in")
+ggsave("plot/metric_alloc_mis_plot.jpg", height = 4, width = 10, units = "in")
 
 
 # Quality of AsympCS (misspecified)
@@ -195,7 +195,7 @@ df_low <- gen_width_df(out_rand = rand_sim_low,
                        ate_ind = ate_ind)
 sim_wid <- gen_width_bwplot(df_high = df_high, df_low = df_low, 
                             ind = ind, ylims = list(c(0, 10), c(0, 5)))
-ggsave("plot/width_mis_bwplot.jpg", plot = sim_wid, height = 4, width = 12, 
+ggsave("plot/width_mis_bwplot.jpg", plot = sim_wid, height = 4, width = 10, 
        units = "in")
 
 
@@ -220,6 +220,6 @@ df_low <- gen_bias_df(out_rand = rand_sim_low,
                       ate_ind = ate_ind, contr_true = contr_true)
 
 sim_bias <- gen_bias_bwplot(df_high = df_high, df_low = df_low, ind = ind,
-                            ylims = list(c(-2, 2), c(-1, 1)))
-ggsave("plot/bias_mis_bwplot.jpg", plot = sim_bias, height = 4, width = 12, 
+                            ylims = list(c(-0.75, 0.75), c(-0.38, 0.38)))
+ggsave("plot/bias_mis_bwplot.jpg", plot = sim_bias, height = 4, width = 10, 
        units = "in")
