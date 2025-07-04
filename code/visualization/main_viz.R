@@ -83,9 +83,9 @@ ggsave("plot/metric_alloc_plot.jpg", height = 4, width = 10, units = "in")
 
 
 ### Real Data Application
-rand_real_sim <- readRDS("output/real_dat/rand_real_sim.RData")[1:10]
-ts_real_sim <- readRDS("output/real_dat/ts_real_sim.RData")[1:10]
-rits_real_sim <- readRDS("output/real_dat/rits_real_sim.RData")[1:10]
+rand_real_sim <- readRDS("output/real_dat/rand_real_sim.RData")
+ts_real_sim <- readRDS("output/real_dat/ts_real_sim.RData")
+rits_real_sim <- readRDS("output/real_dat/rits_real_sim.RData")
 
 n_iter <- length(rand_real_sim)
 N <- length(rand_real_sim[[1]]$trt)
