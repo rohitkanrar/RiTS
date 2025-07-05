@@ -73,6 +73,7 @@ ggsave("plot/bias_bwplot.jpg", plot = sim_bias, height = 4, width = 10,
 ### Section A.2 (Impact of Clipping)
 source("code/function/misc.R")
 alpha <- sim_choice$alpha
+delay_aipw <- 57
 
 ## High SNR
 mu_true <- sim_dat$mu_true * 2
@@ -80,14 +81,14 @@ contr_true <- mu_true - mu_true[1]
 contr_true <- contr_true[setdiff(1:K, sim_dat$placebo_arm)]
 df_high <- gen_cum_miscov_df(out_rand = rand_sim_high, out_ts = ts_sim_high, 
                              out_rits = rits_sim_high, mu_true = mu_true, 
-                             contr_true = contr_true)
+                             contr_true = contr_true, delay_aipw = delay_aipw)
 ## Low SNR
 mu_true <- sim_dat$mu_true
 contr_true <- mu_true - mu_true[1]
 contr_true <- contr_true[setdiff(1:K, sim_dat$placebo_arm)]
 df_low <- gen_cum_miscov_df(out_rand = rand_sim_low, out_ts = ts_sim_low, 
                              out_rits = rits_sim_low, mu_true = mu_true, 
-                             contr_true = contr_true)
+                             contr_true = contr_true, delay_aipw = delay_aipw)
 cum_miscov <- gen_cum_miscov_plot(df_high = df_high, df_low = df_low, 
                                   alpha = sim_choice$alpha, 
                                   ate_start = sim_choice$ate_start)
