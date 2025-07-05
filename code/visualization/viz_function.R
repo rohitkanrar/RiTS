@@ -210,7 +210,7 @@ gen_bias_bwplot <- function(df_high, df_low, ind, ylims){
                  outlier.size = 0.5, outlier.shape = NA) +
     facet_grid(dgp ~ Arm, scales = "free_y") +
     labs(x = "Number of participants", y = "Bias", 
-         fill = "Arm") +
+         fill = "Method") +
     scale_fill_manual(
       values = c("ttest" = "#009E73", "rand" = "#CC79A7", "ts" = "#0072B2", 
                  "rits" = "#D55E00"),

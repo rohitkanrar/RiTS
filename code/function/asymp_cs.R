@@ -3,7 +3,7 @@ library(parallel)
 basic_learner <- function(y, X, newX, ipw){
   # browser()
   # mod <- lm(y ~ ., data.frame(y = y, X = X))
-  mod <- glmnet::glmnet(X, y, alpha = 0, weights = ipw)
+  mod <- glmnet::glmnet(X, y, alpha = 0, weights = sqrt(ipw))
   tmp <- predict(mod, newx = newX, s = 10)
   as.numeric(tmp)
 }
@@ -13,7 +13,7 @@ main_effect_ridge <- function(y, X, newX, trt_ind, K, ipw){
   trt_ind <- factor(trt_ind, levels = 1:K)
   X <- model.matrix(~0+trt_ind+X)
   X <- X[, -1]
-  mod <- glmnet::glmnet(X, y, alpha = 0, weights = ipw)
+  mod <- glmnet::glmnet(X, y, alpha = 0, weights = sqrt(ipw))
   reg_est <- vector(mode = "list", length = K)
   tmp <- matrix(0, nte, K-1)
   newX <- cbind(tmp, newX)

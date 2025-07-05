@@ -1,11 +1,11 @@
 source("code/visualization/viz_function.R")
 out_dir <- "output/"
 # High SNR
-ts_sim_high <- readRDS(paste(out_dir, "ts_sim_dgp_high_min_prpn_0.05_tr_start_24.RData", 
+ts_sim_high <- readRDS(paste(out_dir, "ts_sim_dgp_high_min_prpn_0.1_tr_start_24.RData", 
                              sep = ""))
 rand_sim_high <- readRDS(paste(out_dir, "rand_sim_dgp_high_min_prpn_0.005_tr_start_24.RData", 
                                sep = ""))
-rits_sim_high <- readRDS(paste(out_dir, "rits_sim_dgp_high_min_prpn_0.05_tr_start_24.RData", 
+rits_sim_high <- readRDS(paste(out_dir, "rits_sim_dgp_high_min_prpn_0.1_tr_start_24.RData", 
                                sep = ""))
 
 K <- length(unique(rand_sim_high[[1]]$trt))
@@ -43,11 +43,11 @@ saveRDS(est_err_tab_high, "tables/est_err_tab_high.RData")
 xtable::xtable(est_err_tab_high)
 
 # Low SNR
-ts_sim_low <- readRDS(paste(out_dir, "ts_sim_dgp_low_min_prpn_0.05_tr_start_24.RData", 
+ts_sim_low <- readRDS(paste(out_dir, "ts_sim_dgp_low_min_prpn_0.1_tr_start_24.RData", 
                              sep = ""))
 rand_sim_low <- readRDS(paste(out_dir, "rand_sim_dgp_low_min_prpn_0.005_tr_start_24.RData", 
                                sep = ""))
-rits_sim_low <- readRDS(paste(out_dir, "rits_sim_dgp_low_min_prpn_0.05_tr_start_24.RData", 
+rits_sim_low <- readRDS(paste(out_dir, "rits_sim_dgp_low_min_prpn_0.1_tr_start_24.RData", 
                                sep = ""))
 
 # Low SNR

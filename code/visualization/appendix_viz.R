@@ -117,10 +117,12 @@ rand_sim_low <- readRDS(paste(out_dir, "rand_mis_sim_dgp_low_min_prpn_0.005_tr_s
 rits_sim_low <- readRDS(paste(out_dir, "rits_mis_sim_dgp_low_min_prpn_0.1_tr_start_24.RData", 
                               sep = ""))
 
+sim_choice <- readRDS("metadata/sim_choice.RData")
 n_iter <- length(ts_sim_high)
 N <- length(ts_sim_high[[1]]$trt)
-ind <- c(ts_sim_high[[1]]$tr_first, seq(30, N/2, 15), 
-         seq(N/2+25, N, 25))
+ind <- round(
+  c(seq(50, sim_choice$N*0.625, 10), sim_choice$N*(3/4), sim_choice$N)
+)
 K <- length(unique(rand_sim_high[[1]]$trt))
 
 ## Cumulative Regrets
