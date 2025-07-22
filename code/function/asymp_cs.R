@@ -3,12 +3,8 @@ library(parallel)
 basic_learner <- function(y, X, newX, ipw){
   # browser()
   # mod <- lm(y ~ ., data.frame(y = y, X = X))
-  # mod <- glmnet::cv.glmnet(X, y, alpha = 0, nfolds = min(10, length(y)), grouped = F, 
-  #                          nlambda = 20, weights = ipw)
-  # tmp <- predict(mod, newx = newX, s = "lambda.1se")
-  mod <- glmnet::glmnet(X, y, alpha = 0, nlambda = 10, lambda.max = 50, 
-                        lambda.min.ratio = 0.2, weights = ipw)
-  tmp <- predict(mod, newx = newX, s = 25)
+  mod <- glmnet::glmnet(X, y, alpha = 0, weights = ipw)
+  tmp <- predict(mod, newx = newX, s = 10)
   as.numeric(tmp)
 }
 main_effect_ridge <- function(y, X, newX, trt_ind, K, ipw){
