@@ -56,7 +56,6 @@ results <- mclapply(1:nrow(cases), function(i, cases, sim_choice, sim_dat, n_ite
   K <- sim_choice$K # cannot be changed
   d <- sim_choice$d # cannot be changed
   E <- 2 # cannot be changed
-  X_true <- sim_dat$X_true; X <- sim_dat$X
   beta_true_low <- sim_dat$beta_true
   beta_true_high <- 2 * beta_true_low
   placebo_arm <- sim_dat$placebo_arm
@@ -85,6 +84,8 @@ results <- mclapply(1:nrow(cases), function(i, cases, sim_choice, sim_dat, n_ite
     # if(iter %% 100 == 0) print(iter)
     seed_ <- iter
     set.seed(seed_)
+    X_true <- get_X(N = N)
+    X <- X_true[, 1:2]
     ts_sim[[iter]] <- do_ts_batch(X = X_true, X_true = X_true, beta_true = beta_true, 
                                   weight = weight, seed = seed_, rwd_sig = reward_sig,
                                   tr_start = tr_start, tr_batch = 5, tr_lag = 10,
@@ -155,7 +156,7 @@ results <- mclapply(1:nrow(cases), function(i, cases, sim_choice){
       out_sim <- readRDS(file_name)
       out_sim <- add_asympcs_sim(out_list = out_sim, ate_start = 24, batch = batch, 
                                  placebo_arm = 1, alpha = 0.05, first_peek = 50, 
-                                 n_cores = 1, force_compute = TRUE)
+                                 n_cores = 1, force_compute = TRUE, learner = "main_ridge")
       out_sim <- add_standard_ci(out = out_sim, ate_start = 24, batch = batch, 
                                  placebo_arm = 1, alpha = 0.05, force_compute = TRUE)
       saveRDS(out_sim, file_name) 

@@ -19,7 +19,6 @@ results <- mclapply(1:nrow(cases), function(i, cases, sim_choice, sim_dat, n_ite
   K <- sim_choice$K # cannot be changed
   d <- sim_choice$d # cannot be changed
   E <- 2 # cannot be changed
-  # X_true <- sim_dat$X_true; X <- sim_dat$X
   beta_true_low <- sim_dat$beta_true
   beta_true_high <- 2 * beta_true_low
   placebo_arm <- sim_dat$placebo_arm
