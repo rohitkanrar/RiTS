@@ -6,13 +6,10 @@
 /.idea
 /output
 /output_biometrics_v1
-*.jpg
 *.xlsx
-/plot
 /data
 /output_legacy
 /plot_biometrics_v1
-/tables
 /code/function/not_important
 /code/simulation/not_important
 /code/visualization/not_important

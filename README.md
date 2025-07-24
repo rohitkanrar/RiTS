@@ -42,11 +42,30 @@ The method is named **R**isk-**i**nclusive **T**hompson **S**ampling (RiTS).
 ## Initial Setup:
 
 - Clone Github Repository:
+Option 1 (Full Repository):
 
 ```
 git clone git@github.com:rohitkanrar/RiTS.git
 cd RiTS
 ```
+Option 2 (Without Plots, Tables and Example Output Files):
+
+```
+GIT_LFS_SKIP_SMUDGE=1 git clone git@github.com:rohitkanrar/RiTS.git
+cd RiTS
+```
+
+To Fetch All LFS Files Later:
+```
+git lfs pull
+```
+
+To Fetch A Specific LFS Files Later:
+```
+git lfs pull
+git lfs pull --include="path/to/your/large_file"
+```
+
 - Create additional folders to save output files:
 
 ```
@@ -62,7 +81,26 @@ source("code/r/requirements.R")
 
 ## To Replicate Results:
 
-Please follow `simulation_example.Rmd` to reproduce all experiments, figures and tables.
+- Please follow `simulation_example.Rmd` to reproduce all experiments, figures and tables.
+- To replicate all simulation experiments, follow the steps below:
+```
+mkdir output
+Rscript code/simulation/replicated_trial.R
+Rscript code/simulation/replicated_trial_evaluation.R
+```
+- To generate plots and tables: 
+```
+mkdir plot
+mkdir tables
+Rscript code/visualization/main_viz.R
+Rscript code/visualization/main_tab.R
+Rscript code/visualization/appendix_viz.R
+Rscript code/visualization/appendix_tab.R
+```
+- We are unable to upload all output files (> 8.3 GB) on GitHub. Please execute the code above to generate original output files. 
+- With 16 CPU cores, it took us around 12 hours to complete all simulation.
+- Neither the real data nor the output can be provided due to privacy concerns.
+
 
 ## References
 

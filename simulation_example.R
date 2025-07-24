@@ -14,7 +14,7 @@ if(!dir.exists("output_git/")){
 }
 
 cases <- cases[5:6, ]
-n_iter <- 1000 # only 10 instead of 5000 for illustration
+n_iter <- 10 # only 10 instead of 1000 for illustration
 
 library(parallel)
 num_cores <- 2
