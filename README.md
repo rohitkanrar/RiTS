@@ -13,6 +13,7 @@ The method is named **R**isk-**i**nclusive **T**hompson **S**ampling (RiTS).
 - `/code/simulation`: contains scripts to conduct all simulation experiments described in both the main manuscript and the supplementary material. 
 - `/code/visualization`: contains scripts that generates all figures except Figure 1 and Figure 2 in the main manuscript.
 - `/metadata`: Additional .RData files created to run the simulation experiments conveniently. Files contain lists to specify hyper-parameters required in the simulation experiments.
+- `/output_git`: Example of output files from simulation experiments are generated using `simulation_example.R` for 10 replications, and added in this folder.
 
 ### Contents of `/code/function`:
 - `/code/function/main_function.R`: contains major functions to implement `Rand`, `TS` and `RiTS`.
@@ -42,25 +43,25 @@ The method is named **R**isk-**i**nclusive **T**hompson **S**ampling (RiTS).
 ## Initial Setup:
 
 - Clone Github Repository:
-Option 1 (Full Repository):
+- Option 1 (Full Repository):
 
 ```
 git clone git@github.com:rohitkanrar/RiTS.git
 cd RiTS
 ```
-Option 2 (Without Plots, Tables and Example Output Files):
+- Option 2 (Without Plots, Tables and Example Output Files):
 
 ```
 GIT_LFS_SKIP_SMUDGE=1 git clone git@github.com:rohitkanrar/RiTS.git
 cd RiTS
 ```
 
-To Fetch All LFS Files Later:
+- To Fetch All LFS Files Later:
 ```
 git lfs pull
 ```
 
-To Fetch A Specific LFS Files Later:
+- To Fetch A Specific LFS Files Later:
 ```
 git lfs pull
 git lfs pull --include="path/to/your/large_file"
@@ -82,7 +83,8 @@ source("code/r/requirements.R")
 ## To Replicate Results:
 
 - Please follow `simulation_example.Rmd` to reproduce all experiments, figures and tables.
-- To replicate all simulation experiments, follow the steps below:
+- Example output files are added in `/output_git` folder.
+- To replicate simulation experiments for 1000 replications, please follow the steps below:
 ```
 mkdir output
 Rscript code/simulation/replicated_trial.R
