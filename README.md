@@ -101,13 +101,13 @@ Rscript code/visualization/appendix_tab.R
 ```
 - We are unable to upload all output files (> 8.3 GB) on GitHub. Please execute the code above to generate original output files. 
 - With 16 CPU cores, it took us around 12 hours to complete all simulation.
+- As an alternative, `simulation_example.R` script runs the simulation experiment for 10 replication and saves output files in the `/output_git` folder.
 - Neither the real data nor the output can be provided due to privacy concerns.
-
 
 ## References
 
 [1] Waudby-Smith, I., Arbour, D., Sinha, R., Kennedy, E. H., and Ramdas, A. (2024). Time-
-uniform central limit theory and asymptotic confidence sequences. The Annals of Statistics,
+uniform central limit theory and asymptotic confidence sequences. Annals of Statistics,
 52(6):2613–2640.
 
 Open-sourced software: drconfseq is implemented in [https://github.com/WannabeSmith/drconfseq](https://github.com/WannabeSmith/drconfseq).
