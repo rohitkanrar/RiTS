@@ -9,10 +9,10 @@ dgps <- c("null")
 tr_starts <- sim_choice$tr_start
 min_prpns <- sim_choice$min_prpns
 cases <- expand.grid(dgp = dgps, min_prpn = min_prpns, tr_start = tr_starts)
-n_iter <- 1000
+n_iter <- 10
 
 library(parallel)
-num_cores <- 16
+num_cores <- 4
 results <- mclapply(1:nrow(cases), function(i, cases, sim_choice, sim_dat, n_iter){
   # browser()
   out_dir <- "output/"
@@ -25,8 +25,8 @@ results <- mclapply(1:nrow(cases), function(i, cases, sim_choice, sim_dat, n_ite
   beta_true_null <- sim_dat$beta_true
   # Arms still have safety trend; All arms have placebo efficacy
   for(j in 1:K){
-    if(K == 1) next
-    beta_true_null[, j] <- beta_true_null[, 1]
+    if(j == 1) next
+    beta_true_null[, j, 1] <- beta_true_null[, 1, 1]
   }
   placebo_arm <- sim_dat$placebo_arm
   weight <- sim_dat$weight
