@@ -1,3 +1,16 @@
+library(gsDesign)
+k <- 30
+design <- gsDesign(
+  k = k,
+  test.type = 2,
+  alpha = 0.05,
+  sfu = "OF",
+  timing = (1:k) / k
+)
+
+c_k <- design$upper$bound
+
+
 standard_ci <- function(rwd_hist, trt_hist, K, placebo_arm = 1, alpha = 0.05){
   # browser()
   if(sum(trt_hist == placebo_arm) == 0){
@@ -13,7 +26,10 @@ standard_ci <- function(rwd_hist, trt_hist, K, placebo_arm = 1, alpha = 0.05){
       } else{
         tmp <- t.test(rwd_hist[trt_hist == k], rwd_hist[trt_hist == placebo_arm], 
                       var.equal = FALSE)
-        c(tmp$estimate[1] - tmp$estimate[2], tmp$conf.int)
+        est <- tmp$estimate[1] - tmp$estimate[2]
+        low_ci <- est - c_k * tmp$stderr
+        up_ci <- est - c_k * tmp$stderr
+        c(est, low_ci, up_ci)
       }
     })
     out <- t(out)
@@ -42,7 +58,8 @@ add_standard_ci <- function(out, ate_start, batch = 5, placebo_arm = 1,
         t <- times[j]
         ci_tmp[j, , ] <- standard_ci(rwd_hist = reward_benf[1:t], 
                                      trt_hist = out[[i]]$trt[1:t], K = K,
-                                     placebo_arm = placebo_arm, alpha = alpha/(K-1)) # Bonferroni's correction
+                                     placebo_arm = placebo_arm, 
+                                     alpha = alpha/(K-1)) # Bonferroni's correction
       }
       dimnames(ci_tmp) <- list(Times = times,
                                Arms = setdiff(1:K, placebo_arm), 
