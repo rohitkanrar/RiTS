@@ -1,14 +1,19 @@
-library(gsDesign)
-k <- 30
-design <- gsDesign(
-  k = k,
-  test.type = 2,
-  alpha = 0.05,
-  sfu = "OF",
-  timing = (1:k) / k
-)
+if(FALSE){
+  library(gsDesign)
+  k <- 30
+  design <- gsDesign(
+    k = k,
+    test.type = 2,
+    alpha = 0.05,
+    sfu = "OF",
+    timing = (1:k) / k
+  )
+  c_k <- design$upper$bound
+  saveRDS(c_k, "metadata/ck.RData")
+} else{
+  c_k <- readRDS("metadata/ck.RData")
+}
 
-c_k <- design$upper$bound
 
 
 standard_ci <- function(rwd_hist, trt_hist, K, placebo_arm = 1, alpha = 0.05){
