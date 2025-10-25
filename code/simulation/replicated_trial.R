@@ -4,8 +4,7 @@ source("code/function/misc.R")
 
 sim_choice <- readRDS("metadata/sim_choice.RData")
 sim_dat <- readRDS("metadata/sim_dat.RData")
-# dgps <- c("low", "high", "null")
-dgps <- c("null")
+dgps <- c("low", "high", "null")
 tr_starts <- sim_choice$tr_start
 min_prpns <- sim_choice$min_prpns
 cases <- expand.grid(dgp = dgps, min_prpn = min_prpns, tr_start = tr_starts)
