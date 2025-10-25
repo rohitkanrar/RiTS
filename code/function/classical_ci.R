@@ -11,13 +11,12 @@ if(FALSE){
   c_k <- design$upper$bound
   saveRDS(c_k, "metadata/ck.RData")
 } else{
-  c_k <- readRDS("metadata/ck.RData")
+  c_ks <- readRDS("metadata/ck.RData")
 }
 
 
 
-standard_ci <- function(rwd_hist, trt_hist, K, placebo_arm = 1, alpha = 0.05){
-  # browser()
+standard_ci <- function(rwd_hist, trt_hist, K, placebo_arm = 1, c_k){
   if(sum(trt_hist == placebo_arm) == 0){
     out <- matrix(NA, K-1, 3)
   } else{
@@ -45,12 +44,12 @@ standard_ci <- function(rwd_hist, trt_hist, K, placebo_arm = 1, alpha = 0.05){
   return(as.matrix(out))
 }
 
-add_standard_ci <- function(out, ate_start, batch = 5, placebo_arm = 1, 
-                            alpha = 0.05, force_compute = FALSE){
+add_standard_ci <- function(out, ate_start, n_looks = 30, 
+                            placebo_arm = 1, force_compute = FALSE){
   # browser()
   n_iter <- length(out)
   K <- length(unique(out[[1]]$trt)); N <- length(out[[1]]$trt)
-  times <- seq(ate_start, N, batch)
+  times <- floor(seq(ate_start, N, length.out = n_looks))
   for(i in 1:n_iter){
     if(is.null(out[[i]]$contr_standard) || force_compute){
       ci_tmp <- array(NA, dim = c(length(times), K-1, 3))
@@ -64,7 +63,7 @@ add_standard_ci <- function(out, ate_start, batch = 5, placebo_arm = 1,
         ci_tmp[j, , ] <- standard_ci(rwd_hist = reward_benf[1:t], 
                                      trt_hist = out[[i]]$trt[1:t], K = K,
                                      placebo_arm = placebo_arm, 
-                                     alpha = alpha/(K-1)) # Bonferroni's correction
+                                     c_k = c_ks[j]) # O'brien & Fleming ESF
       }
       dimnames(ci_tmp) <- list(Times = times,
                                Arms = setdiff(1:K, placebo_arm), 
