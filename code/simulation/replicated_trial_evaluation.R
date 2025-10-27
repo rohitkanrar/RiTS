@@ -3,8 +3,8 @@ source("code/function/classical_ci.R")
 source("code/function/asymp_cs.R")
 
 sim_choice <- readRDS("metadata/sim_choice.RData")
-# dgps <- c("low", "high", "null")
-dgps <- c("low", "high")
+dgps <- c("low", "high", "null")
+# dgps <- c("low", "high")
 tr_starts <- sim_choice$tr_start
 min_prpns <- sim_choice$min_prpns
 cases <- expand.grid(dgp = dgps, min_prpn = min_prpns, tr_start = tr_starts)

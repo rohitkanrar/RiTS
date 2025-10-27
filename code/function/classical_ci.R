@@ -32,7 +32,7 @@ standard_ci <- function(rwd_hist, trt_hist, K, placebo_arm = 1, c_k){
                       var.equal = FALSE)
         est <- tmp$estimate[1] - tmp$estimate[2]
         low_ci <- est - c_k * tmp$stderr
-        up_ci <- est - c_k * tmp$stderr
+        up_ci <- est + c_k * tmp$stderr
         c(est, low_ci, up_ci)
       }
     })
