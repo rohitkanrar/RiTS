@@ -51,8 +51,8 @@ gen_cum_reg_df <- function(out_rand, out_ts, out_rits, ind, criteria){
   df["criteria"] <- criteria
   return(df)
 }
-gen_cum_reg_bwplot <- function(df_high, df_low, ind){
-  df <- rbind(df_high, df_low)
+gen_cum_reg_bwplot <- function(df_high, df_low, df_null, ind){
+  df <- rbind(df_high, df_low, df_null)
   sim_reg_plot <- ggplot(df, aes(x = factor(Column), 
                                   y = Value, fill = Method)) +
     geom_boxplot(position = position_dodge(width = 0.8), width = 0.7, 
@@ -156,7 +156,7 @@ gen_width_bwplot <- function(df_high, df_low, ind, ylims){
     scale_fill_manual(
       values = c("ttest" = "#009E73", "rand" = "#CC79A7", "ts" = "#0072B2", 
                  "rits" = "#D55E00"),
-      labels = c("ttest" = "Rand-T-test", "ts" = "TS-AIPW", 
+      labels = c("ttest" = "Rand-OF", "ts" = "TS-AIPW", 
                  "rand" = "Rand-AIPW", "rits" = "RiTS-AIPW")
     ) +
     scale_x_discrete(labels = ind) + theme(legend.position = "top")
@@ -214,7 +214,7 @@ gen_bias_bwplot <- function(df_high, df_low, ind, ylims){
     scale_fill_manual(
       values = c("ttest" = "#009E73", "rand" = "#CC79A7", "ts" = "#0072B2", 
                  "rits" = "#D55E00"),
-      labels = c("ttest" = "Rand-T-Test", "ts" = "TS-AIPW", 
+      labels = c("ttest" = "Rand-OF", "ts" = "TS-AIPW", 
                  "rand" = "Rand-AIPW", "rits" = "RiTS-AIPW")
     ) +
     scale_x_discrete(labels = ind) + theme(legend.position = "top")
@@ -247,7 +247,7 @@ gen_cum_miscov_df <- function(out_rand, out_ts, out_rits, mu_true, contr_true,
   df_std$obs <- as.numeric(obs)
   df_std <- melt(df_std, id.vars = "obs", variable.name = "Arm", 
                   value.name = "Miscov")
-  df_std["Method"] <- "Rand-T-Test"
+  df_std["Method"] <- "Rand-OF"
   
   cum_miscov <- get_cum_mis_cov(out_ts, mu_true = mu_true, 
                                 contr_true = contr_true, delay_ipw = 0,
@@ -277,7 +277,7 @@ gen_cum_miscov_df <- function(out_rand, out_ts, out_rits, mu_true, contr_true,
 gen_cum_miscov_plot <- function(df_high, df_low, alpha, ate_start){
   df_high["dgp"] <- "High-SNR"; df_low["dgp"] <- "Low-SNR"
   df <- rbind(df_high, df_low)
-  df$Method <- factor(df$Method, levels = c("Rand-T-Test", "Rand-AIPW", 
+  df$Method <- factor(df$Method, levels = c("Rand-OF", "Rand-AIPW", 
                                             "TS-AIPW", "RiTS-AIPW"))
   
   ggplot(df, aes(x = obs, y = Miscov, color = Arm)) +
@@ -411,7 +411,7 @@ gen_winner_curve <- function(df_high, df_low){
                  "ts_ipw" = "#56B4E9", "rits_ipw" = "#E69F00"),
       labels = c("ts" = "TS-AIPW", "rand" = "Rand-AIPW", "rits" = "RiTS-AIPW",
                  "ts_ipw" = "TS-IPW", "rand_ipw" = "Rand-IPW", 
-                 "rits_ipw" = "RiTS-IPW", "ttest" = "Rand-T-Test")
+                 "rits_ipw" = "RiTS-IPW", "ttest" = "Rand-OF")
     ) + theme(legend.position = "top")
   if(!is.null(df_low)){
     out_plot <- out_plot + facet_wrap(~dgp)
@@ -528,7 +528,7 @@ gen_power_curve <- function(df_high, df_low){
                  "ts_ipw" = "#56B4E9", "rits_ipw" = "#E69F00"),
       labels = c("ts" = "TS-AIPW", "rand" = "Rand-AIPW", "rits" = "RiTS-AIPW",
                  "ts_ipw" = "TS-IPW", "rand_ipw" = "Rand-IPW", 
-                 "rits_ipw" = "RiTS-IPW", "ttest" = "Rand-T-Test")
+                 "rits_ipw" = "RiTS-IPW", "ttest" = "Rand-OF")
     ) + theme(legend.position = "top")
   if(!is.null(df_low)){
     out_plot <- out_plot + facet_wrap(~dgp)
@@ -547,7 +547,7 @@ gen_metrics_plot <- function(df_winner, df_power, dgp_exists = TRUE){
                  "ts_ipw" = "#56B4E9", "rits_ipw" = "#E69F00"),
       labels = c("ts" = "TS-AIPW", "rand" = "Rand-AIPW", "rits" = "RiTS-AIPW",
                  "ts_ipw" = "TS-IPW", "rand_ipw" = "Rand-IPW", 
-                 "rits_ipw" = "RiTS-IPW", "ttest" = "Rand-T-Test")
+                 "rits_ipw" = "RiTS-IPW", "ttest" = "Rand-OF")
     ) + theme(legend.position = "top")
   if(dgp_exists){
     out_plot <- out_plot + facet_grid(type~dgp)
@@ -656,7 +656,7 @@ gen_bias_rmse_tab <- function(summ_rand, summ_ts, summ_rits, ate_ind, ind){
   est_err_tab <- matrix(paste(round(bias_tab, 2), "(", round(rmse_tab, 2), ")", sep = ""), 
                         nrow = nrow(bias_tab))
   colnames(est_err_tab) <- paste(ind)
-  rownames(est_err_tab) <- paste(c("Rand-T-Test", "Rand-AIPW", "TS-AIPW", "RiTS-AIPW",
+  rownames(est_err_tab) <- paste(c("Rand-OF", "Rand-AIPW", "TS-AIPW", "RiTS-AIPW",
                                    "Rand-IPW", "TS-IPW", "RiTS-IPW"), 
                                  "(Arm", rep(2:4, each = 7), ")", sep = "")
   est_err_tab
