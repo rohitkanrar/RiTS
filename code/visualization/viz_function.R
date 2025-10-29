@@ -139,9 +139,9 @@ gen_width_df <- function(out_rand, out_ts, out_rits, ate_ind){
 }
 require(ggh4x)
 # Function to generate width box plot as in Appendix A.2.
-gen_width_bwplot <- function(df_high, df_low, ind, ylims){
-  df_high["dgp"] <- "High-SNR"; df_low["dgp"] <- "Low-SNR"
-  df <- rbind(df_high, df_low)
+gen_width_bwplot <- function(df_high, df_low, df_null, ind, ylims){
+  df_high["dgp"] <- "High-SNR"; df_low["dgp"] <- "Low-SNR"; df_null["dgp"] <- "Null-Efficacy"
+  df <- rbind(df_high, df_low, df_null)
   y_limits <- list(
     scale_y_continuous(limits = ylims[[1]]),
     scale_y_continuous(limits = ylims[[2]])
@@ -197,8 +197,8 @@ gen_bias_df <- function(out_rand, out_ts, out_rits, ate_ind, contr_true){
   }
   df
 }
-gen_bias_bwplot <- function(df_high, df_low, ind, ylims){
-  df_high["dgp"] <- "High-SNR"; df_low["dgp"] <- "Low-SNR"
+gen_bias_bwplot <- function(df_high, df_low, df_null, ind, ylims){
+  df_high["dgp"] <- "High-SNR"; df_low["dgp"] <- "Low-SNR"; df_null["dgp"] <- "Null-Efficacy"
   df <- rbind(df_high, df_low)
   y_limits <- list(
     scale_y_continuous(limits = ylims[[1]]),
@@ -298,17 +298,6 @@ gen_cum_miscov_plot <- function(df_high, df_low, alpha, ate_start){
     ) + theme(legend.position = "top")
 }
 
-expand_standard_array <- function(target_array, standard_array){
-  target_times_chr <- dimnames(target_array)[[1]]
-  standard_times_chr <- dimnames(standard_array)[[1]]
-  target_times_num <- as.numeric(target_times_chr)
-  standard_times_num <- as.numeric(standard_times_chr)
-  source_indices <- findInterval(target_times_num, standard_times_num)
-  source_indices[source_indices == 0] <- 1
-  new_array <- standard_array[source_indices, , , drop = FALSE]
-  dimnames(new_array) <- dimnames(target_array)
-  return(new_array)
-}
 expand_standard_vector <- function(target_vector, standard_vector){
   target_times_chr <- names(target_vector)
   standard_times_chr <- names(standard_vector)

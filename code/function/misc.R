@@ -30,6 +30,18 @@ apply_floor <- function(a, amin) {
   return(new - c * individual_slack)
 }
 
+expand_standard_array <- function(target_array, standard_array){
+  target_times_chr <- dimnames(target_array)[[1]]
+  standard_times_chr <- dimnames(standard_array)[[1]]
+  target_times_num <- as.numeric(target_times_chr)
+  standard_times_num <- as.numeric(standard_times_chr)
+  source_indices <- findInterval(target_times_num, standard_times_num)
+  source_indices[source_indices == 0] <- 1
+  new_array <- standard_array[source_indices, , , drop = FALSE]
+  dimnames(new_array) <- dimnames(target_array)
+  return(new_array)
+}
+
 get_cum_mis_cov <- function(sim, mu_true, contr_true, delay_aipw = 0, 
                             delay_ipw = 0, need_std = FALSE, need_ipw = FALSE){
   n_iter <- length(sim)
@@ -45,6 +57,8 @@ get_cum_mis_cov <- function(sim, mu_true, contr_true, delay_aipw = 0,
     cum_mis_cov_contr_ipw <- matrix(0, no_of_peek_ipw, dim(sim[[1]]$contr)[2])
   }
   for(iter in 1:n_iter){
+    sim[[iter]][["contr_standard"]] <- expand_standard_array(target_array = sim[[iter]][["contr"]],
+                                                             standard_array = sim[[iter]][["contr_standard"]])
     for(k in 1:K){
       cum_mis_cov_ate[, k] <- cum_mis_cov_ate[, k] + 
         cummax(sim[[iter]]$ate[(delay_aipw+1):total_peek, k,  2] > mu_true[k] | 
