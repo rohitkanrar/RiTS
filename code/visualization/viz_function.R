@@ -1,4 +1,5 @@
 library(ggplot2); library(tidyr); library(patchwork)
+source("code/function/misc.R")
 update_geom_defaults("boxplot", list(
   outlier.size = 0.25,
   color = "black",
@@ -106,6 +107,11 @@ gen_freq_arm_alloc <- function(df_high, df_low, df_null, ylims){
 gen_width_df <- function(out_rand, out_ts, out_rits, ate_ind){
   n_iter <- length(out_rand); K <- length(unique(out_rand[[1]]$trt))
   ind <- dimnames(out_rand[[1]]$contr)[[1]][ate_ind]
+  for(iter in 1:n_iter){
+    out_rand[[iter]][["contr_standard"]] <- 
+      expand_standard_array(target_array = sim[[iter]][["contr"]],
+                            standard_array = sim[[iter]][["contr_standard"]])
+  }
   df <- data.frame()
   for(arm in 2:K){
     contr_std_width <- t(sapply(1:n_iter, function(iter){
@@ -170,6 +176,11 @@ gen_width_bwplot <- function(df_high, df_low, df_null, ind, ylims){
 gen_bias_df <- function(out_rand, out_ts, out_rits, ate_ind, contr_true){
   n_iter <- length(out_rand); K <- length(unique(out_rand[[1]]$trt))
   ind <- dimnames(out_rand[[1]]$contr)[[1]][ate_ind]
+  for(iter in 1:n_iter){
+    out_rand[[iter]][["contr_standard"]] <- 
+      expand_standard_array(target_array = sim[[iter]][["contr"]],
+                            standard_array = sim[[iter]][["contr_standard"]])
+  }
   df <- data.frame()
   for(arm in 2:K){
     contr_std_bias <- t(sapply(1:n_iter, function(iter){
