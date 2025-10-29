@@ -87,11 +87,11 @@ winner[["type"]] <- "Winner (Arm 4)"
 
 # Proportion of trials where stopping criteria is met
 power_high <- gen_power_curve_df(rand_out = rand_sim_high, ts_out = ts_sim_high, 
-                                 rits_out = rits_sim_high, min_thresh = 0.1)
+                                 rits_out = rits_sim_high, min_thresh = 0.1, include_ipw = FALSE)
 power_low <- gen_power_curve_df(rand_out = rand_sim_low, ts_out = ts_sim_low, 
-                                 rits_out = rits_sim_low, min_thresh = 0.1)
+                                 rits_out = rits_sim_low, min_thresh = 0.1, include_ipw = FALSE)
 power_null <- gen_power_curve_df(rand_out = rand_sim_null, ts_out = ts_sim_null, 
-                                rits_out = rits_sim_null, min_thresh = 0.1)
+                                rits_out = rits_sim_null, min_thresh = 0.1, include_ipw = FALSE)
 power_high[["dgp"]] <- "High-SNR"; power_low[["dgp"]] <- "Low-SNR"; power_null[["dgp"]] <- "Null-Efficacy"
 power_df <- rbind(power_high, power_low, power_null)
 power_df[["type"]] <- "Stopping Criteria"
@@ -100,7 +100,7 @@ metric_plots <- gen_metrics_plot(df_winner = winner, df_power = power_df)
 # ggsave("plot/metrics.jpg", height = 4, width = 6, units = "in")
 
 metric_alloc_plot <- alloc_plot + metric_plots + plot_layout(ncol = 2)
-ggsave("plot/metric_alloc_plot.jpg", height = 6, width = 10, units = "in")
+ggsave("plot/metric_alloc_plot.jpg", height = 4, width = 15, units = "in")
 
 
 
