@@ -82,9 +82,9 @@ gen_freq_arm_alloc_df <- function(out_rand, out_ts, out_rits){
   )
   return(df)
 }
-gen_freq_arm_alloc <- function(df_high, df_low, ylims){
+gen_freq_arm_alloc <- function(df_high, df_low, df_null, ylims){
   if(!is.null(df_low)){
-    df <- rbind(df_high, df_low)
+    df <- rbind(df_high, df_low, df_null)
   } else{
     df <- df_high
   }
@@ -396,9 +396,9 @@ gen_winner_curve_df <- function(rand_out, ts_out, rits_out,
   df_long
 }
 require(colorspace)
-gen_winner_curve <- function(df_high, df_low){
+gen_winner_curve <- function(df_high, df_low, df_null){
   if(!is.null(df_low)){
-    df <- rbind(df_high, df_low)
+    df <- rbind(df_high, df_low, df_null)
   } else{
     df <- df_high
   }
@@ -513,9 +513,9 @@ gen_power_curve_df <- function(rand_out, ts_out, rits_out, min_thresh = 0.1,
   return(df_long)
 }
 
-gen_power_curve <- function(df_high, df_low){
+gen_power_curve <- function(df_high, df_low, df_null){
   if(!is.null(df_low)){
-    df <- rbind(df_high, df_low)
+    df <- rbind(df_high, df_low, df_null)
   } else{
     df <- df_high
   }
