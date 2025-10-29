@@ -298,13 +298,37 @@ gen_cum_miscov_plot <- function(df_high, df_low, alpha, ate_start){
     ) + theme(legend.position = "top")
 }
 
+expand_standard_array <- function(target_array, standard_array){
+  target_times_chr <- dimnames(target_array)[[1]]
+  standard_times_chr <- dimnames(standard_array)[[1]]
+  target_times_num <- as.numeric(target_times_chr)
+  standard_times_num <- as.numeric(standard_times_chr)
+  source_indices <- findInterval(target_times_num, standard_times_num)
+  source_indices[source_indices == 0] <- 1
+  new_array <- standard_array[source_indices, , , drop = FALSE]
+  dimnames(new_array) <- dimnames(target_array)
+  return(new_array)
+}
+expand_standard_vector <- function(target_vector, standard_vector){
+  target_times_chr <- names(target_vector)
+  standard_times_chr <- names(standard_vector)
+  target_times_num <- as.numeric(target_times_chr)
+  standard_times_num <- as.numeric(standard_times_chr)
+  source_indices <- findInterval(target_times_num, standard_times_num)
+  source_indices[source_indices == 0] <- 1
+  new_vector <- standard_vector[source_indices, drop = FALSE]
+  names(new_vector) <- names(target_vector)
+  return(new_vector)
+}
+
 gen_winner_curve_df <- function(rand_out, ts_out, rits_out, 
                              true_best_arm = 4, include_std = TRUE, 
                              include_ipw = TRUE){
   n_iter <- length(rand_out)
   true_best_arm <- true_best_arm - 1
   n_comp <- dim(rand_out[[1]]$contr)[1]
-  power_std <- numeric(n_comp)
+  n_comp_obrien <- dim(rand_out[[1]]$contr_standard)[1]
+  power_std <- numeric(n_comp_obrien)
   power_rand <- numeric(n_comp)
   power_ts <- numeric(n_comp)
   power_rits <- numeric(n_comp)
@@ -316,7 +340,8 @@ gen_winner_curve_df <- function(rand_out, ts_out, rits_out,
   for(i in 1:n_iter){
     if(include_std){
       power_std <- power_std + as.numeric(
-        sapply(1:n_comp, function(t) which.max(rand_out[[i]]$contr_standard[t, , 1]) == true_best_arm)
+        sapply(1:n_comp_obrien, 
+               function(t) which.max(rand_out[[i]]$contr_standard[t, , 1]) == true_best_arm)
       )
     }
     power_rand <- power_rand + as.numeric(
@@ -339,8 +364,14 @@ gen_winner_curve_df <- function(rand_out, ts_out, rits_out,
         sapply(1:n_comp, function(t) which.max(rits_out[[i]]$contr_ipw[t, , 1]) == true_best_arm)
       )
     }
+    names(power_std) <- dimnames(rand_out[[i]]$contr_standard)[[1]]
+    names(power_rand) <- dimnames(rand_out[[i]]$contr)[[1]]
+    power_std_step <- expand_standard_vector(target_vector = power_rand, 
+                                            standard_vector = power_std)
   }
+  names(power_std) <- NULL; names(power_rand) <- NULL; names(power_std_step) <- NULL
   power_std <- power_std / n_iter
+  power_std_step <- power_std_step / n_iter
   power_rand <- power_rand / n_iter
   power_ts <- power_ts / n_iter
   power_rits <- power_rits / n_iter
@@ -354,7 +385,7 @@ gen_winner_curve_df <- function(rand_out, ts_out, rits_out,
                    rits = power_rits, 
                    participant = as.numeric(dimnames(rand_out[[1]]$contr)[[1]]))
   if(include_std){
-    df[["ttest"]] <- power_std
+    df[["ttest"]] <- power_std_step
   }
   if(include_ipw){
     df[["rand_ipw"]] <- power_rand_ipw
@@ -391,11 +422,10 @@ gen_winner_curve <- function(df_high, df_low){
 source("code/function/misc.R")
 gen_power_curve_df <- function(rand_out, ts_out, rits_out, min_thresh = 0.1,
                                include_std = TRUE, include_ipw = TRUE){
-  # browser()
   n_iter <- length(rand_out); K <- length(unique(rand_out[[1]]$trt))
   n_comp <- dim(rand_out[[1]]$contr)[1]
-  
-  power_std <- numeric(n_comp)
+  n_comp_obrien <- dim(rand_out[[1]]$contr_standard)[1]
+  power_std <- numeric(n_comp_obrien)
   power_rand <- numeric(n_comp)
   power_ts <- numeric(n_comp)
   power_rits <- numeric(n_comp)
@@ -407,7 +437,7 @@ gen_power_curve_df <- function(rand_out, ts_out, rits_out, min_thresh = 0.1,
   
   for(i in 1:n_iter){
     if(include_std){
-      power_std <- power_std + sapply(1:n_comp, function(t){
+      power_std <- power_std + sapply(1:n_comp_obrien, function(t){
         rej <- sapply(1:(K-1), function(k){
           zero_in_intv(rand_out[[i]]$contr_standard[t, k, 2:3], zero = min_thresh)
         })
@@ -452,9 +482,13 @@ gen_power_curve_df <- function(rand_out, ts_out, rits_out, min_thresh = 0.1,
         as.numeric(FALSE %in% rej)
       })
     }
+    names(power_std) <- dimnames(rand_out[[i]]$contr_standard)[[1]]
+    names(power_rand) <- dimnames(rand_out[[i]]$contr)[[1]]
+    power_std_step <- expand_standard_vector(target_vector = power_rand, 
+                                             standard_vector = power_std)
   }
-  
   power_std <- power_std / n_iter
+  power_std_step <- power_std_step / n_iter
   power_rand <- power_rand / n_iter
   power_ts <- power_ts / n_iter
   power_rits <- power_rits / n_iter
@@ -468,7 +502,7 @@ gen_power_curve_df <- function(rand_out, ts_out, rits_out, min_thresh = 0.1,
                    rits = power_rits,  
                    participant = as.numeric(dimnames(rand_out[[1]]$contr)[[1]]))
   if(include_std){
-    df[["ttest"]] <- power_std
+    df[["ttest"]] <- power_std_step
   }
   if(include_ipw){
     df[["rand_ipw"]] <- power_rand_ipw
