@@ -49,7 +49,7 @@ df_null <- gen_width_df(out_rand = rand_sim_null,
                        out_ts = ts_sim_null, out_rits = rits_sim_null, 
                        ate_ind = ate_ind)
 sim_wid <- gen_width_bwplot(df_high = df_high, df_low = df_low, df_null = df_null,
-                                 ind = ind, ylims = list(c(0, 2), c(0, 1)))
+                            ind = ind, ylims = list(c(0, 2.5), c(0, 1.5), c(0, 0.6)))
 ggsave("plot/width_bwplot.jpg", plot = sim_wid, height = 6, width = 10, 
        units = "in")
 
@@ -186,7 +186,7 @@ for(cr in criteria){
 }
 df_null["dgp"] <- "Null-Efficacy"
 sim_regret_plot <- gen_cum_reg_bwplot(df_high, df_low, df_null, ind)
-ggsave("plot/regret_mis_sim_bwplot.jpg", height = 4, width = 10, units = "in")
+ggsave("plot/regret_mis_sim_bwplot.jpg", height = 6, width = 10, units = "in")
 
 ## Frequency of Arm Allocation Plot
 df_high <- gen_freq_arm_alloc_df(out_rand = rand_sim_high,
@@ -203,11 +203,11 @@ alloc_plot <- gen_freq_arm_alloc(df_high = df_high, df_low = df_low, df_null = d
                                  ylims = c(0, 150))
 # Proportion of trials where Arm 4 is the winner (without confidence)
 winner_high <- gen_winner_curve_df(rand_out = rand_sim_high, ts_out = ts_sim_high, 
-                                   rits_out = rits_sim_high, true_best_arm = 4)
+                                   rits_out = rits_sim_high, true_best_arm = 4, include_ipw = FALSE)
 winner_low <- gen_winner_curve_df(rand_out = rand_sim_low, ts_out = ts_sim_low, 
-                                  rits_out = rits_sim_low, true_best_arm = 4)
+                                  rits_out = rits_sim_low, true_best_arm = 4, include_ipw = FALSE)
 winner_null <- gen_winner_curve_df(rand_out = rand_sim_null, ts_out = ts_sim_null, 
-                                  rits_out = rits_sim_null, true_best_arm = 4)
+                                  rits_out = rits_sim_null, true_best_arm = 4, include_ipw = FALSE)
 winner_high[["dgp"]] <- "High-SNR"; winner_low[["dgp"]] <- "Low-SNR" 
 winner_null[["dgp"]] <- "Null-Efficacy"
 winner <- rbind(winner_high, winner_low, winner_null)
@@ -215,11 +215,11 @@ winner[["type"]] <- "Winner (Arm 4)"
 
 # Proportion of trials where stopping criteria is met
 power_high <- gen_power_curve_df(rand_out = rand_sim_high, ts_out = ts_sim_high, 
-                                 rits_out = rits_sim_high, min_thresh = 0.1)
+                                 rits_out = rits_sim_high, min_thresh = 0.1, include_ipw = FALSE)
 power_low <- gen_power_curve_df(rand_out = rand_sim_low, ts_out = ts_sim_low, 
-                                rits_out = rits_sim_low, min_thresh = 0.1)
+                                rits_out = rits_sim_low, min_thresh = 0.1, include_ipw = FALSE)
 power_null <- gen_power_curve_df(rand_out = rand_sim_null, ts_out = ts_sim_null, 
-                                rits_out = rits_sim_null, min_thresh = 0.1)
+                                rits_out = rits_sim_null, min_thresh = 0.1, include_ipw = FALSE)
 power_high[["dgp"]] <- "High-SNR"; power_low[["dgp"]] <- "Low-SNR"
 power_null[["dgp"]] <- "Null-Efficacy"
 power_df <- rbind(power_high, power_low, power_null)
@@ -250,8 +250,8 @@ df_null <- gen_width_df(out_rand = rand_sim_null,
                        out_ts = ts_sim_null, out_rits = rits_sim_null, 
                        ate_ind = ate_ind)
 sim_wid <- gen_width_bwplot(df_high = df_high, df_low = df_low, df_null = df_null,
-                            ind = ind, ylims = list(c(0, 3.5), c(0, 1.75)))
-ggsave("plot/width_mis_bwplot.jpg", plot = sim_wid, height = 4, width = 10, 
+                            ind = ind, ylims = list(c(0, 3.25), c(0, 1.75), c(0, 0.6)))
+ggsave("plot/width_mis_bwplot.jpg", plot = sim_wid, height = 6, width = 10, 
        units = "in")
 
 

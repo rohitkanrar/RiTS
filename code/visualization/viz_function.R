@@ -150,7 +150,8 @@ gen_width_bwplot <- function(df_high, df_low, df_null, ind, ylims){
   df <- rbind(df_high, df_low, df_null)
   y_limits <- list(
     scale_y_continuous(limits = ylims[[1]]),
-    scale_y_continuous(limits = ylims[[2]])
+    scale_y_continuous(limits = ylims[[2]]),
+    scale_y_continuous(limits = ylims[[3]])
   )
   wid_plot <- ggplot(df, aes(x = factor(Column), 
                                   y = Width, fill = Method)) + 
@@ -210,7 +211,7 @@ gen_bias_df <- function(out_rand, out_ts, out_rits, ate_ind, contr_true){
 }
 gen_bias_bwplot <- function(df_high, df_low, df_null, ind, ylims){
   df_high["dgp"] <- "High-SNR"; df_low["dgp"] <- "Low-SNR"; df_null["dgp"] <- "Null-Efficacy"
-  df <- rbind(df_high, df_low)
+  df <- rbind(df_high, df_low, df_null)
   y_limits <- list(
     scale_y_continuous(limits = ylims[[1]]),
     scale_y_continuous(limits = ylims[[2]])
