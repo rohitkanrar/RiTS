@@ -285,9 +285,9 @@ gen_cum_miscov_df <- function(out_rand, out_ts, out_rits, mu_true, contr_true,
   rbind(df_std, df_rand, df_ts, df_rits)
 }
 
-gen_cum_miscov_plot <- function(df_high, df_low, alpha, ate_start){
-  df_high["dgp"] <- "High-SNR"; df_low["dgp"] <- "Low-SNR"
-  df <- rbind(df_high, df_low)
+gen_cum_miscov_plot <- function(df_high, df_low, df_null, alpha, ate_start){
+  df_high["dgp"] <- "High-SNR"; df_low["dgp"] <- "Low-SNR"; df_null["dgp"] <- "Null-Efficacy"
+  df <- rbind(df_high, df_low, df_null)
   df$Method <- factor(df$Method, levels = c("Rand-OF", "Rand-AIPW", 
                                             "TS-AIPW", "RiTS-AIPW"))
   

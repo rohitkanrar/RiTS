@@ -177,7 +177,15 @@ for(cr in criteria){
   )
 }
 df_low["dgp"] <- "Low-SNR"
-sim_regret_plot <- gen_cum_reg_bwplot(df_high, df_low, ind)
+df_null <- data.frame()
+for(cr in criteria){
+  df_null <- rbind(df_null, 
+                  gen_cum_reg_df(out_rand = rand_sim_null, out_ts = ts_sim_null, 
+                                 out_rits = rits_sim_null, ind = ind, criteria = cr)
+  )
+}
+df_null["dgp"] <- "Null-Efficacy"
+sim_regret_plot <- gen_cum_reg_bwplot(df_high, df_low, df_null, ind)
 ggsave("plot/regret_mis_sim_bwplot.jpg", height = 4, width = 10, units = "in")
 
 ## Frequency of Arm Allocation Plot
