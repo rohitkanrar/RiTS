@@ -4,7 +4,7 @@ if(FALSE){
   design <- gsDesign(
     k = k,
     test.type = 2,
-    alpha = 0.05,
+    alpha = 0.05/3,
     sfu = "OF",
     timing = (1:k) / k
   )

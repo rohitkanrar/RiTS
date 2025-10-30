@@ -100,3 +100,31 @@ zero_in_intv <- function(intv, zero = 0.1){
     return(FALSE)
   }
 }
+
+zero_where_intv <- function(intv, zero = 0.1){
+  a <- intv[1]; b <- intv[2]
+  if(is.na(a) || is.na(b)){
+    return("NOIDEA")
+  } else if(b < zero){
+    return("ABOVE")
+  } else if(a > zero){
+    return("BELOW")
+  } else if(a < zero && b > zero){
+    return("INSIDE")
+  } else{
+    return("NOIDEA")
+  }
+}
+
+stop_trial <- function(intvs, K, zero = 0.1){
+  pos <- sapply(1:(K-1), function(k){
+    zero_where_intv(intvs[k, ], zero = zero)
+  })
+  if("BELOW" %in% pos){
+    return(1)
+  } else if(sum(pos == "ABOVE") == (K-1)){
+    return(1)
+  } else{
+    return(0)
+  }
+}
