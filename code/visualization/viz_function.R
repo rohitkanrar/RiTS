@@ -109,8 +109,8 @@ gen_width_df <- function(out_rand, out_ts, out_rits, ate_ind){
   ind <- dimnames(out_rand[[1]]$contr)[[1]][ate_ind]
   for(iter in 1:n_iter){
     out_rand[[iter]][["contr_standard"]] <- 
-      expand_standard_array(target_array = sim[[iter]][["contr"]],
-                            standard_array = sim[[iter]][["contr_standard"]])
+      expand_standard_array(target_array = out_rand[[iter]][["contr"]],
+                            standard_array = out_rand[[iter]][["contr_standard"]])
   }
   df <- data.frame()
   for(arm in 2:K){
@@ -178,8 +178,8 @@ gen_bias_df <- function(out_rand, out_ts, out_rits, ate_ind, contr_true){
   ind <- dimnames(out_rand[[1]]$contr)[[1]][ate_ind]
   for(iter in 1:n_iter){
     out_rand[[iter]][["contr_standard"]] <- 
-      expand_standard_array(target_array = sim[[iter]][["contr"]],
-                            standard_array = sim[[iter]][["contr_standard"]])
+      expand_standard_array(target_array = out_rand[[iter]][["contr"]],
+                            standard_array = out_rand[[iter]][["contr_standard"]])
   }
   df <- data.frame()
   for(arm in 2:K){
