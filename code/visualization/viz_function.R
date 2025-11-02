@@ -626,6 +626,81 @@ gen_summary_for_table <- function(sim, K, ate_ind, contr_true, need_std = FALSE,
   out_list
 }
 
+gen_summary_for_table_stoptime <- function(sim, K, ate_ind, contr_true, 
+                                           need_std = FALSE, need_ipw = FALSE){
+  n_iter <- length(sim)
+  width_contr <- numeric(K-1)
+  bias_contr <- numeric(K-1)
+  rmse_contr <- numeric(K-1)
+  if(need_std){
+    width_contr_std <- numeric(K-1)
+    bias_contr_std <- numeric(K-1)
+    rmse_contr_std <- numeric(K-1)
+  }
+  if(need_ipw){
+    width_contr_ipw <- numeric(K-1)
+    bias_contr_ipw <- numeric(K-1)
+    rmse_contr_ipw <- numeric(K-1)
+  }
+  for(k in 2:K){
+    for(iter in 1:n_iter){
+      stop_info <- stop_trial_when(all_intvs = sim[[iter]]$contr, K = K)
+      stop_info_standard <- stop_trial_when(all_intvs = sim[[iter]]$contr_standard, K = K)
+      width_contr[k-1] <- width_contr[k-1] + 
+        abs(sim[[iter]]$contr[stop_info$ind, k-1, 3] - 
+              sim[[iter]]$contr[stop_info$ind, k-1, 2])
+      bias_contr[k-1] <- bias_contr[k-1] + 
+        sim[[iter]]$contr[stop_info$ind, k-1, 1] - contr_true[k-1]
+      rmse_contr[k-1] <- rmse_contr[k-1] + 
+        (sim[[iter]]$contr[stop_info$ind, k-1, 1] - contr_true[k-1])^2
+      if(need_std){
+        width_contr_std[k-1] <- width_contr_std[k-1] + 
+          abs(sim[[iter]]$contr_standard[stop_info_standard$ind, k-1, 3] - 
+                sim[[iter]]$contr_standard[stop_info_standard$ind, k-1, 2])
+        bias_contr_std[k-1] <- bias_contr_std[k-1] + 
+          sim[[iter]]$contr_standard[stop_info_standard$ind, k-1, 1] - contr_true[k-1]
+        rmse_contr_std[k-1] <- rmse_contr_std[k-1] + 
+          (sim[[iter]]$contr_standard[stop_info_standard$ind, k-1, 1] - contr_true[k-1])^2
+      }
+      if(need_ipw){
+        width_contr_ipw[k-1] <- width_contr_ipw[k-1] + 
+          abs(sim[[iter]]$contr_ipw[stop_info$ind, k-1, 3] - 
+                sim[[iter]]$contr_ipw[stop_info$ind, k-1, 2])
+        bias_contr_ipw[k-1] <- bias_contr_ipw[k-1] + 
+          sim[[iter]]$contr_ipw[stop_info$ind, k-1, 1] - contr_true[k-1]
+        rmse_contr_ipw[k-1] <- rmse_contr_ipw[k-1] + 
+          (sim[[iter]]$contr_ipw[stop_info$ind, k-1, 1] - contr_true[k-1])^2
+      }
+    }
+    width_contr[k-1] <- width_contr[k-1] / n_iter
+    bias_contr[k-1] <- bias_contr[k-1] / n_iter
+    rmse_contr[k-1] <- sqrt(rmse_contr[k-1] / n_iter)
+    if(need_std){
+      width_contr_std[k-1] <- width_contr_std[k-1] / n_iter
+      bias_contr_std[k-1] <- bias_contr_std[k-1] / n_iter
+      rmse_contr_std[k-1] <- sqrt(rmse_contr_std[k-1] / n_iter)
+    }
+    if(need_ipw){
+      width_contr_ipw[k-1] <- width_contr_ipw[k-1] / n_iter
+      bias_contr_ipw[k-1] <- bias_contr_ipw[k-1] / n_iter
+      rmse_contr_ipw[k-1] <- sqrt(rmse_contr_ipw[k-1] / n_iter)
+    }
+  }
+  out_list <- list(width = width_contr, bias = bias_contr, 
+                   rmse = rmse_contr)
+  if(need_std){
+    out_list[["width_std"]] <- width_contr_std
+    out_list[["bias_std"]] <- bias_contr_std
+    out_list[["rmse_std"]] <- rmse_contr_std
+  }
+  if(need_ipw){
+    out_list[["width_ipw"]] <- width_contr_ipw
+    out_list[["bias_ipw"]] <- bias_contr_ipw
+    out_list[["rmse_ipw"]] <- rmse_contr_ipw
+  }
+  out_list
+}
+
 gen_bias_rmse_tab <- function(summ_rand, summ_ts, summ_rits, ate_ind, ind){
   bias_tab <- matrix(NA, 7*(K-1), length(ate_ind))
   for(k in 1:(K-1)){

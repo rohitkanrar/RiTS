@@ -44,7 +44,7 @@ expand_standard_array <- function(target_array, standard_array){
 
 get_cum_mis_cov <- function(sim, mu_true, contr_true, delay_aipw = 0, 
                             delay_ipw = 0, need_std = FALSE, need_ipw = FALSE){
-  n_iter <- length(sim)
+  n_iter <- length(sim); K <- length(mu_true)
   total_peek <- dim(sim[[1]]$ate)[1]
   no_of_peek <- dim(sim[[1]]$ate)[1] - delay_aipw
   cum_mis_cov_ate <- matrix(0, no_of_peek, dim(sim[[1]]$ate)[2])
@@ -116,15 +116,91 @@ zero_where_intv <- function(intv, zero = 0.1){
   }
 }
 
-stop_trial <- function(intvs, K, zero = 0.1){
+stop_trial <- function(intvs, K, zero = 0.1, return_type = FALSE){
   pos <- sapply(1:(K-1), function(k){
     zero_where_intv(intvs[k, ], zero = zero)
   })
   if("BELOW" %in% pos){
-    return(1)
+    if(!return_type){
+      return(1)
+    } else{
+      return(c(1, 1))
+    }
   } else if(sum(pos == "ABOVE") == (K-1)){
-    return(1)
+    if(!return_type){
+      return(1)
+    } else{
+      return(c(1, 2))
+    }
   } else{
-    return(0)
+    if(!return_type){
+      return(0)
+    } else{
+      return(c(0, 0))
+    }
   }
+}
+
+stop_trial_when <- function(all_intvs, K, zero = 0.1){
+  # browser()
+  n_intvs <- dim(all_intvs)[1]
+  decisions <- sapply(1:n_intvs, function(t){
+    stop_trial(intvs = all_intvs[t, , 2:3], K = K, zero = zero, 
+               return_type = TRUE)
+  })
+  if(sum(decisions[1, ]) == 0){
+    stop_ind <- ncol(decisions)
+  } else{
+    stop_ind <- min(which(decisions[1, ] == 1))
+  }
+  stop_time <- as.numeric(dimnames(all_intvs)[[1]][stop_ind])
+  stop_type <- decisions[2, stop_ind]
+  stop_type <- ifelse(stop_type == 1, "alternative", "null")
+  list(ind = stop_ind, type = stop_type, time = stop_time)
+}
+# stop_trial_when(tmp[[1]]$contr, K = 4)
+
+get_cum_mis_cov_stoptime <- function(sim, mu_true, contr_true, delay_aipw = 0, 
+                            delay_ipw = 0, need_std = FALSE, need_ipw = FALSE){
+  n_iter <- length(sim); K <- length(mu_true)
+  cum_mis_cov_ate <- numeric(K)
+  cum_mis_cov_contr <- numeric(K-1)
+  if(need_std){
+    cum_mis_cov_contr_std <- numeric(K-1)
+  }
+  if(need_ipw){
+    cum_mis_cov_contr_ipw <- numeric(K-1)
+  }
+  for(iter in 1:n_iter){
+    stop_info <- stop_trial_when(all_intvs = sim[[iter]]$contr, K = K)
+    stop_info_standard <- stop_trial_when(all_intvs = sim[[iter]]$contr_standard, K = K)
+    for(k in 1:K){
+      cum_mis_cov_ate[k] <- cum_mis_cov_ate[k] + 
+        cummax(sim[[iter]]$ate[stop_info$ind, k,  2] > mu_true[k] | 
+                 sim[[iter]]$ate[stop_info$ind, k, 3] < mu_true[k])
+      if(k > 1){
+        cum_mis_cov_contr[k-1] <- cum_mis_cov_contr[k-1] + 
+          cummax(sim[[iter]]$contr[stop_info$ind, k-1,  2] > contr_true[k-1] | 
+                   sim[[iter]]$contr[stop_info$ind, k-1, 3] < contr_true[k-1])
+        if(need_std){
+          cum_mis_cov_contr_std[k-1] <-   cum_mis_cov_contr_std[k-1] + 
+            cummax(sim[[iter]]$contr_standard[stop_info_standard$ind, k-1,  2] > contr_true[k-1] | 
+                     sim[[iter]]$contr_standard[stop_info_standard$ind, k-1, 3] < contr_true[k-1])
+        }
+        if(need_ipw){
+          cum_mis_cov_contr_ipw[k-1] <-   cum_mis_cov_contr_ipw[k-1] + 
+            cummax(sim[[iter]]$contr_ipw[stop_info$ind, k-1,  2] > contr_true[k-1] | 
+                     sim[[iter]]$contr_ipw[stop_info$ind, k-1, 3] < contr_true[k-1])
+        }
+      } 
+    }
+  }
+  out_list <- list(ate = cum_mis_cov_ate, contr = cum_mis_cov_contr)
+  if(need_std){
+    out_list[["contr_std"]] <- cum_mis_cov_contr_std
+  } 
+  if(need_ipw){
+    out_list[["contr_ipw"]] <- cum_mis_cov_contr_ipw
+  }
+  return(out_list)
 }
