@@ -113,3 +113,85 @@ saveRDS(est_err_all_mis_tab, "tables/est_err_all_mis_tab.RData")
 # est_err_all_tab <- readRDS("tables/est_err_all_tab.RData")
 # est_err_all_mis_tab <- readRDS("tables/est_err_all_mis_tab.RData")
 # xtable::xtable(rbind(est_err_all_mis_tab[[22]]$tab, est_err_all_mis_tab[[10]]$tab))
+
+
+######################################
+# main_tab.R contents from first round
+######################################
+source("code/visualization/viz_function.R")
+out_dir <- "output/"
+# High SNR
+ts_sim_high <- readRDS(paste(out_dir, "ts_sim_dgp_high_min_prpn_0.1_tr_start_24.RData", 
+                             sep = ""))
+rand_sim_high <- readRDS(paste(out_dir, "rand_sim_dgp_high_min_prpn_0.005_tr_start_24.RData", 
+                               sep = ""))
+rits_sim_high <- readRDS(paste(out_dir, "rits_sim_dgp_high_min_prpn_0.1_tr_start_24.RData", 
+                               sep = ""))
+
+K <- length(unique(rand_sim_high[[1]]$trt))
+sim_choice <- readRDS("metadata/sim_choice.RData")
+ate_start <- sim_choice$ate_start
+ind <- round(
+  c(seq(50, sim_choice$N*0.625, 10), sim_choice$N*(3/4), sim_choice$N)
+)
+
+ate_ind <- sapply(ind, function(i){
+  which(as.numeric(dimnames(ts_sim_high[[1]]$contr)[[1]]) == i)
+})
+sim_dat <- readRDS("metadata/sim_dat.RData")
+
+# High SNR
+mu_true <- sim_dat$mu_true * 2
+contr_true <- mu_true - mu_true[1]
+contr_true <- contr_true[setdiff(1:K, sim_dat$placebo_arm)]
+
+summ_rand <- gen_summary_for_table(sim = rand_sim_high, K = K, 
+                                   ate_ind = ate_ind, contr_true = contr_true, 
+                                   need_std = TRUE, need_ipw = TRUE)
+summ_ts <- gen_summary_for_table(sim = ts_sim_high, K = K,
+                                 ate_ind = ate_ind, contr_true = contr_true,
+                                 need_ipw = TRUE)
+summ_rits <- gen_summary_for_table(sim = rits_sim_high, K = K, 
+                                   ate_ind = ate_ind, contr_true = contr_true,
+                                   need_ipw = TRUE)
+
+est_err_tab_high <- gen_bias_rmse_tab(summ_rand = summ_rand, 
+                                      summ_ts = summ_ts,
+                                      summ_rits = summ_rits, 
+                                      ate_ind = ate_ind, ind = ind)
+saveRDS(est_err_tab_high, "tables/est_err_tab_high.RData")
+xtable::xtable(est_err_tab_high)
+
+# Low SNR
+ts_sim_low <- readRDS(paste(out_dir, "ts_sim_dgp_low_min_prpn_0.1_tr_start_24.RData", 
+                            sep = ""))
+rand_sim_low <- readRDS(paste(out_dir, "rand_sim_dgp_low_min_prpn_0.005_tr_start_24.RData", 
+                              sep = ""))
+rits_sim_low <- readRDS(paste(out_dir, "rits_sim_dgp_low_min_prpn_0.1_tr_start_24.RData", 
+                              sep = ""))
+
+# Low SNR
+mu_true <- sim_dat$mu_true
+contr_true <- mu_true - mu_true[1]
+contr_true <- contr_true[setdiff(1:K, sim_dat$placebo_arm)]
+
+summ_rand <- gen_summary_for_table(sim = rand_sim_low, K = K, 
+                                   ate_ind = ate_ind, contr_true = contr_true, 
+                                   need_std = TRUE, need_ipw = TRUE)
+summ_ts <- gen_summary_for_table(sim = ts_sim_low, K = K, 
+                                 ate_ind = ate_ind, contr_true = contr_true,
+                                 need_ipw = TRUE)
+summ_rits <- gen_summary_for_table(sim = rits_sim_low, K = K, 
+                                   ate_ind = ate_ind, contr_true = contr_true,
+                                   need_ipw = TRUE)
+
+est_err_tab_low <- gen_bias_rmse_tab(summ_rand = summ_rand, 
+                                     summ_ts = summ_ts,
+                                     summ_rits = summ_rits, 
+                                     ate_ind = ate_ind, ind = ind)
+saveRDS(est_err_tab_low, "tables/est_err_tab_low.RData")
+xtable::xtable(est_err_tab_low)
+
+# est_err_tab_high <- readRDS("tables/est_err_tab_high.RData")
+# est_err_tab_low <- readRDS("tables/est_err_tab_low.RData")
+# est_err_tab <- rbind(est_err_tab_high, est_err_tab_low)

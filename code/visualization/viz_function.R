@@ -642,34 +642,41 @@ gen_summary_for_table_stoptime <- function(sim, K, ate_ind, contr_true,
     bias_contr_ipw <- numeric(K-1)
     rmse_contr_ipw <- numeric(K-1)
   }
+  stoptime <- numeric(n_iter)
+  stopind <- numeric(n_iter)
+  stoptime_std <- stoptime; stopind_std <- stopind
   for(k in 2:K){
     for(iter in 1:n_iter){
-      stop_info <- stop_trial_when(all_intvs = sim[[iter]]$contr, K = K)
-      stop_info_standard <- stop_trial_when(all_intvs = sim[[iter]]$contr_standard, K = K)
+      if(k == 2){
+        stop_info <- stop_trial_when(all_intvs = sim[[iter]]$contr, K = K)
+        stop_info_standard <- stop_trial_when(all_intvs = sim[[iter]]$contr_standard, K = K)
+        stoptime[iter] <- stop_info$time; stopind[iter] <- stop_info$ind
+        stoptime_std[iter] <- stop_info_standard$time; stopind_std[iter] <- stop_info_standard$ind
+      }
       width_contr[k-1] <- width_contr[k-1] + 
-        abs(sim[[iter]]$contr[stop_info$ind, k-1, 3] - 
-              sim[[iter]]$contr[stop_info$ind, k-1, 2])
+        abs(sim[[iter]]$contr[stopind[iter], k-1, 3] - 
+              sim[[iter]]$contr[stopind[iter], k-1, 2])
       bias_contr[k-1] <- bias_contr[k-1] + 
-        sim[[iter]]$contr[stop_info$ind, k-1, 1] - contr_true[k-1]
+        sim[[iter]]$contr[stopind[iter], k-1, 1] - contr_true[k-1]
       rmse_contr[k-1] <- rmse_contr[k-1] + 
-        (sim[[iter]]$contr[stop_info$ind, k-1, 1] - contr_true[k-1])^2
+        (sim[[iter]]$contr[stopind[iter], k-1, 1] - contr_true[k-1])^2
       if(need_std){
         width_contr_std[k-1] <- width_contr_std[k-1] + 
-          abs(sim[[iter]]$contr_standard[stop_info_standard$ind, k-1, 3] - 
-                sim[[iter]]$contr_standard[stop_info_standard$ind, k-1, 2])
+          abs(sim[[iter]]$contr_standard[stopind_std[iter], k-1, 3] - 
+                sim[[iter]]$contr_standard[stopind_std[iter], k-1, 2])
         bias_contr_std[k-1] <- bias_contr_std[k-1] + 
-          sim[[iter]]$contr_standard[stop_info_standard$ind, k-1, 1] - contr_true[k-1]
+          sim[[iter]]$contr_standard[stopind_std[iter], k-1, 1] - contr_true[k-1]
         rmse_contr_std[k-1] <- rmse_contr_std[k-1] + 
-          (sim[[iter]]$contr_standard[stop_info_standard$ind, k-1, 1] - contr_true[k-1])^2
+          (sim[[iter]]$contr_standard[stopind_std[iter], k-1, 1] - contr_true[k-1])^2
       }
       if(need_ipw){
         width_contr_ipw[k-1] <- width_contr_ipw[k-1] + 
-          abs(sim[[iter]]$contr_ipw[stop_info$ind, k-1, 3] - 
-                sim[[iter]]$contr_ipw[stop_info$ind, k-1, 2])
+          abs(sim[[iter]]$contr_ipw[stopind[iter], k-1, 3] - 
+                sim[[iter]]$contr_ipw[stopind[iter], k-1, 2])
         bias_contr_ipw[k-1] <- bias_contr_ipw[k-1] + 
-          sim[[iter]]$contr_ipw[stop_info$ind, k-1, 1] - contr_true[k-1]
+          sim[[iter]]$contr_ipw[stopind[iter], k-1, 1] - contr_true[k-1]
         rmse_contr_ipw[k-1] <- rmse_contr_ipw[k-1] + 
-          (sim[[iter]]$contr_ipw[stop_info$ind, k-1, 1] - contr_true[k-1])^2
+          (sim[[iter]]$contr_ipw[stopind[iter], k-1, 1] - contr_true[k-1])^2
       }
     }
     width_contr[k-1] <- width_contr[k-1] / n_iter
@@ -687,11 +694,14 @@ gen_summary_for_table_stoptime <- function(sim, K, ate_ind, contr_true,
     }
   }
   out_list <- list(width = width_contr, bias = bias_contr, 
-                   rmse = rmse_contr)
+                   rmse = rmse_contr, avg_stoptime = mean(stoptime),
+                   sd_stoptime = sd(stoptime))
   if(need_std){
     out_list[["width_std"]] <- width_contr_std
     out_list[["bias_std"]] <- bias_contr_std
     out_list[["rmse_std"]] <- rmse_contr_std
+    out_list[["avg_stoptime_std"]] <- mean(stoptime_std)
+    out_list[["sd_stoptime_std"]] <- sd(stoptime_std)
   }
   if(need_ipw){
     out_list[["width_ipw"]] <- width_contr_ipw
@@ -729,6 +739,48 @@ gen_bias_rmse_tab <- function(summ_rand, summ_ts, summ_rits, ate_ind, ind){
                                    "Rand-IPW", "TS-IPW", "RiTS-IPW"), 
                                  "(Arm", rep(2:4, each = 7), ")", sep = "")
   est_err_tab
+}
+
+gen_metric_tab_stoptime <- function(summ_rand, summ_ts, summ_rits,
+                                    cummiscov_rand, cummiscov_ts, cummiscov_rits){
+  K <- length(summ_rand$width) + 1
+  metric_tab <- matrix(NA, 6, 4*(K-1))
+  
+  metric_tab[1, seq(1, 4*(K-1), by = 4)] <- summ_rand$bias_std
+  metric_tab[1, seq(2, 4*(K-1), by = 4)] <- summ_rand$bias
+  metric_tab[1, seq(3, 4*(K-1), by = 4)] <- summ_ts$bias
+  metric_tab[1, seq(4, 4*(K-1), by = 4)] <- summ_rits$bias
+  
+  metric_tab[2, seq(1, 4*(K-1), by = 4)] <- summ_rand$rmse_std
+  metric_tab[2, seq(2, 4*(K-1), by = 4)] <- summ_rand$rmse
+  metric_tab[2, seq(3, 4*(K-1), by = 4)] <- summ_ts$rmse
+  metric_tab[2, seq(4, 4*(K-1), by = 4)] <- summ_rits$rmse
+  
+  metric_tab[3, seq(1, 4*(K-1), by = 4)] <- summ_rand$width_std
+  metric_tab[3, seq(2, 4*(K-1), by = 4)] <- summ_rand$width
+  metric_tab[3, seq(3, 4*(K-1), by = 4)] <- summ_ts$width
+  metric_tab[3, seq(4, 4*(K-1), by = 4)] <- summ_rits$width
+  
+  metric_tab[4, seq(1, 4*(K-1), by = 4)] <- summ_rand$avg_stoptime_std
+  metric_tab[4, seq(2, 4*(K-1), by = 4)] <- summ_rand$avg_stoptime
+  metric_tab[4, seq(3, 4*(K-1), by = 4)] <- summ_ts$avg_stoptime
+  metric_tab[4, seq(4, 4*(K-1), by = 4)] <- summ_rits$avg_stoptime
+  
+  metric_tab[5, seq(1, 4*(K-1), by = 4)] <- summ_rand$sd_stoptime_std
+  metric_tab[5, seq(2, 4*(K-1), by = 4)] <- summ_rand$sd_stoptime
+  metric_tab[5, seq(3, 4*(K-1), by = 4)] <- summ_ts$sd_stoptime
+  metric_tab[5, seq(4, 4*(K-1), by = 4)] <- summ_rits$sd_stoptime
+  
+  metric_tab[6, seq(1, 4*(K-1), by = 4)] <- cummiscov_rand$contr_std
+  metric_tab[6, seq(2, 4*(K-1), by = 4)] <- cummiscov_rand$contr
+  metric_tab[6, seq(3, 4*(K-1), by = 4)] <- cummiscov_ts$contr
+  metric_tab[6, seq(4, 4*(K-1), by = 4)] <- cummiscov_rits$contr
+  
+  rownames(metric_tab) <- c("Bias", "RMSE", "Avg. Width", "Stoptime (Mean)",
+                             "Stoptime (SD)", "Cum. Miscov.")
+  colnames(metric_tab) <- paste(c("Rand-OF", "Rand-AIPW", "TS-AIPW", "RiTS-AIPW"), 
+                                 "(Arm", rep(2:K, each = K), ")", sep = "")
+  metric_tab
 }
 
 gen_cum_miscov_for_tab <- function(out_rand, out_ts, out_rits, 
