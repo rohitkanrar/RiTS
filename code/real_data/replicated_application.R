@@ -53,6 +53,7 @@ library(parallel); num_cores <- 20
 # }
 # saveRDS(ts_real_sim, "output/real_dat/ts_real_sim.RData")
 # saveRDS(rits_real_sim, "output/real_dat/rits_real_sim.RData")
+rand_real_sim <- readRDS("output/real_dat/rand_real_sim.RData")
 rand_real_sim <- add_standard_ci(out = rand_real_sim, ate_start = ate_start, 
                                  n_looks = 30, placebo_arm = 1, force_compute = TRUE)
 saveRDS(rand_real_sim, "output/real_dat/rand_real_sim.RData")
