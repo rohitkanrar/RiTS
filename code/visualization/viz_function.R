@@ -561,6 +561,11 @@ gen_summary_for_table <- function(sim, K, ate_ind, contr_true, need_std = FALSE,
     width_contr_std <- matrix(0, K-1, length(ate_ind))
     bias_contr_std <- matrix(0, K-1, length(ate_ind))
     rmse_contr_std <- matrix(0, K-1, length(ate_ind))
+    for(iter in 1:n_iter){
+      sim[[iter]][["contr_standard"]] <- 
+        expand_standard_array(target_array = sim[[iter]][["contr"]],
+                              standard_array = sim[[iter]][["contr_standard"]])
+    }
   }
   if(need_ipw){
     width_contr_ipw <- matrix(0, K-1, length(ate_ind))

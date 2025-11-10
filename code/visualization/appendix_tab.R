@@ -1,7 +1,7 @@
 source("code/visualization/viz_function.R")
 sim_choice <- readRDS("metadata/sim_choice.RData")
 sim_dat <- readRDS("metadata/sim_dat.RData")
-dgps <- c("low", "high")
+dgps <- c("low", "high", "null")
 tr_starts <- sim_choice$tr_start
 min_prpns <- sim_choice$min_prpns
 cases <- expand.grid(tr_start = tr_starts, min_prpn = min_prpns, dgp = dgps)
@@ -61,13 +61,13 @@ for(i in 1:nrow(cases)){
   # estimation error (bias and rmse)
   summ_rand <- gen_summary_for_table(sim = rand_sim, K = K, 
                                      ate_ind = ate_ind, contr_true = contr_true, 
-                                     need_std = TRUE, need_ipw = TRUE)
+                                     need_std = TRUE, need_ipw = FALSE)
   summ_ts <- gen_summary_for_table(sim = ts_sim, K = K, 
                                    ate_ind = ate_ind, contr_true = contr_true,
-                                   need_ipw = TRUE)
+                                   need_ipw = FALSE)
   summ_rits <- gen_summary_for_table(sim = rits_sim, K = K, 
                                      ate_ind = ate_ind, contr_true = contr_true,
-                                     need_ipw = TRUE)
+                                     need_ipw = FALSE)
   
   est_err_tab <- gen_bias_rmse_tab(summ_rand = summ_rand, 
                                        summ_ts = summ_ts,
@@ -88,13 +88,13 @@ for(i in 1:nrow(cases)){
   # estimation error (bias and rmse)
   summ_rand <- gen_summary_for_table(sim = rand_sim, K = K, 
                                      ate_ind = ate_ind, contr_true = contr_true, 
-                                     need_std = TRUE, need_ipw = TRUE)
+                                     need_std = TRUE, need_ipw = FALSE)
   summ_ts <- gen_summary_for_table(sim = ts_sim, K = K, 
                                    ate_ind = ate_ind, contr_true = contr_true,
-                                   need_ipw = TRUE)
+                                   need_ipw = FALSE)
   summ_rits <- gen_summary_for_table(sim = rits_sim, K = K, 
                                      ate_ind = ate_ind, contr_true = contr_true,
-                                     need_ipw = TRUE)
+                                     need_ipw = FALSE)
   
   est_err_tab <- gen_bias_rmse_tab(summ_rand = summ_rand, 
                                    summ_ts = summ_ts,
@@ -147,13 +147,13 @@ contr_true <- contr_true[setdiff(1:K, sim_dat$placebo_arm)]
 
 summ_rand <- gen_summary_for_table(sim = rand_sim_high, K = K, 
                                    ate_ind = ate_ind, contr_true = contr_true, 
-                                   need_std = TRUE, need_ipw = TRUE)
+                                   need_std = TRUE, need_ipw = FALSE)
 summ_ts <- gen_summary_for_table(sim = ts_sim_high, K = K,
                                  ate_ind = ate_ind, contr_true = contr_true,
-                                 need_ipw = TRUE)
+                                 need_ipw = FALSE)
 summ_rits <- gen_summary_for_table(sim = rits_sim_high, K = K, 
                                    ate_ind = ate_ind, contr_true = contr_true,
-                                   need_ipw = TRUE)
+                                   need_ipw = FALSE)
 
 est_err_tab_high <- gen_bias_rmse_tab(summ_rand = summ_rand, 
                                       summ_ts = summ_ts,
@@ -177,13 +177,13 @@ contr_true <- contr_true[setdiff(1:K, sim_dat$placebo_arm)]
 
 summ_rand <- gen_summary_for_table(sim = rand_sim_low, K = K, 
                                    ate_ind = ate_ind, contr_true = contr_true, 
-                                   need_std = TRUE, need_ipw = TRUE)
+                                   need_std = TRUE, need_ipw = FALSE)
 summ_ts <- gen_summary_for_table(sim = ts_sim_low, K = K, 
                                  ate_ind = ate_ind, contr_true = contr_true,
-                                 need_ipw = TRUE)
+                                 need_ipw = FALSE)
 summ_rits <- gen_summary_for_table(sim = rits_sim_low, K = K, 
                                    ate_ind = ate_ind, contr_true = contr_true,
-                                   need_ipw = TRUE)
+                                   need_ipw = FALSE)
 
 est_err_tab_low <- gen_bias_rmse_tab(summ_rand = summ_rand, 
                                      summ_ts = summ_ts,
@@ -192,6 +192,39 @@ est_err_tab_low <- gen_bias_rmse_tab(summ_rand = summ_rand,
 saveRDS(est_err_tab_low, "tables/est_err_tab_low.RData")
 xtable::xtable(est_err_tab_low)
 
+
+
+# Null-Efficacy
+ts_sim_low <- readRDS(paste(out_dir, "ts_sim_dgp_low_min_prpn_0.1_tr_start_24.RData", 
+                            sep = ""))
+rand_sim_low <- readRDS(paste(out_dir, "rand_sim_dgp_low_min_prpn_0.005_tr_start_24.RData", 
+                              sep = ""))
+rits_sim_low <- readRDS(paste(out_dir, "rits_sim_dgp_low_min_prpn_0.1_tr_start_24.RData", 
+                              sep = ""))
+
+# Null-Efficacy
+mu_true <- rep(sim_dat$mu_true, length(sim_dat$mu_true))
+contr_true <- mu_true - mu_true[1]
+contr_true <- contr_true[setdiff(1:K, sim_dat$placebo_arm)]
+
+summ_rand <- gen_summary_for_table(sim = rand_sim_null, K = K, 
+                                   ate_ind = ate_ind, contr_true = contr_true, 
+                                   need_std = TRUE, need_ipw = FALSE)
+summ_ts <- gen_summary_for_table(sim = ts_sim_null, K = K, 
+                                 ate_ind = ate_ind, contr_true = contr_true,
+                                 need_ipw = FALSE)
+summ_rits <- gen_summary_for_table(sim = rits_sim_null, K = K, 
+                                   ate_ind = ate_ind, contr_true = contr_true,
+                                   need_ipw = FALSE)
+
+est_err_tab_null <- gen_bias_rmse_tab(summ_rand = summ_rand, 
+                                     summ_ts = summ_ts,
+                                     summ_rits = summ_rits, 
+                                     ate_ind = ate_ind, ind = ind)
+saveRDS(est_err_tab_null, "tables/est_err_tab_null.RData")
+xtable::xtable(est_err_tab_null)
+
 # est_err_tab_high <- readRDS("tables/est_err_tab_high.RData")
 # est_err_tab_low <- readRDS("tables/est_err_tab_low.RData")
-# est_err_tab <- rbind(est_err_tab_high, est_err_tab_low)
+# est_err_tab_null <- readRDS("tables/est_err_tab_null.RData")
+# est_err_tab <- rbind(est_err_tab_high, est_err_tab_low, est_err_tab_null)
