@@ -1,12 +1,13 @@
 if(FALSE){
   library(gsDesign)
   k <- 30
+  info.frac <- (1:k) / k
   design <- gsDesign(
     k = k,
-    test.type = 2,
-    alpha = 0.05/3,
-    sfu = "OF",
-    timing = (1:k) / k
+    n.I = info.frac,
+    test.type = 1,
+    alpha = 0.05/(3 * 2), # 3 for number of active doses, 2 for two-sided CI
+    sfu = sfLDOF
   )
   c_k <- design$upper$bound
   saveRDS(c_k, "metadata/ck.RData")
@@ -29,7 +30,7 @@ standard_ci <- function(rwd_hist, trt_hist, K, placebo_arm = 1, c_k){
           NA, NA)
       } else{
         tmp <- t.test(rwd_hist[trt_hist == k], rwd_hist[trt_hist == placebo_arm], 
-                      var.equal = FALSE)
+                      var.equal = TRUE)
         est <- tmp$estimate[1] - tmp$estimate[2]
         low_ci <- est - c_k * tmp$stderr
         up_ci <- est + c_k * tmp$stderr

@@ -91,7 +91,7 @@ rand_sim_null <- readRDS(paste(out_dir, "rand_sim_dgp_null_min_prpn_0.005_tr_sta
 rits_sim_null <- readRDS(paste(out_dir, "rits_sim_dgp_null_min_prpn_0.1_tr_start_24.RData", 
                                sep = ""))
 
-# Low SNR
+# Null Efficacy
 mu_true <- rep(sim_dat$mu_true[1], length(sim_dat$mu_true))
 contr_true <- mu_true - mu_true[1]
 contr_true <- contr_true[setdiff(1:K, sim_dat$placebo_arm)]
@@ -123,6 +123,7 @@ metric_tab_null <- gen_metric_tab_stoptime(summ_rand = summ_rand,
 saveRDS(metric_tab_null, "tables/metric_tab_null.RData")
 xtable::xtable(metric_tab_null)
 
-# metric_tab_high <- readRDS("tables/metric_tab_high.RData")
-# metric_tab_low <- readRDS("tables/metric_tab_low.RData")
-# metric_tab <- rbind(metric_tab_high, metric_tab_low)
+metric_tab_high <- readRDS("tables/metric_tab_high.RData")
+metric_tab_low <- readRDS("tables/metric_tab_low.RData")
+metric_tab_null <- readRDS("tables/metric_tab_null.RData")
+metric_tab <- rbind(metric_tab_high, metric_tab_low, metric_tab_null)
