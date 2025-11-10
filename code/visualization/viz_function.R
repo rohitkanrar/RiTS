@@ -717,32 +717,25 @@ gen_summary_for_table_stoptime <- function(sim, K, ate_ind, contr_true,
 }
 
 gen_bias_rmse_tab <- function(summ_rand, summ_ts, summ_rits, ate_ind, ind){
-  bias_tab <- matrix(NA, 7*(K-1), length(ate_ind))
+  bias_tab <- matrix(NA, 4*(K-1), length(ate_ind))
   for(k in 1:(K-1)){
-    bias_tab[7*(k-1)+1, ] <- summ_rand$bias_std[k, ]
-    bias_tab[7*(k-1)+2, ] <- summ_rand$bias[k, ]
-    bias_tab[7*(k-1)+3, ] <- summ_ts$bias[k, ]
-    bias_tab[7*(k-1)+4, ] <- summ_rits$bias[k, ]
-    bias_tab[7*(k-1)+5, ] <- summ_rand$bias_ipw[k, ]
-    bias_tab[7*(k-1)+6, ] <- summ_ts$bias_ipw[k, ]
-    bias_tab[7*(k-1)+7, ] <- summ_rits$bias_ipw[k, ]
+    bias_tab[4*(k-1)+1, ] <- summ_rand$bias_std[k, ]
+    bias_tab[4*(k-1)+2, ] <- summ_rand$bias[k, ]
+    bias_tab[4*(k-1)+3, ] <- summ_ts$bias[k, ]
+    bias_tab[4*(k-1)+4, ] <- summ_rits$bias[k, ]
   }
-  rmse_tab <- matrix(NA, 7*(K-1), length(ate_ind))
+  rmse_tab <- matrix(NA, 4*(K-1), length(ate_ind))
   for(k in 1:(K-1)){
-    rmse_tab[7*(k-1)+1, ] <- summ_rand$rmse_std[k, ]
-    rmse_tab[7*(k-1)+2, ] <- summ_rand$rmse[k, ]
-    rmse_tab[7*(k-1)+3, ] <- summ_ts$rmse[k, ]
-    rmse_tab[7*(k-1)+4, ] <- summ_rits$rmse[k, ]
-    rmse_tab[7*(k-1)+5, ] <- summ_rand$rmse_ipw[k, ]
-    rmse_tab[7*(k-1)+6, ] <- summ_ts$rmse_ipw[k, ]
-    rmse_tab[7*(k-1)+7, ] <- summ_rits$rmse_ipw[k, ]
+    rmse_tab[4*(k-1)+1, ] <- summ_rand$rmse_std[k, ]
+    rmse_tab[4*(k-1)+2, ] <- summ_rand$rmse[k, ]
+    rmse_tab[4*(k-1)+3, ] <- summ_ts$rmse[k, ]
+    rmse_tab[4*(k-1)+4, ] <- summ_rits$rmse[k, ]
   }
   est_err_tab <- matrix(paste(round(bias_tab, 2), "(", round(rmse_tab, 2), ")", sep = ""), 
                         nrow = nrow(bias_tab))
   colnames(est_err_tab) <- paste(ind)
-  rownames(est_err_tab) <- paste(c("Rand-OF", "Rand-AIPW", "TS-AIPW", "RiTS-AIPW",
-                                   "Rand-IPW", "TS-IPW", "RiTS-IPW"), 
-                                 "(Arm", rep(2:4, each = 7), ")", sep = "")
+  rownames(est_err_tab) <- paste(c("Rand-OF", "Rand-AIPW", "TS-AIPW", "RiTS-AIPW"), 
+                                 "(Arm", rep(2:4, each = 4), ")", sep = "")
   est_err_tab
 }
 
