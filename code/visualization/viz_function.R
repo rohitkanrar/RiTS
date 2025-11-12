@@ -310,18 +310,6 @@ gen_cum_miscov_plot <- function(df_high, df_low, df_null, alpha, ate_start){
     ) + theme(legend.position = "top")
 }
 
-expand_standard_vector <- function(target_vector, standard_vector){
-  target_times_chr <- names(target_vector)
-  standard_times_chr <- names(standard_vector)
-  target_times_num <- as.numeric(target_times_chr)
-  standard_times_num <- as.numeric(standard_times_chr)
-  source_indices <- findInterval(target_times_num, standard_times_num)
-  source_indices[source_indices == 0] <- 1
-  new_vector <- standard_vector[source_indices, drop = FALSE]
-  names(new_vector) <- names(target_vector)
-  return(new_vector)
-}
-
 gen_winner_curve_df <- function(rand_out, ts_out, rits_out, 
                              true_best_arm = 4, include_std = TRUE, 
                              include_ipw = TRUE){
