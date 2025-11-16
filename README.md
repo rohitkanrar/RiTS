@@ -115,4 +115,4 @@ Open-sourced software: drconfseq is implemented in [https://github.com/WannabeSm
 **I would like to thank the authors of the above open-sourced software.**
 
 ## Additional Acknowledgement
-I would like to thank [Professor Somak Dutta](https://faculty.sites.iastate.edu/somakd/) for providing access to his personal High-performance Computing cluster, which greatly helped an efficient execution of this project.
+I would like to thank the [Laurence H. Baker Center for Bioinformatics & Biological Statistics](https://www.bioinformatics.iastate.edu/) for partly supporting this research and for providing access to High-performance computing cluster, which greatly helped an efficient execution of this project.
