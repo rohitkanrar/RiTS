@@ -3,6 +3,7 @@ source("code/function/classical_ci.R")
 source("code/function/asymp_cs.R")
 
 sim_choice <- readRDS("metadata/sim_choice.RData")
+c_ks <- readRDS("metadata/ck.RData")
 dgps <- c("low", "high", "null")
 tr_starts <- sim_choice$tr_start
 min_prpns <- sim_choice$min_prpns
@@ -11,7 +12,7 @@ batch <- 1
 
 library(parallel)
 num_cores <- 16
-results <- mclapply(1:nrow(cases), function(i, cases, sim_choice){
+results <- mclapply(1:nrow(cases), function(i, cases, sim_choice, c_ks){
   # browser()
   out_dir <- "output/"
   dgp <- cases[i, "dgp"]; min_prpn <- cases[i, "min_prpn"]
@@ -33,12 +34,13 @@ results <- mclapply(1:nrow(cases), function(i, cases, sim_choice){
                                  n_cores = 1, force_compute = TRUE,
                                  learner = NULL)
       out_sim <- add_standard_ci(out = out_sim, ate_start = 24, n_looks = 30, 
-                                 placebo_arm = 1, force_compute = TRUE)
+                                 placebo_arm = 1, force_compute = TRUE, 
+                                 c_ks = c_ks)
       saveRDS(out_sim, file_name) 
     } else{
       next
     }
   }
   return(NULL)
-}, mc.cores = num_cores, cases = cases, sim_choice = sim_choice)
+}, mc.cores = num_cores, cases = cases, sim_choice = sim_choice, c_ks = c_ks)
 print(timestamp())
