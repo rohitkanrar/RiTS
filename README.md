@@ -4,7 +4,7 @@ This repository contains all codes used in the following paper
 
 - Kanrar, R., Li, C., Ghodsi, Z., Gamalo, M. (2025+). Risk-inclusive Contextual Bandits for Early Phase Clinical Trials.
 
-The method is named **R**isk-**i**nclusive **T**hompson **S**ampling (RiTS).
+The method is named **R**isk-**i**nclusive **T**hompson **S**ampling (RiTS). [arXiv](https://arxiv.org/abs/2507.22344)
 
 ## Contents
 
