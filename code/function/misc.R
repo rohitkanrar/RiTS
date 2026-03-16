@@ -159,7 +159,7 @@ stop_trial <- function(intvs, K, zero = 0.1, return_type = FALSE){
   }
 }
 
-stop_trial_when <- function(all_intvs, K, zero = 0.1){
+stop_trial_when <- function(all_intvs, K, zero = 0.1, m = 80){
   # browser()
   n_intvs <- dim(all_intvs)[1]
   decisions <- sapply(1:n_intvs, function(t){
@@ -172,6 +172,10 @@ stop_trial_when <- function(all_intvs, K, zero = 0.1){
     stop_ind <- min(which(decisions[1, ] == 1))
   }
   stop_time <- as.numeric(dimnames(all_intvs)[[1]][stop_ind])
+  if(stop_time < m){
+    stop_time <- m
+    stop_ind <- which(as.numeric(dimnames(all_intvs)[[1]]) == m)
+  }
   stop_type <- decisions[2, stop_ind]
   stop_type <- ifelse(stop_type == 1, "alternative", "null")
   list(ind = stop_ind, type = stop_type, time = stop_time)

@@ -645,7 +645,7 @@ gen_summary_for_table_stoptime <- function(sim, K, ate_ind, contr_true,
     for(iter in 1:n_iter){
       if(k == 2){
         stop_info <- stop_trial_when(all_intvs = sim[[iter]]$contr, K = K)
-        stop_info_standard <- stop_trial_when(all_intvs = sim[[iter]]$contr_standard, K = K)
+        stop_info_standard <- stop_trial_when(all_intvs = sim[[iter]]$contr_standard, K = K, m = 78)
         stoptime[iter] <- stop_info$time; stopind[iter] <- stop_info$ind
         stoptime_std[iter] <- stop_info_standard$time; stopind_std[iter] <- stop_info_standard$ind
       }
