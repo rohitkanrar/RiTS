@@ -195,7 +195,7 @@ get_cum_mis_cov_stoptime <- function(sim, mu_true, contr_true, delay_aipw = 0,
   }
   for(iter in 1:n_iter){
     stop_info <- stop_trial_when(all_intvs = sim[[iter]]$contr, K = K)
-    stop_info_standard <- stop_trial_when(all_intvs = sim[[iter]]$contr_standard, K = K)
+    stop_info_standard <- stop_trial_when(all_intvs = sim[[iter]]$contr_standard, K = K, m = 78)
     for(k in 1:K){
       cum_mis_cov_ate[k] <- cum_mis_cov_ate[k] + 
         cummax(sim[[iter]]$ate[stop_info$ind, k,  2] > mu_true[k] | 
