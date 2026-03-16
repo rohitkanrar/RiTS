@@ -518,10 +518,13 @@ gen_power_curve <- function(df_high, df_low, df_null){
   return(out_plot)
 }
 
+library(dplyr)
 gen_metrics_plot <- function(df_winner, df_power, dgp_exists = TRUE){
   df <- rbind(df_winner, df_power)
-  out_plot <- ggplot(df, aes(x = participant, y = value, color = Methods)) +
-    geom_line() + labs(x = "Number of participants", y = "Proportion of trials") + 
+  out_plot <- ggplot(df %>% filter(participant >= 80), 
+                     aes(x = participant, y = value, color = Methods)) +
+    geom_line() + 
+    labs(x = "Number of participants", y = "Proportion of trials") + 
     scale_color_manual(
       name = "Method",
       values = c("rand" = "#CC79A7", "ts" = "#0072B2", "rits" = "#D55E00", 
@@ -532,7 +535,7 @@ gen_metrics_plot <- function(df_winner, df_power, dgp_exists = TRUE){
                  "rits_ipw" = "RiTS-IPW", "ttest" = "Rand-OF")
     ) + theme(legend.position = "top")
   if(dgp_exists){
-    out_plot <- out_plot + facet_grid(type~dgp)
+    out_plot <- out_plot + facet_grid(type~dgp, scales = "free_y")
   } else{
     out_plot <- out_plot + facet_wrap(~type)
   }
