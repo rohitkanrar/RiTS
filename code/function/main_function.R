@@ -49,13 +49,13 @@ get_propensities_rits <- function(t, x, K, d, param, tr_start = 10,
   }
 }
 
-get_rwd_cont <- function(x, a, beta_true, sd = 0.1){
+get_rwd_cont <- function(x, a, beta_true, sd = 1){
   avg_rwd <- as.numeric(crossprod(x, beta_true))
-  r <- avg_rwd[a] + rnorm(1, sd = 0.1)
+  r <- avg_rwd[a] + rnorm(1, sd = sd)
   list(avg_rwd = avg_rwd, rwd = r)
 }
 
-one_step_rand_biv <- function(x, K, beta_true, log_dat, weight, rwd_sig = 0.1, 
+one_step_rand_biv <- function(x, K, beta_true, log_dat, weight, rwd_sig = 1, 
                               trt = NULL, setup = "simulation", 
                               eff = NULL, safe = NULL){
   x <- matrix(as.numeric(x), ncol = 1)
@@ -75,7 +75,7 @@ one_step_rand_biv <- function(x, K, beta_true, log_dat, weight, rwd_sig = 0.1,
   
   true_mu <- matrix(0, 2, K)
   if(setup == "simulation"){
-    tmp <- get_rwd_cont(x, trt_new, beta_true[, , 1])
+    tmp <- get_rwd_cont(x, trt_new, beta_true[, , 1], rwd_sig)
     true_mu[1, ] <- tmp$avg_rwd
     rwd_benf_new <- tmp$rwd
     
@@ -120,7 +120,7 @@ one_step_rand_biv <- function(x, K, beta_true, log_dat, weight, rwd_sig = 0.1,
 one_step_ts_batch <- function(x, x_true, t, param, beta_true, K, d, log_dat,  
                               min_prpn = 0.05, M = 1000,
                               tr_start = 10, tr_lag = 10, ate_start = 20, 
-                              weight = 2, train = FALSE, rwd_sig = 0.1,
+                              weight = 2, train = FALSE, rwd_sig = 1,
                               design = "no_clip", trt = NULL,
                               setup = "simulation", eff = NULL, safe = NULL){
   # browser()
@@ -251,7 +251,7 @@ one_step_rits_batch <- function(x, x_true, t, param, beta_true, K, d,
                                 log_dat, floor_start = 0.005, 
                                 min_prpn = 0.05, tr_start = 10, tr_lag = 10, 
                                 M = 1000, ate_start = 20, tr_batch = 10, 
-                                weight = 2, train = FALSE, rwd_sig = 0.1, 
+                                weight = 2, train = FALSE, rwd_sig = 1, 
                                 design = "clip", trt = NULL,
                                 setup = "simulation", eff = NULL, safe = NULL){
   last_tr_ind <- log_dat$last_tr_ind
@@ -389,7 +389,7 @@ one_step_rits_batch <- function(x, x_true, t, param, beta_true, K, d,
 
 
 do_rand_biv <- function(X, X_true, beta_true, weight = 1, seed = NULL, 
-                        rwd_sig = 0.1, tr_start = 24, asympcs = FALSE, 
+                        rwd_sig = 1, tr_start = 24, asympcs = FALSE, 
                         ate_start = 24, placebo_arm = 1, alpha = 0.05, 
                         first_peek = NULL,
                         setup = "simulation", counterfact = NULL){
@@ -472,7 +472,7 @@ do_rand_biv <- function(X, X_true, beta_true, weight = 1, seed = NULL,
 
 
 do_ts_batch <- function(X, X_true, beta_true, weight = 1, seed = NULL, 
-                        rwd_sig = 0.1, tr_start = 24, tr_batch = 5, tr_lag = 10,
+                        rwd_sig = 1, tr_start = 24, tr_batch = 5, tr_lag = 10,
                         M = 1000, v = 10, min_prpn = 0.05, 
                         asympcs = FALSE, ate_start = 20, placebo_arm = 1, 
                         alpha = 0.05, first_peek = NULL, design = "clip",
@@ -581,7 +581,7 @@ do_ts_batch <- function(X, X_true, beta_true, weight = 1, seed = NULL,
 
 
 do_rits_batch <- function(X, X_true, beta_true, weight = 1, seed = NULL, 
-                          rwd_sig = 0.1, tr_start = 24, tr_batch = 5, tr_lag = 10,
+                          rwd_sig = 1, tr_start = 24, tr_batch = 5, tr_lag = 10,
                           M = 1000, v = 10, min_prpn = 0.05, 
                           asympcs = FALSE, ate_start = 20, placebo_arm = 1, 
                           alpha = 0.05, first_peek = NULL, design = "clip",

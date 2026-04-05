@@ -26,11 +26,11 @@ results <- mclapply(1:nrow(cases), function(i, cases, sim_choice, c_ks){
     if(file.exists(file_name)){
       out_sim <- readRDS(file_name)
       out_sim <- add_asympcs_sim(out_list = out_sim, ate_start = 24, batch = batch,
-                                 placebo_arm = 1, alpha = 0.05, first_peek = 100,
+                                 placebo_arm = 1, alpha = 0.05, first_peek = 80,
                                  n_cores = 1, force_compute = TRUE,
                                  learner = "main_ridge")
       out_sim <- add_asympcs_sim(out_list = out_sim, ate_start = 24, batch = batch,
-                                 placebo_arm = 1, alpha = 0.05, first_peek = 50,
+                                 placebo_arm = 1, alpha = 0.05, first_peek = 80,
                                  n_cores = 1, force_compute = TRUE,
                                  learner = NULL)
       out_sim <- add_standard_ci(out = out_sim, ate_start = 24, n_looks = 30, 

@@ -23,7 +23,7 @@ main_effect_ridge <- function(y, X, newX, trt_ind, K, ipw){
     if(k != 1){
       newX_k[, k-1] <- 1
     }
-    reg_est[[k]] <- as.numeric(predict(mod, newx = newX_k, s = 0.1))
+    reg_est[[k]] <- as.numeric(predict(mod, newx = newX_k, s = 10))
   }
   reg_est
 }
