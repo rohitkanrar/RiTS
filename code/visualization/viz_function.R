@@ -535,7 +535,8 @@ gen_metrics_plot <- function(df_winner, df_power, dgp_exists = TRUE){
                  "rits_ipw" = "RiTS-IPW", "ttest" = "Rand-OF")
     ) + theme(legend.position = "top")
   if(dgp_exists){
-    out_plot <- out_plot + facet_grid(type~dgp, scales = "free_y")
+    out_plot <- out_plot + 
+      ggh4x::facet_grid2(type ~ dgp, scales = "free_y", independent = "y")
   } else{
     out_plot <- out_plot + facet_wrap(~type)
   }
