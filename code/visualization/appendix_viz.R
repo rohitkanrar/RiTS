@@ -49,7 +49,7 @@ df_null <- gen_width_df(out_rand = rand_sim_null,
                        out_ts = ts_sim_null, out_rits = rits_sim_null, 
                        ate_ind = ate_ind)
 sim_wid <- gen_width_bwplot(df_high = df_high, df_low = df_low, df_null = df_null,
-                            ind = ind, ylims = list(c(0, 2.5), c(0, 1.5), c(0, 0.6)))
+                            ind = ind, ylims = NULL)
 ggsave("plot/width_bwplot.jpg", plot = sim_wid, height = 6, width = 10, 
        units = "in")
 
@@ -84,7 +84,7 @@ df_null <- gen_bias_df(out_rand = rand_sim_null,
 
 sim_bias <- gen_bias_bwplot(df_high = df_high, df_low = df_low, 
                             df_null = df_null, ind = ind,
-                            ylims = list(c(-0.5, 0.5), c(-0.25, 0.25)))
+                            ylims = NULL)
 ggsave("plot/bias_bwplot.jpg", plot = sim_bias, height = 6, width = 10, 
        units = "in")
 

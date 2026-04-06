@@ -426,43 +426,43 @@ gen_power_curve_df <- function(rand_out, ts_out, rits_out, min_thresh = 0.1,
   
   for(i in 1:n_iter){
     if(include_std){
-      power_std <- power_std + sapply(1:n_comp_obrien, function(t){
+      power_std <- power_std + cummax(sapply(1:n_comp_obrien, function(t){
         rej <- stop_trial(intvs = rand_out[[i]]$contr_standard[t, , 2:3], 
                           K = K, zero = min_thresh)
         rej
-      })
+      }))
     }
-    power_rand <- power_rand + sapply(1:n_comp, function(t){
+    power_rand <- power_rand + cummax(sapply(1:n_comp, function(t){
       rej <- stop_trial(intvs = rand_out[[i]]$contr[t, , 2:3], 
                         K = K, zero = min_thresh)
       rej
-    })
-    power_ts <- power_ts + sapply(1:n_comp, function(t){
+    }))
+    power_ts <- power_ts + cummax(sapply(1:n_comp, function(t){
       rej <- stop_trial(intvs = ts_out[[i]]$contr[t, , 2:3], 
                         K = K, zero = min_thresh)
       rej
-    })
-    power_rits <- power_rits + sapply(1:n_comp, function(t){
+    }))
+    power_rits <- power_rits + cummax(sapply(1:n_comp, function(t){
       rej <- stop_trial(intvs = rits_out[[i]]$contr[t, , 2:3], 
                         K = K, zero = min_thresh)
       rej
-    })
+    }))
     if(include_ipw){
-      power_rand_ipw <- power_rand_ipw + sapply(1:n_comp, function(t){
+      power_rand_ipw <- power_rand_ipw + cummax(sapply(1:n_comp, function(t){
         rej <- stop_trial(intvs = rand_out[[i]]$contr_ipw[t, , 2:3], 
                           K = K, zero = min_thresh)
         rej
-      })
-      power_ts_ipw <- power_ts_ipw + sapply(1:n_comp, function(t){
+      }))
+      power_ts_ipw <- power_ts_ipw + cummax(sapply(1:n_comp, function(t){
         rej <- stop_trial(intvs = ts_out[[i]]$contr_ipw[t, , 2:3], 
                           K = K, zero = min_thresh)
         rej
-      })
-      power_rits_ipw <- power_rits_ipw + sapply(1:n_comp, function(t){
+      }))
+      power_rits_ipw <- power_rits_ipw + cummax(sapply(1:n_comp, function(t){
         rej <- stop_trial(intvs = rits_out[[i]]$contr_ipw[t, , 2:3], 
                           K = K, zero = min_thresh)
         rej
-      })
+      }))
     }
     names(power_std) <- dimnames(rand_out[[i]]$contr_standard)[[1]]
     names(power_rand) <- dimnames(rand_out[[i]]$contr)[[1]]
