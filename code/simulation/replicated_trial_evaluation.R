@@ -1,6 +1,7 @@
 print(timestamp())
 source("code/function/classical_ci.R")
 source("code/function/asymp_cs.R")
+source("code/function/of_asympci.R")
 
 sim_choice <- readRDS("metadata/sim_choice.RData")
 c_ks <- readRDS("metadata/ck.RData")
@@ -25,17 +26,32 @@ results <- mclapply(1:nrow(cases), function(i, cases, sim_choice, c_ks){
     file_name <- paste(out_dir, mod, "_", case_str, ".RData", sep = "")
     if(file.exists(file_name)){
       out_sim <- readRDS(file_name)
+      # ---- AsympCS (AIPW, main_ridge) ----------------------------------------
       out_sim <- add_asympcs_sim(out_list = out_sim, ate_start = 24, batch = batch,
                                  placebo_arm = 1, alpha = 0.05, first_peek = 80,
                                  n_cores = 1, force_compute = TRUE,
                                  learner = "main_ridge")
+      
+      # ---- AsympCS (IPW, no regression) ---------------------------------------
       out_sim <- add_asympcs_sim(out_list = out_sim, ate_start = 24, batch = batch,
                                  placebo_arm = 1, alpha = 0.05, first_peek = 80,
                                  n_cores = 1, force_compute = TRUE,
                                  learner = NULL)
+      
+      # ---- OBF repeated CI on raw outcomes (Rand-OF baseline) -----------------
       out_sim <- add_standard_ci(out = out_sim, ate_start = 24, n_looks = 30, 
                                  placebo_arm = 1, force_compute = TRUE, 
                                  c_ks = c_ks)
+      
+      # ---- OBF asymptotic repeated CI (AIPW, main_ridge) <<< NEW -------------
+      # Uses the same 30 look times as add_standard_ci() via n_looks = 30, so
+      # the two OBF methods are evaluated at identical sample sizes.
+      # Critical values are computed internally via gsDesign with the same
+      # sfLDOF spending function and Bonferroni correction alpha/(K-1).
+      out_sim <- add_of_asympci_sim(out_list = out_sim, ate_start = 24,
+                                    n_looks = 30, placebo_arm = 1,
+                                    alpha = 0.05, force_compute = TRUE,
+                                    learner = "main_ridge", n_cores = 1)
       saveRDS(out_sim, file_name) 
     } else{
       next
