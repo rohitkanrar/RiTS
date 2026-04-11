@@ -48,10 +48,11 @@ results <- mclapply(1:nrow(cases), function(i, cases, sim_choice, c_ks){
       # the two OBF methods are evaluated at identical sample sizes.
       # Critical values are computed internally via gsDesign with the same
       # sfLDOF spending function and Bonferroni correction alpha/(K-1).
-      out_sim <- add_of_asympci_sim(out_list = out_sim, ate_start = 24,
-                                    n_looks = 30, placebo_arm = 1,
-                                    alpha = 0.05, force_compute = TRUE,
-                                    learner = "main_ridge", n_cores = 1)
+      
+      # out_sim <- add_of_asympci_sim(out_list = out_sim, ate_start = 24,
+      #                               n_looks = 30, placebo_arm = 1,
+      #                               alpha = 0.05, force_compute = TRUE,
+      #                               learner = "main_ridge", n_cores = 1)
       saveRDS(out_sim, file_name) 
     } else{
       next
