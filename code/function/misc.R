@@ -88,7 +88,7 @@ get_cum_mis_cov <- function(sim, mu_true, contr_true, delay_aipw = 0,
           cum_mis_cov_contr_std[, k-1] <-   cum_mis_cov_contr_std[, k-1] + 
             cummax(sim[[iter]]$contr_standard[(delay_aipw+1):total_peek, k-1,  2] > contr_true[k-1] | 
                      sim[[iter]]$contr_standard[(delay_aipw+1):total_peek, k-1, 3] < contr_true[k-1])
-          cum_mis_cov_contr_std[-which(all_ia %in% ia), k-1] <- 0
+          # cum_mis_cov_contr_std[-which(all_ia %in% ia), k-1] <- 0
         }
         if(need_ipw){
           cum_mis_cov_contr_ipw[, k-1] <-   cum_mis_cov_contr_ipw[, k-1] + 
