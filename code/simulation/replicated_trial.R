@@ -1,6 +1,7 @@
 print(timestamp())
 source("code/function/main_function.R")
 source("code/function/misc.R")
+source("metadata/get_metadata.R")
 
 sim_choice <- readRDS("metadata/sim_choice.RData")
 sim_dat <- readRDS("metadata/sim_dat.RData")

@@ -1,6 +1,7 @@
 print(timestamp())
 source("code/function/classical_ci.R")
 source("code/function/asymp_cs.R")
+source("metadata/get_metadata.R")
 
 sim_choice <- readRDS("metadata/sim_choice.RData")
 c_ks <- readRDS("metadata/ck.RData")
