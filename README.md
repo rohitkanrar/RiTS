@@ -13,7 +13,7 @@ The method is named **R**isk-**i**nclusive **T**hompson **S**ampling (RiTS). [ar
 - `/code/simulation`: contains scripts to conduct all simulation experiments described in both the main manuscript and the supplementary material. 
 - `/code/visualization`: contains scripts that generates all figures except Figure 1 and Figure 2 in the main manuscript.
 - `/metadata`: Additional .RData files created to run the simulation experiments conveniently. Files contain lists to specify hyper-parameters required in the simulation experiments.
-- `/output_git`: Example of output files from simulation experiments are generated using `simulation_example.R` for 10 replications, and added in this folder.
+- `/output_git`: Example of output files from simulation experiments are generated using `simulation_example.R` for 10 replications, and added in this folder. The PDF file is generated using the `simulation_example.Rmd` and is saved at `simulation_example.pdf`.
 
 ### Contents of `/code/function`:
 - `/code/function/main_function.R`: contains major functions to implement `Rand`, `TS` and `RiTS`.

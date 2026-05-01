@@ -30,7 +30,6 @@ sim_dat <- list(
 
 saveRDS(sim_dat, "metadata/sim_dat.RData")
 saveRDS(sim_choice, "metadata/sim_choice.RData")
-rm(list = ls())
 
 
 library(gsDesign)
@@ -45,4 +44,3 @@ design <- gsDesign(
 )
 c_k <- design$upper$bound
 saveRDS(c_k, "metadata/ck.RData")
-rm(list = ls())

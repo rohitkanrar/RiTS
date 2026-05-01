@@ -44,14 +44,43 @@ standard_ci <- function(rwd_hist, trt_hist, K, placebo_arm = 1, c_k){
 }
 
 add_standard_ci <- function(out, ate_start, n_looks = 30, 
-                            placebo_arm = 1, force_compute = FALSE, c_ks = c_ks){
+                            placebo_arm = 1, force_compute = FALSE, c_ks = NULL){
   # browser()
   n_iter <- length(out)
   K <- length(unique(out[[1]]$trt)); N <- length(out[[1]]$trt)
   times <- floor(seq(ate_start, N, length.out = n_looks))
+  
+  # If c_ks is not supplied, load the pre-calculated group-sequential boundaries
+  if (is.null(c_ks)) {
+    if (file.exists("metadata/ck.RData")) {
+      c_ks <- readRDS("metadata/ck.RData")
+    } else {
+      stop(
+        "c_ks was not supplied and metadata/ck.RData was not found. ",
+        "Either create metadata/ck.RData first or pass c_ks explicitly."
+      )
+    }
+  }
+  
+  # If one critical value is supplied, repeat it for all looks
+  if (length(c_ks) == 1) {
+    c_ks <- rep(c_ks, length(times))
+  }
+  
+  # Check that c_ks has the correct length
+  if (length(c_ks) != length(times)) {
+    stop(
+      "Length of c_ks must be either 1 or equal to the number of looks. ",
+      "length(c_ks) = ", length(c_ks),
+      ", length(times) = ", length(times), "."
+    )
+  }
+  
   # converting bounds for known variance to unknown variance
   c_ks_tbounds <- qt(1 - pnorm(c_ks), times - 1, lower.tail = FALSE)
-  c_ks_tbounds[c_ks_tbounds == Inf] <- max(c_ks[c_ks_tbounds == Inf])
+  if (any(is.infinite(c_ks_tbounds))) {
+    c_ks_tbounds[is.infinite(c_ks_tbounds)] <- max(c_ks_tbounds[is.finite(c_ks_tbounds)])
+  }
   for(i in 1:n_iter){
     if(is.null(out[[i]]$contr_standard) || force_compute){
       ci_tmp <- array(NA, dim = c(length(times), K-1, 3))

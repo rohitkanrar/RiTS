@@ -45,89 +45,186 @@ n_iter <- 10 # only 10 instead of 5000 for illustration
 
 ### Running Trial Optimization Step for 10 Replications
 
-Only two cases are executed. Two CPU cores are enough.
+Only selected small-scale cases are executed. One CPU core is enough.
 
 ```{r}
 library(parallel)
-num_cores <- 2
-results <- mclapply(1:nrow(cases), function(i, cases, sim_choice, sim_dat, n_iter){
-  # browser()
-  out_dir <- "output_git/"
-  N <- sim_choice$N
-  K <- sim_choice$K # cannot be changed
-  d <- sim_choice$d # cannot be changed
-  E <- 2 # cannot be changed
-  beta_true_low <- sim_dat$beta_true
-  beta_true_high <- 2 * beta_true_low
-  placebo_arm <- sim_dat$placebo_arm
-  weight <- sim_dat$weight
-  design <- sim_choice$design
-  reward_sig <- sim_choice$reward_sig
-  
-  dgp <- cases[i, "dgp"]; min_prpn <- cases[i, "min_prpn"]
-  tr_start <- cases[i, "tr_start"]
-  case_str <- paste("dgp", dgp, "min_prpn", min_prpn, "tr_start", tr_start, 
-                    sep = "_")
-  case_str0 <- paste("dgp", dgp, "min_prpn", 0.005, "tr_start", sim_choice$ate_start, 
-                    sep = "_")
-  rand_file_name <- paste(out_dir, "rand_sim_", case_str0, ".RData", sep = "")
-  rand_mis_file_name <- paste(out_dir, "rand_mis_sim_", case_str0, ".RData", sep = "")
-  
-  ts_sim <- vector(mode = "list", length = n_iter)
-  rand_sim <- ts_sim; rits_sim <- ts_sim; rand_mis_sim <- ts_sim; 
-  ts_mis_sim <- ts_sim; rits_mis_sim <- ts_mis_sim
-  if(dgp == "low"){
-    beta_true <- beta_true_low
-  } else{
-    beta_true <- beta_true_high
-  }
-  for(iter in 1:n_iter){
-    # if(iter %% 100 == 0) print(iter)
-    seed_ <- iter
-    set.seed(seed_)
-    X_true <- get_X(N = N)
-    X <- X_true[, 1:2]
-    ts_sim[[iter]] <- do_ts_batch(X = X_true, X_true = X_true, beta_true = beta_true, 
-                                  weight = weight, seed = seed_, rwd_sig = reward_sig,
-                                  tr_start = tr_start, tr_batch = 5, tr_lag = 10,
-                                  M = 1000, v = 10, min_prpn = min_prpn, asympcs = FALSE)
-    rits_sim[[iter]] <- do_rits_batch(X = X_true, X_true = X_true, beta_true = beta_true, 
-                                      weight = weight, seed = seed_, rwd_sig = reward_sig,
-                                      tr_start = tr_start, tr_batch = 5, tr_lag = 10,
-                                      M = 1000, v = 10, min_prpn = min_prpn, asympcs = FALSE)
-    ts_mis_sim[[iter]] <- do_ts_batch(X = X, X_true = X_true, beta_true = beta_true, 
-                                      weight = weight, seed = seed_, rwd_sig = reward_sig,
-                                      tr_start = tr_start, tr_batch = 5, tr_lag = 10,
-                                      M = 1000, v = 10, min_prpn = min_prpn, asympcs = FALSE)
-    rits_mis_sim[[iter]] <- do_rits_batch(X = X, X_true = X_true, beta_true = beta_true, 
-                                          weight = weight, seed = seed_, rwd_sig = reward_sig,
-                                          tr_start = tr_start, tr_batch = 5, tr_lag = 10,
-                                          M = 1000, v = 10, min_prpn = min_prpn, asympcs = FALSE)
-    if(min_prpn == 0.005){
-      rand_sim[[iter]] <- do_rand_biv(X = X_true, X_true = X_true, beta_true = beta_true, 
-                                      weight = weight, seed = seed_, 
-                                      rwd_sig = reward_sig, tr_start = tr_start,
-                                      asympcs = FALSE)
-      rand_mis_sim[[iter]] <- do_rand_biv(X = X, X_true = X_true, beta_true = beta_true, 
-                                          weight = weight, seed = seed_, 
-                                          rwd_sig = reward_sig, tr_start = tr_start,
-                                          asympcs = FALSE)
+
+num_cores <- 1
+
+results <- mclapply(
+  1:nrow(cases),
+  function(i, cases, sim_choice, sim_dat, n_iter) {
+
+    out_dir <- "output_git/"
+
+    if (!dir.exists(out_dir)) {
+      dir.create(out_dir, recursive = TRUE)
     }
-  }
-  saveRDS(ts_sim, paste(out_dir, "ts_sim_", case_str, ".RData", sep = ""))
-  saveRDS(rits_sim, paste(out_dir, "rits_sim_", case_str, ".RData", sep = ""))
-  saveRDS(ts_mis_sim, paste(out_dir, "ts_mis_sim_", case_str, ".RData", sep = ""))
-  saveRDS(rits_mis_sim, paste(out_dir, "rits_mis_sim_", case_str, ".RData", sep = ""))
-  if(min_prpn == 0.005){
+
+    N <- sim_choice$N
+    K <- sim_choice$K # cannot be changed
+    d <- sim_choice$d # cannot be changed
+    E <- 2 # cannot be changed
+
+    beta_true_low <- sim_dat$beta_true
+    beta_true_high <- 2 * beta_true_low
+
+    placebo_arm <- sim_dat$placebo_arm
+    weight <- sim_dat$weight
+    design <- sim_choice$design
+    reward_sig <- sim_choice$reward_sig
+
+    dgp <- cases[i, "dgp"]
+    min_prpn <- cases[i, "min_prpn"]
+    tr_start <- cases[i, "tr_start"]
+
+    case_str <- paste(
+      "dgp", dgp,
+      "min_prpn", min_prpn,
+      "tr_start", tr_start,
+      sep = "_"
+    )
+
+    case_str0 <- paste(
+      "dgp", dgp,
+      "min_prpn", 0.005,
+      "tr_start", sim_choice$ate_start,
+      sep = "_"
+    )
+
+    ts_sim <- vector(mode = "list", length = n_iter)
+    rand_sim <- ts_sim
+    rits_sim <- ts_sim
+    rand_mis_sim <- ts_sim
+    ts_mis_sim <- ts_sim
+    rits_mis_sim <- ts_mis_sim
+
+    if (dgp == "low") {
+      beta_true <- beta_true_low
+    } else {
+      beta_true <- beta_true_high
+    }
+
+    for (iter in 1:n_iter) {
+
+      seed_ <- iter
+      set.seed(seed_)
+
+      X_true <- get_X(N = N)
+      X <- X_true[, 1:2]
+
+      ts_sim[[iter]] <- do_ts_batch(
+        X = X_true,
+        X_true = X_true,
+        beta_true = beta_true,
+        weight = weight,
+        seed = seed_,
+        rwd_sig = reward_sig,
+        tr_start = tr_start,
+        tr_batch = 5,
+        tr_lag = 10,
+        M = 1000,
+        v = 10,
+        min_prpn = min_prpn,
+        asympcs = FALSE
+      )
+
+      rits_sim[[iter]] <- do_rits_batch(
+        X = X_true,
+        X_true = X_true,
+        beta_true = beta_true,
+        weight = weight,
+        seed = seed_,
+        rwd_sig = reward_sig,
+        tr_start = tr_start,
+        tr_batch = 5,
+        tr_lag = 10,
+        M = 1000,
+        v = 10,
+        min_prpn = min_prpn,
+        asympcs = FALSE
+      )
+
+      ts_mis_sim[[iter]] <- do_ts_batch(
+        X = X,
+        X_true = X_true,
+        beta_true = beta_true,
+        weight = weight,
+        seed = seed_,
+        rwd_sig = reward_sig,
+        tr_start = tr_start,
+        tr_batch = 5,
+        tr_lag = 10,
+        M = 1000,
+        v = 10,
+        min_prpn = min_prpn,
+        asympcs = FALSE
+      )
+
+      rits_mis_sim[[iter]] <- do_rits_batch(
+        X = X,
+        X_true = X_true,
+        beta_true = beta_true,
+        weight = weight,
+        seed = seed_,
+        rwd_sig = reward_sig,
+        tr_start = tr_start,
+        tr_batch = 5,
+        tr_lag = 10,
+        M = 1000,
+        v = 10,
+        min_prpn = min_prpn,
+        asympcs = FALSE
+      )
+
+      # Generate randomization comparator for plotting.
+      # We save it using case_str0, i.e. min_prpn = 0.005 and tr_start = ate_start,
+      # to match the naming convention expected by the plotting code.
+      rand_sim[[iter]] <- do_rand_biv(
+        X = X_true,
+        X_true = X_true,
+        beta_true = beta_true,
+        weight = weight,
+        seed = seed_,
+        rwd_sig = reward_sig,
+        tr_start = sim_choice$ate_start,
+        asympcs = FALSE
+      )
+
+      rand_mis_sim[[iter]] <- do_rand_biv(
+        X = X,
+        X_true = X_true,
+        beta_true = beta_true,
+        weight = weight,
+        seed = seed_,
+        rwd_sig = reward_sig,
+        tr_start = sim_choice$ate_start,
+        asympcs = FALSE
+      )
+    }
+
+    saveRDS(ts_sim, paste(out_dir, "ts_sim_", case_str, ".RData", sep = ""))
+    saveRDS(rits_sim, paste(out_dir, "rits_sim_", case_str, ".RData", sep = ""))
+    saveRDS(ts_mis_sim, paste(out_dir, "ts_mis_sim_", case_str, ".RData", sep = ""))
+    saveRDS(rits_mis_sim, paste(out_dir, "rits_mis_sim_", case_str, ".RData", sep = ""))
+
     saveRDS(rand_sim, paste(out_dir, "rand_sim_", case_str0, ".RData", sep = ""))
     saveRDS(rand_mis_sim, paste(out_dir, "rand_mis_sim_", case_str0, ".RData", sep = ""))
-  }
-  return(NULL)
-}, mc.cores = num_cores, cases = cases, sim_dat = sim_dat, sim_choice = sim_choice, n_iter = n_iter)
+
+    return(NULL)
+  },
+  mc.cores = num_cores,
+  cases = cases,
+  sim_dat = sim_dat,
+  sim_choice = sim_choice,
+  n_iter = n_iter
+)
 ```
 
 ## Trial Evaluation
 ### Loading Necessary Functions, Objects and Simulated Data
+
 ```{r}
 source("code/function/main_function.R")
 source("code/function/misc.R")
@@ -137,79 +234,152 @@ source("code/function/asymp_cs.R")
 batch <- 1
 ```
 
-### Adding AsympCS and T-Test CI in Output Files from Trial Optimization Step 
+### Adding AsympCS and T-Test CI in Output Files from Trial Optimization Step
 
 ```{r}
 library(parallel)
-num_cores <- 2
-results <- mclapply(1:nrow(cases), function(i, cases, sim_choice){
-  # browser()
-  out_dir <- "output_git/"
-  dgp <- cases[i, "dgp"]; min_prpn <- cases[i, "min_prpn"]
-  tr_start <- cases[i, "tr_start"]
-  case_str <- paste("dgp", dgp, "min_prpn", min_prpn, "tr_start", tr_start, 
-                    sep = "_")
-  mods <- c("rand_sim", "ts_sim", "rits_sim", "rand_mis_sim", "ts_mis_sim", 
-            "rits_mis_sim")
-  for(mod in mods){
-    file_name <- paste(out_dir, mod, "_", case_str, ".RData", sep = "")
-    if(file.exists(file_name)){
-      out_sim <- readRDS(file_name)
-      out_sim <- add_asympcs_sim(out_list = out_sim, ate_start = 24, batch = batch, 
-                                 placebo_arm = 1, alpha = 0.05, first_peek = 50, 
-                                 n_cores = 1, force_compute = TRUE, learner = "main_ridge")
-      out_sim <- add_standard_ci(out = out_sim, ate_start = 24, batch = batch, 
-                                 placebo_arm = 1, alpha = 0.05, force_compute = TRUE)
-      saveRDS(out_sim, file_name) 
-    } else{
-      next
+
+num_cores <- 1
+
+results <- mclapply(
+  1:nrow(cases),
+  function(i, cases, sim_choice) {
+
+    out_dir <- "output_git/"
+
+    if (!dir.exists(out_dir)) {
+      dir.create(out_dir, recursive = TRUE)
     }
-  }
-  return(NULL)
-}, mc.cores = num_cores, cases = cases, sim_choice = sim_choice)
+
+    dgp <- cases[i, "dgp"]
+    min_prpn <- cases[i, "min_prpn"]
+    tr_start <- cases[i, "tr_start"]
+
+    case_str <- paste(
+      "dgp", dgp,
+      "min_prpn", min_prpn,
+      "tr_start", tr_start,
+      sep = "_"
+    )
+
+    case_str0 <- paste(
+      "dgp", dgp,
+      "min_prpn", 0.005,
+      "tr_start", sim_choice$ate_start,
+      sep = "_"
+    )
+
+    file_names <- c(
+      paste(out_dir, "ts_sim_", case_str, ".RData", sep = ""),
+      paste(out_dir, "rits_sim_", case_str, ".RData", sep = ""),
+      paste(out_dir, "ts_mis_sim_", case_str, ".RData", sep = ""),
+      paste(out_dir, "rits_mis_sim_", case_str, ".RData", sep = ""),
+      paste(out_dir, "rand_sim_", case_str0, ".RData", sep = ""),
+      paste(out_dir, "rand_mis_sim_", case_str0, ".RData", sep = "")
+    )
+
+    for (file_name in file_names) {
+
+      if (file.exists(file_name)) {
+
+        out_sim <- readRDS(file_name)
+
+        out_sim <- add_asympcs_sim(
+          out_list = out_sim,
+          ate_start = 24,
+          batch = batch,
+          placebo_arm = 1,
+          alpha = 0.05,
+          first_peek = 50,
+          n_cores = 1,
+          force_compute = TRUE,
+          learner = "main_ridge"
+        )
+
+        out_sim <- add_standard_ci(
+          out = out_sim,
+          ate_start = 24,
+          placebo_arm = 1,
+          force_compute = TRUE
+        )
+
+        print(file_name)
+        print(length(out_sim))
+
+        saveRDS(out_sim, file_name)
+
+      } else {
+        warning("File not found and skipped: ", file_name)
+      }
+    }
+
+    return(NULL)
+  },
+  mc.cores = num_cores,
+  cases = cases,
+  sim_choice = sim_choice
+)
 ```
 
 
 ## Generate All Plots
 
-### Main Text
+### Main Text Example Plot
+
+This uses the small-scale example files generated in `output_git/`.
+
 ```{r}
-source("code/visualization/main_viz.R")
+required_pkgs <- c("patchwork", "reshape2", "ggh4x", "colorspace")
+
+missing_pkgs <- required_pkgs[!vapply(required_pkgs, requireNamespace, logical(1), quietly = TRUE)]
+
+if (length(missing_pkgs) > 0) {
+  stop(
+    "Please install the following packages before running the plotting chunk: ",
+    paste(missing_pkgs, collapse = ", ")
+  )
+}
+
+library(patchwork)
+library(reshape2)
+library(ggh4x)
+library(colorspace)
+
+source("code/visualization/main_viz_example.R")
 ```
-Figure numbers and `R` objects are matched below from the above `R` script.
-- Figure 1: Used PowerPoint
-- Figure 2: `sim_regret_plot`
-- Figure 3: `metric_alloc_plot`
-- Figure 4: `metric_alloc_plot_real`
+
+The generated example plot object is:
+
+- `metric_alloc_plot_example`
+
+The saved plot file is:
+
+- `plot/metric_alloc_plot_example.jpg`
 
 ### Web Appendix
-```{r}
+
+The full appendix plotting script expects the full author simulation outputs, so it is not run for this small-scale example.
+
+```{r, eval=FALSE}
 source("code/visualization/appendix_viz.R")
 ```
-Figure numbers and `R` objects are matched below from the above `R` script.
-- Web Figure 1: `sim_wid`
-- Web Figure 2: `sim_bias`
-- Web Figure 3: `cum_miscov`
-- Web Figure 4: `sim_regret_plot`
-- Web Figure 4: `sim_regret_plot`
-
 
 ## Generate All Tables
 
-### Main Text (Table 1)
-```{r}
-source("code/visualization/main_tab.R")
-est_err_tab <- rbind(est_err_tab_high, est_err_tab_low) # Table 1
-```
-Only one table is included in the main text.
+### Main Text
 
+The full table script expects the full author simulation outputs, so it is not run for this small-scale example.
+
+```{r, eval=FALSE}
+source("code/visualization/main_tab.R")
+est_err_tab <- rbind(est_err_tab_high, est_err_tab_low)
+```
 
 ### Web Appendix
-```{r}
+
+The full appendix table script expects the full author simulation outputs, so it is not run for this small-scale example.
+
+```{r, eval=FALSE}
 source("code/visualization/appendix_tab.R")
 table2 <- rbind(est_err_all_mis_tab[[6]]$tab, est_err_all_mis_tab[[5]]$tab)
 ```
-Table numbers and `R` objects are matched below from the above chunk of `R` code.
-- Web Table 1: `cum_miscov_all_tab`
-- Web Table 2: `table2`
-- Web Table 3: `cum_miscov_all_mis_tab`
