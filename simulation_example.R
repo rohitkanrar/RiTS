@@ -14,8 +14,14 @@ if(!dir.exists("output_git/")){
   dir.create("output_git/")
 }
 
+# Rows 5-6 correspond to dgp = low/high, min_prpn = 0.05, tr_start = 24.
+# This is a representative subset for illustration purposes.
 cases <- cases[5:6, ]
 n_iter <- 10 # only 10 instead of 1000 for illustration
+
+# Define globally so the table-generation section below can access them
+out_dir <- "output_git/"
+K <- sim_choice$K
 
 library(parallel)
 num_cores <- 2
@@ -121,8 +127,9 @@ results <- mclapply(1:nrow(cases), function(i, cases, sim_choice){
       out_sim <- add_asympcs_sim(out_list = out_sim, ate_start = 24, batch = batch, 
                                  placebo_arm = 1, alpha = 0.05, first_peek = 80, 
                                  n_cores = 1, force_compute = TRUE, learner = "main_ridge")
-      out_sim <- add_standard_ci(out = out_sim, ate_start = 24, batch = batch, 
-                                 placebo_arm = 1, alpha = 0.05, force_compute = TRUE)
+      out_sim <- add_standard_ci(out = out_sim, ate_start = 24, n_looks = 30,
+                                 placebo_arm = 1, force_compute = TRUE,
+                                 c_ks = readRDS("metadata/ck.RData"))
       saveRDS(out_sim, file_name) 
     } else{
       next

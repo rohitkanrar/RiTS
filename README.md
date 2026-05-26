@@ -22,10 +22,10 @@ The method is named **R**isk-**i**nclusive **T**hompson **S**ampling (RiTS). [ar
 - `/code/function/classical_ci.R`: contains functions to add t-test based confidence intervals to simulation outputs. 
 
 ### Contents of `/code/real_data`:
-- `/code/real_data/replicated_application`: contains all functions to replicate methods on generated pseudo-outcomes.
+- `/code/real_data/replicated_application.R`: contains all functions to replicate methods on generated pseudo-outcomes.
 - `/code/real_data/clean.R`: used to clean the data (not important as the real data is not shared.) 
 - `/code/real_data/eda.R`: used to perform initial exploratory data analysis to select relevant covariates.
-- `/code/real_data/baseline_lab.R`: supports the inclusion of some bio-markers in the safety model.
+- `/code/real_data/eda_baseline_lab.R`: supports the inclusion of some bio-markers in the safety model.
 
 ### Contents of `/code/simulation`:
 - `/code/simulation/replicated_trial.R`: execute trial optimization steps with all methods for all choices of hyper-parameters. Multiple cores execute different cases in parallel.
@@ -34,16 +34,17 @@ The method is named **R**isk-**i**nclusive **T**hompson **S**ampling (RiTS). [ar
 ### Contents of `/code/visualization`:
 - `/code/visualization/appendix_viz.R`: generates all plots in the Web Appendix.
 - `/code/visualization/main_viz.R`: generates all plots in the main text.
-- `/code/visualization/viz_functions.R`: includes all functions to generate plots.
+- `/code/visualization/main_viz_example.R`: generates the subset of main-text plots from the example output files in `/output_git`.
+- `/code/visualization/viz_function.R`: includes all functions to generate plots.
 - `/code/visualization/response_letter.R`: used to generate a line plot included in the response letter.
 - `/code/visualization/main_tab.R`: generates all tables included in the main text.
 - `/code/visualization/appendix_tab.R`: generates all tables included in the Web Appendix.
 
 
-## Initial Setup:
+## Initial Setup
 
 - Clone Github Repository:
-- Option 1 (Full Repository):
+- Option 1 (Full Repository, including pre-generated plots and example outputs via Git LFS):
 
 ```
 git clone git@github.com:rohitkanrar/RiTS.git
@@ -61,47 +62,45 @@ cd RiTS
 git lfs pull
 ```
 
-- To Fetch A Specific LFS Files Later:
+- To Fetch A Specific LFS File Later:
 ```
-git lfs pull
 git lfs pull --include="path/to/your/large_file"
 ```
 
-- Create additional folders to save output files:
+- Install all required R packages (run once from the repository root):
 
 ```
-mkdir output
-mkdir plot
+source("requirements.R")
 ```
 
-- Install all required R packages:
+> **Note:** `requirements.R` installs all CRAN and GitHub dependencies, including `MASS`, `glmnet`, `ggplot2`, `tidyr`, `dplyr`, and `drconfseq`. Run this before executing any other script.
 
-```
-source("code/r/requirements.R")
-```
+## To Replicate Results
 
-## To Replicate Results:
-
-- Please follow `simulation_example.Rmd` to reproduce all experiments, figures and tables.
-- Example output files are added in `/output_git` folder.
+- Please follow `simulation_example.Rmd` to reproduce a small-scale version of all experiments, figures and tables.
+- Example output files are in the `/output_git` folder.
 - To replicate simulation experiments for 1000 replications, please follow the steps below:
+
 ```
 mkdir output
 Rscript code/simulation/replicated_trial.R
 Rscript code/simulation/replicated_trial_evaluation.R
 ```
-- To generate plots and tables: 
+
+- To generate plots and tables:
 ```
-mkdir plot
 mkdir tables
 Rscript code/visualization/main_viz.R
 Rscript code/visualization/main_tab.R
 Rscript code/visualization/appendix_viz.R
 Rscript code/visualization/appendix_tab.R
 ```
+
+> **Note on the `plot/` directory:** Pre-generated plot files are tracked via Git LFS (`*.jpg`). After a full clone (`git lfs pull`), the `plot/` directory will already be populated. If you cloned without LFS or want to regenerate plots, the visualization scripts above will create the `plot/` directory and save new files there.
+
 - We are unable to upload all output files (> 8.3 GB) on GitHub. Please execute the code above to generate original output files. 
-- With 16 CPU cores, it took us around 12 hours to complete all simulation.
-- As an alternative, `simulation_example.R` script runs the simulation experiment for 10 replication and saves output files in the `/output_git` folder.
+- With 16 CPU cores, it took us around 12 hours to complete all simulation. The real-data replication script (`replicated_application.R`) uses 20 cores by default. Please adjust the `num_cores` variable at the top of each script to match your available hardware before running.
+- As an alternative, `simulation_example.R` runs the simulation experiment for 10 replications and saves output files in the `/output_git` folder.
 - Neither the real data nor the output can be provided due to privacy concerns.
 
 ## References
